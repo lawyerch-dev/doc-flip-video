@@ -79,7 +79,7 @@ async function main() {
     ],
   });
   const page = await browser.newPage();
-  // 1x viewport — canvas is 1x, ffmpeg upscales with lanczos
+  // 1x viewport — renderer.html reads template for canvas size
   await page.setViewport({ width: W, height: H });
   page.on("console", msg => { if (msg.type() === "error") console.log("  [page]", msg.text()); });
   page.on("error", err => console.error("  [page error]", err.message));
@@ -92,18 +92,39 @@ async function main() {
   fs.mkdirSync(path.join(__dirname, "..", "output"), { recursive: true });
   const outFile = path.join(__dirname, "..", "output", "output.mp4");
 
-  // ffmpeg: decode JPEG, upscale 1x→2x with lanczos, encode h264
+  // Pick random background music
+  const musicDir = path.join(__dirname, '..', 'assets', 'music');
+  const musicFiles = fs.readdirSync(musicDir).filter(f => f.match(/\.(mp3|wav|ogg|m4a)$/i));
+  const musicFile = musicFiles.length > 0 ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]) : null;
+  if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
+
+  // ffmpeg: decode JPEG, upscale 1x→2x with lanczos, add BGM at 30% volume
   const outW = W * 2, outH = H * 2;
-  const ffmpeg = spawn("ffmpeg", [
+  const ffmpegArgs = [
     "-y",
     "-f", "image2pipe", "-c:v", "mjpeg", "-r", `${FPS}`,
     "-i", "pipe:0",
+  ];
+  if (musicFile) {
+    ffmpegArgs.push("-i", musicFile);
+  }
+  ffmpegArgs.push(
     "-vf", `scale=${outW}:${outH}:flags=lanczos`,
     "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-    "-pix_fmt", "yuv420p", "-movflags", "+faststart", outFile,
-  ], { stdio: ["pipe", "inherit", "inherit"] });
+    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+  );
+  if (musicFile) {
+    ffmpegArgs.push(
+      "-af", "volume=0.3",
+      "-c:a", "aac", "-b:a", "128k",
+      "-map", "0:v:0", "-map", "1:a:0",
+      "-shortest",
+    );
+  }
+  ffmpegArgs.push(outFile);
+  const ffmpeg = spawn("ffmpeg", ffmpegArgs, { stdio: ["pipe", "inherit", "inherit"] });
 
-  // Batch render: send all frame calls to page, get JPEG frames back in batches
+  // Batch render: send frame calls to page, get JPEG frames back
   const BATCH = 60;
   let rendered = 0;
 

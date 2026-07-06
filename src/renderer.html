@@ -172,6 +172,7 @@ void main() {
 // ── WebGL ──
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 let W, H;
 
 function compile(src, type) {
@@ -228,7 +229,6 @@ fetch('template.json').then(r => r.json()).then(tmpl => {
   H = tmpl.style.height;
   canvas.width = W;
   canvas.height = H;
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   templateLoaded = true;
   checkReady();
 });

@@ -19,6 +19,17 @@ const MARGIN = S.margin;
 const MAX_TEXT_W = W - MARGIN * 2;
 const FONT = S.font.split(",").map(f => `"${f.trim()}"`).join(",");
 
+// ── Format helpers (assemble display strings from granular meta) ──
+function formatDate(m) {
+  return `${m.year}年${String(m.month).padStart(2, "0")}月${String(m.day).padStart(2, "0")}日`;
+}
+function formatIssue(m) {
+  return `第${m.issueNumber}期`;
+}
+function formatIssueFull(m) {
+  return `${m.year}年总第${m.issueNumber}期`;
+}
+
 // ── Helpers ──
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -123,8 +134,7 @@ function drawBackground(ctx) {
     // Dynamic watermark: derive from issue number
     let wmText = wm.text;
     if (wmText === "auto") {
-      const m = A.meta.issue.match(/\d+/);
-      wmText = m ? `No.${m[0]}` : A.meta.issue;
+      wmText = `No.${A.meta.issueNumber}`;
     }
     ctx.save();
     ctx.globalAlpha = wm.opacity != null ? wm.opacity : 1;
@@ -148,9 +158,15 @@ function drawBackground(ctx) {
 function drawBarcode(ctx) {
   const bc = T.barcode;
   if (!bc || !bc.enabled) return;
-  // Extract digits only (Code128B needs ASCII 32-127)
-  const raw = bc.text === "auto" ? A.meta.issue : bc.text;
-  const text = raw.replace(/[^0-9]/g, "") || "0000";
+  // Extract year-month + issue number for barcode (e.g. "202607458")
+  const raw = bc.text === "auto" ? null : bc.text;
+  let text;
+  if (raw) {
+    text = raw.replace(/[^0-9A-Za-z\-]/g, "");
+  } else {
+    const ymd = `${A.meta.year}${String(A.meta.month).padStart(2,"0")}${String(A.meta.day).padStart(2,"0")}`;
+    text = ymd + A.meta.issueNumber; // "20260701458"
+  }
 
   // Offscreen canvas for barcode
   const barcodeCanvas = createCanvas(bc.width, bc.height + (bc.textSize || 14) + 8);
@@ -196,16 +212,47 @@ function drawTop(ctx) {
   ctx.fillStyle = logo.background;
   roundRect(ctx, logo.x, logo.y, logo.width, logo.height, logo.radius); ctx.fill();
   ctx.fillStyle = logo.color;
-  ctx.font = `bold ${logo.size}px ${FONT}`;
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(logo.text, logo.x + logo.width / 2, logo.y + logo.height / 2);
+  const logoFont = logo.font || FONT;
+  const chars = logo.text.split("");
+  const firstScale = logo.firstCharScale || 1;
+  if (chars.length > 1 && firstScale !== 1) {
+    // Artistic seal: first char larger, horizontal layout
+    const baseSize = logo.size;
+    const bigSize = Math.round(baseSize * firstScale);
+    const smallSize = baseSize;
+    const centerY = logo.y + logo.height / 2;
+    // Measure total width
+    ctx.font = `bold ${bigSize}px ${logoFont}`;
+    const w0 = ctx.measureText(chars[0]).width;
+    ctx.font = `bold ${smallSize}px ${logoFont}`;
+    const restWidths = chars.slice(1).map(c => ctx.measureText(c).width);
+    const gap = 6;
+    const totalW = w0 + gap + restWidths.reduce((a, b) => a + b, 0);
+    let cx = logo.x + (logo.width - totalW) / 2;
+    // First (larger) character — positioned higher
+    ctx.font = `bold ${bigSize}px ${logoFont}`;
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const firstOffY = logo.firstCharOffsetY || 0;
+    const otherOffY = logo.otherCharOffsetY || 0;
+    ctx.fillText(chars[0], cx, centerY + bigSize * firstOffY);
+    cx += w0 + gap;
+    // Remaining characters
+    ctx.font = `bold ${smallSize}px ${logoFont}`;
+    for (let i = 1; i < chars.length; i++) {
+      ctx.fillText(chars[i], cx, centerY + smallSize * otherOffY);
+      cx += restWidths[i - 1];
+    }
+  } else {
+    ctx.font = `bold ${logo.size}px ${logoFont}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(logo.text, logo.x + logo.width / 2, logo.y + logo.height / 2);
+  }
   const sealBottom = logo.y + logo.height;
 
   // ── Issue number at absolute x,y ──
   const prefixFont = `bold ${issNum.prefixSize}px ${FONT}`;
   const numFont = `bold ${issNum.numberSize}px ${FONT}`;
-  const numMatch = meta.issue.match(/第(\d+)期/);
-  const num = numMatch ? numMatch[1] : "";
+  const num = String(meta.issueNumber);
   const partGap = issNum.partSpacing || 8;
 
   let ix = issNum.x;
@@ -228,7 +275,7 @@ function drawTop(ctx) {
   ctx.fillStyle = dt.color;
   ctx.font = `${dt.size}px ${FONT}`;
   ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.fillText(meta.date, dt.x, dt.y);
+  ctx.fillText(formatDate(meta), dt.x, dt.y);
 
   // ── Description at absolute x,y ──
   let descBottom = dt.y + dt.size;

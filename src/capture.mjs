@@ -74,9 +74,8 @@ async function main() {
   const outFile = path.join(__dirname, "..", "output", "output.mp4");
 
   const ffmpeg = spawn("ffmpeg", [
-    "-y", "-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-r", `${FPS}`,
+    "-y", "-f", "image2pipe", "-c:v", "png", "-r", `${FPS}`,
     "-i", "pipe:0",
-    "-vf", "vflip",
     "-c:v", "libx264", "-preset", "medium", "-crf", "18",
     "-pix_fmt", "yuv420p", "-movflags", "+faststart", outFile,
   ], { stdio: ["pipe", "inherit", "inherit"] });
@@ -85,18 +84,16 @@ async function main() {
 
   for (let f = 0; f < TOTAL_FRAMES; f++) {
     const call = getFrame(f / FPS);
-    const pixels = await page.evaluate(async (call, W, H) => {
+    const dataUrl = await page.evaluate(async (call) => {
       const [fn, ...args] = call.replace(')', '').split('(');
       window['__' + fn](...args.map(Number));
-      const gl = document.getElementById("c").getContext("webgl");
-      const buf = new Uint8Array(W * H * 4);
-      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
-      let b = "";
-      for (let i = 0; i < buf.length; i += 8192) b += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
-      return btoa(b);
-    }, call, W, H);
+      const canvas = document.getElementById("c");
+      return canvas.toDataURL('image/png');
+    }, call);
 
-    const rawBuf = Buffer.from(pixels, "base64");
+    // Extract base64 data and decode to Buffer
+    const base64 = dataUrl.split(',')[1];
+    const rawBuf = Buffer.from(base64, 'base64');
     const ok = ffmpeg.stdin.write(rawBuf);
     if (!ok) await new Promise(r => ffmpeg.stdin.once("drain", r));
 

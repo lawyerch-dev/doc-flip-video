@@ -1,5 +1,5 @@
 {
-  "name": "page-flip-demo",
+  "name": "doc-flip-video",
   "version": "1.0.0",
   "scripts": {
     "build": "node src/build.mjs",

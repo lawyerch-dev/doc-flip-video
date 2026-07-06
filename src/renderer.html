@@ -78,7 +78,7 @@ void main(){
   gl_FragColor=antiAlias(color,cl,dte(pt));
 }`;
 
-// 2) Marker sweep: left-to-right reveal with soft edge
+// 2) Marker sweep: left-to-right reveal with glowing highlight edge
 const SWEEP = `
 precision highp float;
 varying vec2 uv;
@@ -87,8 +87,12 @@ uniform float progress;
 void main() {
   vec4 a = texture2D(from, uv);
   vec4 b = texture2D(to, uv);
-  float mask = smoothstep(progress - 0.03, progress, uv.x);
-  gl_FragColor = mix(b, a, mask);
+  float mask = smoothstep(progress - 0.08, progress + 0.02, uv.x);
+  float edge = smoothstep(0.0, 0.06, abs(uv.x - progress));
+  float glow = (1.0 - edge) * 0.5;
+  vec4 result = mix(b, a, mask);
+  result.rgb += vec3(1.0, 0.9, 0.3) * glow;
+  gl_FragColor = result;
 }`;
 
 // 3) Simple blend
@@ -98,6 +102,25 @@ varying vec2 uv;
 uniform sampler2D from, to;
 uniform float progress;
 void main() { gl_FragColor = mix(texture2D(from, uv), texture2D(to, uv), progress); }`;
+
+// 4) Cover entrance: fade in from white + slight scale-down
+const SETTLE = `
+precision highp float;
+varying vec2 uv;
+uniform sampler2D tex;
+uniform float progress;
+void main() {
+  // Scale from 1.04 to 1.0 (zoom out)
+  float scale = mix(1.04, 1.0, progress);
+  vec2 center = vec2(0.5, 0.5);
+  vec2 tc = center + (uv - center) / scale;
+  vec4 color = texture2D(tex, tc);
+  // Fade in from white
+  color.rgb = mix(vec3(1.0), color.rgb, progress);
+  // Clamp to canvas bounds
+  if (tc.x < 0.0 || tc.x > 1.0 || tc.y < 0.0 || tc.y > 1.0) color = vec4(1.0, 1.0, 1.0, 1.0);
+  gl_FragColor = color;
+}`;
 
 // ── WebGL ──
 const canvas = document.getElementById('c');
@@ -126,6 +149,7 @@ const programs = {
   curl:  link(VERT, CURL),
   sweep: link(VERT, SWEEP),
   blend: link(VERT, BLEND),
+  settle: link(VERT, SETTLE),
 };
 
 function use(name) {
@@ -185,6 +209,14 @@ window.__blend = function(progress) {
   gl.viewport(0, 0, W, H);
   const p = use('blend');
   bindTex(0, texs.plain, p, 'from'); bindTex(1, texs.hl, p, 'to');
+  gl.uniform1f(gl.getUniformLocation(p, 'progress'), progress);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+};
+
+window.__settle = function(progress) {
+  gl.viewport(0, 0, W, H);
+  const p = use('settle');
+  bindTex(0, texs.cover, p, 'tex');
   gl.uniform1f(gl.getUniformLocation(p, 'progress'), progress);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };

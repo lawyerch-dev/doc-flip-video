@@ -39,7 +39,9 @@ for (let f = 0; f < TOTAL_FRAMES; f++) {
     if (sec < seg.end) {
       if (seg.fn === 'cover') { frameCalls.push('cover'); break; }
       if (seg.fn === 'blend') { frameCalls.push(`blend(${seg.val})`); break; }
-      const p = easeInOut((sec - seg.t0) / seg.dur);
+      let p = easeInOut((sec - seg.t0) / seg.dur);
+      // Skip white-screen phase: clamp settle progress to min 0.6
+      if (seg.fn === 'settle') p = Math.max(p, 0.6);
       frameCalls.push(`${seg.fn}(${p.toFixed(4)})`);
       break;
     }
@@ -155,6 +157,23 @@ async function main() {
 
   ffmpeg.stdin.end();
   await new Promise((res, rej) => ffmpeg.on("close", c => c === 0 ? res() : rej(new Error(`exit ${c}`))));
+
+  // Embed cover image as video poster
+  const coverPng = path.join(__dirname, '..', 'assets', 'page_cover.png');
+  if (fs.existsSync(coverPng)) {
+    const tmpOut = outFile + '.tmp.mp4';
+    const posterArgs = ['-y', '-i', outFile, '-i', coverPng,
+      '-map', '0', '-map', '1', '-c', 'copy',
+      '-disposition:v:1', 'attached_pic',
+      '-movflags', '+faststart', tmpOut];
+    await new Promise((res, rej) => {
+      const p = spawn('ffmpeg', posterArgs, { stdio: ['pipe', 'inherit', 'inherit'] });
+      p.on('close', c => c === 0 ? res() : rej(new Error(`poster exit ${c}`)));
+    });
+    fs.renameSync(tmpOut, outFile);
+    console.log('🖼️  Poster embedded');
+  }
+
   await browser.close();
   srv.close();
   console.log(`\n✅ → output/output.mp4`);

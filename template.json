@@ -4,10 +4,7 @@
     "height": 1440,
     "font": "PingFang SC,Noto Sans SC,SimSun,sans-serif",
     "margin": 80,
-    "background": {
-      "top": "#ffffff",
-      "bottom": "#faf8f5"
-    },
+    "background": "#ffffff",
     "leftBand": {
       "enabled": false,
       "width": 8,
@@ -16,7 +13,7 @@
     },
     "headerBand": {
       "enabled": true,
-      "color": "#f9f6f1",
+      "color": "#ffffff",
       "height": 290
     },
     "watermark": {
@@ -145,9 +142,7 @@
       "indent": "auto",
       "boldColor": "#cc0000",
       "highlightColor": "rgba(255,210,0,0.35)",
-      "highlightBorderColor": "rgba(204,0,0,0.5)",
-      "highlightTextColor": "#8b1a1a",
-      "highlightUnderlineColor": "rgba(204,0,0,0.6)"
+      "highlightTextColor": "#8b1a1a"
     },
     "sourceText": {
       "size": 28,
@@ -155,7 +150,7 @@
       "gapFromContent": 30,
       "lineHeight": 38,
       "x": 50,
-      "y": 1100
+      "y": 1050
     }
   },
   "bottom": {
@@ -164,18 +159,24 @@
       "width": 2,
       "gap": 7
     },
-    "text": "关注两拐，交通安全专业知识每日更新",
-    "size": 28,
-    "color": "#666666",
+    "text": {
+      "content": "关注我，了解更多法律新鲜事",
+      "size": 58,
+      "color": "#000",
+      "font": null,
+      "bold": true,
+      "x": 620,
+      "y": 1280
+    },
     "gapFromLine": 15,
     "bottomMargin": 150,
     "band": {
       "enabled": true,
-      "color": "#f5f5f5",
+      "color": "#ffffff",
       "height": 120
     },
-"qrPlaceholder": {
-      "enabled": true,
+    "qrPlaceholder": {
+      "enabled": false,
       "size": 80,
       "x": 920,
       "y": 1330,
@@ -183,6 +184,16 @@
       "labelSize": 14,
       "labelColor": "#999999",
       "borderColor": "#dddddd"
+    },
+    "qrImage": {
+      "enabled": true,
+      "src": "assets/qrcode.png",
+      "size": 120,
+      "x": 80,
+      "y": 1250,
+      "label": "扫码关注",
+      "labelSize": 14,
+      "labelColor": "#000"
     }
   },
   "barcode": {
@@ -195,6 +206,6 @@
     "barColor": "#333333",
     "bgColor": "transparent",
     "textSize": 14,
-    "textColor": "#666666"
+    "textColor": "#000"
   }
 }

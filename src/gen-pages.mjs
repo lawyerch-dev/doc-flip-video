@@ -1,4 +1,4 @@
-import { createCanvas } from "canvas";
+import { createCanvas, loadImage } from "canvas";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -40,6 +40,40 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
 }
 
+// ── Common helpers ──
+function makeFont(size, bold, font) {
+  return `${bold ? "bold " : ""}${size}px ${font || FONT}`;
+}
+
+function resolvePos(cfg, defaultX, defaultY) {
+  return {
+    x: cfg.x != null ? cfg.x : defaultX,
+    y: cfg.y != null ? cfg.y : defaultY
+  };
+}
+
+function text(ctx, content, cfg, defaults) {
+  const d = defaults || {};
+  const size = cfg.size ?? d.size ?? 28;
+  const color = cfg.color ?? d.color ?? "#666666";
+  const font = cfg.font ?? d.font ?? FONT;
+  const bold = cfg.bold ?? d.bold ?? false;
+  const align = cfg.align ?? d.align ?? "left";
+  const baseline = cfg.baseline ?? d.baseline ?? "top";
+  ctx.fillStyle = color;
+  ctx.font = makeFont(size, bold, font);
+  ctx.textAlign = align;
+  ctx.textBaseline = baseline;
+}
+
+function drawDoubleLine(ctx, y, cfg) {
+  ctx.strokeStyle = cfg.color;
+  ctx.lineWidth = cfg.width;
+  ctx.beginPath(); ctx.moveTo(MARGIN, y); ctx.lineTo(W - MARGIN, y); ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(MARGIN, y + cfg.gap); ctx.lineTo(W - MARGIN, y + cfg.gap); ctx.stroke();
+}
+
 function wrapText(ctx, text, maxWidth, firstMaxWidth) {
   if (!text) return [];
   const firstW = firstMaxWidth || maxWidth;
@@ -61,7 +95,7 @@ function wrapText(ctx, text, maxWidth, firstMaxWidth) {
   return lines;
 }
 
-function highlightLines(ctx, lines, lineXs, y, lh, fontSize, keyword, withHighlights, bodyCfg) {
+function highlightLines(ctx, lines, lineXs, y, lh, fontSize, keyword, withHighlights, bodyCfg, isBold, drawFontSize) {
   const positions = [];
   if (!keyword || lines.length === 0) return positions;
   const charMap = [];
@@ -85,32 +119,24 @@ function highlightLines(ctx, lines, lineXs, y, lh, fontSize, keyword, withHighli
     }
   }
   if (curLine >= 0) ranges.push({ line: curLine, startOffset: curStart, endOffset: charMap[kwEnd - 1].offset + 1 });
+  // Use the exact same font as the original text for accurate measureText
+  const srcFont = makeFont(drawFontSize || fontSize, isBold);
   for (const r of ranges) {
     const line = lines[r.line];
     const prefix = line.substring(0, r.startOffset);
     const matched = line.substring(r.startOffset, r.endOffset);
+    ctx.font = srcFont;
     const bx = lineXs[r.line] + ctx.measureText(prefix).width;
     const bw = ctx.measureText(matched).width;
     const ly = y + r.line * lh;
     if (withHighlights) {
-      // Soft highlight background (rounded, translucent)
       ctx.fillStyle = bodyCfg.highlightColor || "rgba(255,210,0,0.35)";
-      roundRect(ctx, bx - 4, ly - fontSize * 0.35, bw + 8, fontSize * 1.3, 4); ctx.fill();
-      // Bold text on highlight
+      roundRect(ctx, bx - 4, ly - fontSize * 0.2, bw + 8, fontSize * 1.2, 4); ctx.fill();
       ctx.fillStyle = bodyCfg.highlightTextColor || "#8b1a1a";
-      ctx.font = `bold ${fontSize}px ${FONT}`;
+      ctx.font = makeFont(fontSize, true);
       ctx.fillText(matched, bx, ly);
-      ctx.font = `${fontSize}px ${FONT}`;
-      // Underline accent
-      const ulColor = bodyCfg.highlightUnderlineColor || "rgba(204,0,0,0.6)";
-      ctx.strokeStyle = ulColor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(bx, ly + fontSize * 0.95);
-      ctx.lineTo(bx + bw, ly + fontSize * 0.95);
-      ctx.stroke();
     }
-    positions.push({ x: bx - 4, y: ly - fontSize * 0.35, w: bw + 8, h: fontSize * 1.3 });
+    positions.push({ x: bx - 4, y: ly - fontSize * 0.2, w: bw + 8, h: fontSize * 1.2 });
   }
   return positions;
 }
@@ -139,7 +165,7 @@ function drawBackground(ctx) {
     ctx.save();
     ctx.globalAlpha = wm.opacity != null ? wm.opacity : 1;
     ctx.fillStyle = wm.color;
-    ctx.font = `${wm.bold !== false ? "bold " : ""}${wm.size}px ${FONT}`;
+    ctx.font = makeFont(wm.size, wm.bold !== false);
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.translate(wm.x, wm.y);
     ctx.rotate(wm.rotate != null ? wm.rotate : -0.18);
@@ -186,7 +212,7 @@ function drawBarcode(ctx) {
     ctx.drawImage(barcodeCanvas, bc.x, bc.y);
   } catch (e) {
     ctx.fillStyle = bc.textColor || "#999999";
-    ctx.font = `${bc.textSize || 14}px ${FONT}`;
+    ctx.font = makeFont(bc.textSize || 14, false);
     ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillText(text, bc.x + bc.width / 2, bc.y);
   }
@@ -216,72 +242,58 @@ function drawTop(ctx) {
   const chars = logo.text.split("");
   const firstScale = logo.firstCharScale || 1;
   if (chars.length > 1 && firstScale !== 1) {
-    // Artistic seal: first char larger, horizontal layout
     const baseSize = logo.size;
     const bigSize = Math.round(baseSize * firstScale);
     const smallSize = baseSize;
     const centerY = logo.y + logo.height / 2;
-    // Measure total width
-    ctx.font = `bold ${bigSize}px ${logoFont}`;
+    ctx.font = makeFont(bigSize, true, logoFont);
     const w0 = ctx.measureText(chars[0]).width;
-    ctx.font = `bold ${smallSize}px ${logoFont}`;
+    ctx.font = makeFont(smallSize, true, logoFont);
     const restWidths = chars.slice(1).map(c => ctx.measureText(c).width);
     const gap = 6;
     const totalW = w0 + gap + restWidths.reduce((a, b) => a + b, 0);
     let cx = logo.x + (logo.width - totalW) / 2;
-    // First (larger) character — positioned higher
-    ctx.font = `bold ${bigSize}px ${logoFont}`;
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
     const firstOffY = logo.firstCharOffsetY || 0;
     const otherOffY = logo.otherCharOffsetY || 0;
+    ctx.font = makeFont(bigSize, true, logoFont);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
     ctx.fillText(chars[0], cx, centerY + bigSize * firstOffY);
     cx += w0 + gap;
-    // Remaining characters
-    ctx.font = `bold ${smallSize}px ${logoFont}`;
+    ctx.font = makeFont(smallSize, true, logoFont);
     for (let i = 1; i < chars.length; i++) {
       ctx.fillText(chars[i], cx, centerY + smallSize * otherOffY);
       cx += restWidths[i - 1];
     }
   } else {
-    ctx.font = `bold ${logo.size}px ${logoFont}`;
+    ctx.font = makeFont(logo.size, true, logoFont);
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(logo.text, logo.x + logo.width / 2, logo.y + logo.height / 2);
   }
   const sealBottom = logo.y + logo.height;
 
   // ── Issue number at absolute x,y ──
-  const prefixFont = `bold ${issNum.prefixSize}px ${FONT}`;
-  const numFont = `bold ${issNum.numberSize}px ${FONT}`;
   const num = String(meta.issueNumber);
   const partGap = issNum.partSpacing || 8;
-
   let ix = issNum.x;
   ctx.textBaseline = "middle";
-  ctx.fillStyle = issNum.color;
-  ctx.font = prefixFont;
-  ctx.textAlign = "left";
+  text(ctx, "第", { color: issNum.color, size: issNum.prefixSize, bold: true, align: "left", baseline: "middle" });
   ctx.fillText("第", ix, issNum.y);
   ix += ctx.measureText("第").width + partGap;
-  ctx.fillStyle = issNum.numberColor;
-  ctx.font = numFont;
+  text(ctx, num, { color: issNum.numberColor, size: issNum.numberSize, bold: true, align: "left", baseline: "middle" });
   ctx.fillText(num, ix, issNum.y);
   ix += ctx.measureText(num).width + partGap;
-  ctx.fillStyle = issNum.color;
-  ctx.font = prefixFont;
+  text(ctx, "期", { color: issNum.color, size: issNum.prefixSize, bold: true, align: "left", baseline: "middle" });
   ctx.fillText("期", ix, issNum.y);
   const issBottom = issNum.y + issNum.numberSize / 2;
 
   // ── Date at absolute x,y ──
-  ctx.fillStyle = dt.color;
-  ctx.font = `${dt.size}px ${FONT}`;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  text(ctx, formatDate(meta), dt, { align: "left" });
   ctx.fillText(formatDate(meta), dt.x, dt.y);
 
   // ── Description at absolute x,y ──
   let descBottom = dt.y + dt.size;
   if (meta.description) {
-    ctx.fillStyle = desc.color;
-    ctx.font = `${desc.bold ? "bold " : ""}${desc.size}px ${FONT}`;
+    text(ctx, meta.description, desc, { align: "left" });
     ctx.fillText(meta.description, desc.x, desc.y);
     descBottom = desc.y + desc.size;
   }
@@ -290,11 +302,7 @@ function drawTop(ctx) {
   const allBottom = Math.max(sealBottom, issBottom, dt.y + dt.size, descBottom);
   const lineY = top.line.auto ? (allBottom + (top.line.gapFromContent || 35)) : top.line.y;
   top.line.y = lineY;
-  ctx.strokeStyle = top.line.color;
-  ctx.lineWidth = top.line.width;
-  ctx.beginPath(); ctx.moveTo(MARGIN, lineY); ctx.lineTo(W - MARGIN, lineY); ctx.stroke();
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(MARGIN, lineY + top.line.gap); ctx.lineTo(W - MARGIN, lineY + top.line.gap); ctx.stroke();
+  drawDoubleLine(ctx, lineY, top.line);
 
   // Barcode (top-right)
   drawBarcode(ctx);
@@ -318,61 +326,67 @@ function drawDotDivider(ctx, y) {
 // ── Bottom section ──
 function drawBottom(ctx, contentEndY) {
   const bot = T.bottom;
-  // Gray footer band
   const bandH = bot.band && bot.band.enabled ? bot.band.height : 0;
   const lineY = Math.max(contentEndY + 30, H - bot.bottomMargin - bandH);
 
   // Double line
-  ctx.strokeStyle = bot.line.color;
-  ctx.lineWidth = bot.line.width;
-  ctx.beginPath(); ctx.moveTo(MARGIN, lineY); ctx.lineTo(W - MARGIN, lineY); ctx.stroke();
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(MARGIN, lineY + bot.line.gap); ctx.lineTo(W - MARGIN, lineY + bot.line.gap); ctx.stroke();
-  // Footer text
-  ctx.fillStyle = bot.color;
-  ctx.font = `${bot.size}px ${FONT}`;
-  ctx.textAlign = "center"; ctx.textBaseline = "top";
-  ctx.fillText(T.bottom.text, W / 2, lineY + bot.gapFromLine);
+  drawDoubleLine(ctx, lineY, bot.line);
 
-  // Gray band at bottom
+  // Footer text config
+  const txt = bot.text || {};
+  const txtContent = txt.content || bot.text || "";
+  const txtSize = txt.size || bot.size || 28;
+  const txtColor = txt.color || bot.color || "#666666";
+  const txtFont = txt.font || FONT;
+  const txtBold = txt.bold != null ? txt.bold : false;
+  const txtX = txt.x === "center" ? W / 2 : (txt.x != null ? txt.x : W / 2);
+  const txtY = txt.y != null ? txt.y : (lineY + bot.gapFromLine);
+
+  // Gray band at bottom (drawn before text so text is on top)
   if (bot.band && bot.band.enabled) {
     const bandY = H - bandH;
     ctx.fillStyle = bot.band.color;
     ctx.fillRect(0, bandY, W, bandH);
 
-    // QR placeholder
+    // QR image or placeholder
+    const qrImg = bot.qrImage;
     const qr = bot.qrPlaceholder;
-    if (qr && qr.enabled) {
+    if (qrImg && qrImg.enabled && qrImg._img) {
+      const qrX = qrImg.x != null ? qrImg.x : (W - MARGIN - qrImg.size - 20);
+      const qrY = qrImg.y != null ? qrImg.y : (bandY + (bandH - qrImg.size - qrImg.labelSize - 8) / 2);
+      ctx.drawImage(qrImg._img, qrX, qrY, qrImg.size, qrImg.size);
+      text(ctx, qrImg.label, { size: qrImg.labelSize, color: qrImg.labelColor, align: "center" });
+      ctx.fillText(qrImg.label, qrX + qrImg.size / 2, qrY + qrImg.size + 6);
+    } else if (qr && qr.enabled) {
       const qrX = qr.x != null ? qr.x : (W - MARGIN - qr.size - 20);
       const qrY = qr.y != null ? qr.y : (bandY + (bandH - qr.size - qr.labelSize - 8) / 2);
-      // QR border box
       ctx.strokeStyle = qr.borderColor;
       ctx.lineWidth = 1.5;
       roundRect(ctx, qrX, qrY, qr.size, qr.size, 6); ctx.stroke();
-      // "QR" placeholder text inside
-      ctx.fillStyle = "#cccccc";
-      ctx.font = `bold ${Math.round(qr.size * 0.28)}px ${FONT}`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      text(ctx, "QR", { size: Math.round(qr.size * 0.28), color: "#cccccc", bold: true, align: "center", baseline: "middle" });
       ctx.fillText("QR", qrX + qr.size / 2, qrY + qr.size / 2);
-      // Label below QR
-      ctx.fillStyle = qr.labelColor;
-      ctx.font = `${qr.labelSize}px ${FONT}`;
-      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      text(ctx, qr.label, { size: qr.labelSize, color: qr.labelColor, align: "center" });
       ctx.fillText(qr.label, qrX + qr.size / 2, qrY + qr.size + 6);
     }
   }
+
+  // Footer text (drawn last so it's always on top)
+  text(ctx, txtContent, { size: txtSize, color: txtColor, font: txtFont, bold: txtBold, align: "center" });
+  ctx.fillText(txtContent, txtX, txtY);
 }
 
 // ── Cover (middle section) ──
 function generateCover() {
-  const canvas = createCanvas(W, H);
+  const SCALE = 2;
+  const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
+  ctx.scale(SCALE, SCALE);
   drawBackground(ctx);
   drawTop(ctx);
 
   const mid = T.middle;
   const ac = A.cover;
-  ctx.font = `bold ${mid.headline.size}px ${FONT}`;
+  ctx.font = makeFont(mid.headline.size, true);
   const headlineLines = wrapText(ctx, ac.headline, MAX_TEXT_W);
   const headlineH = headlineLines.length * mid.headline.lineHeight;
   const blockH = mid.tag.height + mid.spacing.tagToHeadline + headlineH + mid.spacing.headlineToSource + mid.source.lineHeight * 2;
@@ -385,27 +399,21 @@ function generateCover() {
   const tagY = mid.tag.y != null ? mid.tag.y : y;
   ctx.fillStyle = mid.tag.background;
   roundRect(ctx, tagX, tagY, mid.tag.width, mid.tag.height, mid.tag.radius); ctx.fill();
-  ctx.fillStyle = mid.tag.color;
-  ctx.font = `${mid.tag.bold ? "bold " : ""}${mid.tag.size}px ${FONT}`;
-  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  text(ctx, mid.tag.text, mid.tag, { align: "left", baseline: "middle" });
   ctx.fillText(mid.tag.text, tagX + mid.tag.paddingX, tagY + mid.tag.height / 2);
   y = tagY + mid.tag.height;
 
   // Headline (absolute x,y or flow)
   const hlX = mid.headline.x != null ? mid.headline.x : MARGIN;
   const hlY = mid.headline.y != null ? mid.headline.y : (y + mid.spacing.tagToHeadline);
-  ctx.fillStyle = mid.headline.color;
-  ctx.font = `${mid.headline.bold ? "bold " : ""}${mid.headline.size}px ${FONT}`;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  text(ctx, null, mid.headline, { align: "left" });
   for (let i = 0; i < headlineLines.length; i++) { ctx.fillText(headlineLines[i], hlX, hlY + i * mid.headline.lineHeight); }
   y = hlY + headlineLines.length * mid.headline.lineHeight;
 
   // Source (absolute x,y or flow)
   const srcX = mid.source.x != null ? mid.source.x : MARGIN;
   const srcY = mid.source.y != null ? mid.source.y : (y + mid.spacing.headlineToSource);
-  ctx.fillStyle = mid.source.color;
-  ctx.font = `${mid.source.size}px ${FONT}`;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  text(ctx, null, mid.source, { align: "left" });
   const srcLines = wrapText(ctx, ac.source, MAX_TEXT_W);
   for (let i = 0; i < srcLines.length; i++) { ctx.fillText(srcLines[i], srcX, srcY + i * mid.source.lineHeight); }
   y = srcY + srcLines.length * mid.source.lineHeight;
@@ -416,8 +424,10 @@ function generateCover() {
 
 // ── Content (middle section) ──
 function generateContent(withHighlights) {
-  const canvas = createCanvas(W, H);
+  const SCALE = 2;
+  const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
+  ctx.scale(SCALE, SCALE);
   drawBackground(ctx);
   drawTop(ctx);
 
@@ -433,14 +443,14 @@ function generateContent(withHighlights) {
 
   // Center calculation
   let totalLines = 0;
-  ctx.font = `bold ${mid.contentTitle.size}px ${FONT}`;
+  ctx.font = makeFont(mid.contentTitle.size, true);
   totalLines += wrapText(ctx, ac.title, MAX_TEXT_W).length;
-  ctx.font = `bold ${mid.contentSubtitle.size}px ${FONT}`;
+  ctx.font = makeFont(mid.contentSubtitle.size, true);
   totalLines += wrapText(ctx, ac.subtitle, MAX_TEXT_W).length;
   totalLines += 1;
   for (const para of ac.paragraphs) {
     if (!para.text) { totalLines += 0.6; continue; }
-    ctx.font = para.bold ? `bold ${body.fontSize + 4}px ${FONT}` : `${body.fontSize}px ${FONT}`;
+    ctx.font = makeFont(para.bold ? body.fontSize + 4 : body.fontSize, para.bold);
     const useIndent = !para.bold;
     totalLines += wrapText(ctx, para.text, MAX_TEXT_W, useIndent ? MAX_TEXT_W - indent : MAX_TEXT_W).length;
   }
@@ -455,23 +465,21 @@ function generateContent(withHighlights) {
   // Title (absolute x,y or flow)
   const titleY = mid.contentTitle.y != null ? mid.contentTitle.y : y;
   const titleX = mid.contentTitle.x != null ? mid.contentTitle.x : MARGIN;
-  ctx.fillStyle = mid.contentTitle.color;
-  ctx.font = `${mid.contentTitle.bold ? "bold " : ""}${mid.contentTitle.size}px ${FONT}`;
+  text(ctx, null, mid.contentTitle, { align: "left" });
   const titleLines = wrapText(ctx, ac.title, MAX_TEXT_W);
   const titleXs = titleLines.map(() => titleX);
   for (let i = 0; i < titleLines.length; i++) ctx.fillText(titleLines[i], titleX, titleY + i * mid.contentTitle.lineHeight);
-  if (ac.titleHighlight) hlPositions.push(...highlightLines(ctx, titleLines, titleXs, titleY, mid.contentTitle.lineHeight, mid.contentTitle.size, ac.titleHighlight, withHighlights, body));
+  if (ac.titleHighlight) hlPositions.push(...highlightLines(ctx, titleLines, titleXs, titleY, mid.contentTitle.lineHeight, mid.contentTitle.size, ac.titleHighlight, withHighlights, body, mid.contentTitle.bold, mid.contentTitle.size));
   y = titleY + titleLines.length * mid.contentTitle.lineHeight;
 
   // Subtitle (absolute x,y or flow)
   const subY = mid.contentSubtitle.y != null ? mid.contentSubtitle.y : y;
   const subX = mid.contentSubtitle.x != null ? mid.contentSubtitle.x : MARGIN;
-  ctx.fillStyle = mid.contentSubtitle.color;
-  ctx.font = `${mid.contentSubtitle.bold ? "bold " : ""}${mid.contentSubtitle.size}px ${FONT}`;
+  text(ctx, null, mid.contentSubtitle, { align: "left" });
   const subLines = wrapText(ctx, ac.subtitle, MAX_TEXT_W);
   const subXs = subLines.map(() => subX);
   for (let i = 0; i < subLines.length; i++) ctx.fillText(subLines[i], subX, subY + i * mid.contentSubtitle.lineHeight);
-  if (ac.subtitleHighlight) hlPositions.push(...highlightLines(ctx, subLines, subXs, subY, mid.contentSubtitle.lineHeight, mid.contentSubtitle.size, ac.subtitleHighlight, withHighlights, body));
+  if (ac.subtitleHighlight) hlPositions.push(...highlightLines(ctx, subLines, subXs, subY, mid.contentSubtitle.lineHeight, mid.contentSubtitle.size, ac.subtitleHighlight, withHighlights, body, mid.contentSubtitle.bold, mid.contentSubtitle.size));
   y = subY + subLines.length * mid.contentSubtitle.lineHeight;
 
   // Dot divider
@@ -483,7 +491,7 @@ function generateContent(withHighlights) {
   for (const para of ac.paragraphs) {
     if (!para.text) { y += body.lineHeight * 0.6; continue; }
     const isBold = para.bold;
-    ctx.font = isBold ? `bold ${body.fontSize + 4}px ${FONT}` : `${body.fontSize}px ${FONT}`;
+    ctx.font = makeFont(isBold ? body.fontSize + 4 : body.fontSize, isBold);
     const useIndent = !isBold;
     const lines = wrapText(ctx, para.text, MAX_TEXT_W, useIndent ? MAX_TEXT_W - indent : MAX_TEXT_W);
     const lineXs = lines.map((_, li) => MARGIN + (useIndent && li === 0 ? indent : 0));
@@ -491,15 +499,14 @@ function generateContent(withHighlights) {
       ctx.fillStyle = isBold ? body.boldColor : body.color;
       ctx.fillText(lines[li], lineXs[li], y + li * body.lineHeight);
     }
-    if (para.highlight) hlPositions.push(...highlightLines(ctx, lines, lineXs, y, body.lineHeight, body.fontSize, para.highlight, withHighlights, body));
+    if (para.highlight) hlPositions.push(...highlightLines(ctx, lines, lineXs, y, body.lineHeight, body.fontSize, para.highlight, withHighlights, body, isBold, isBold ? body.fontSize + 4 : body.fontSize));
     y += lines.length * body.lineHeight;
   }
 
   // Source (absolute x,y or flow)
   const srcY = mid.sourceText.y != null ? mid.sourceText.y : (y + mid.sourceText.gapFromContent);
   const srcX = mid.sourceText.x != null ? mid.sourceText.x : MARGIN;
-  ctx.fillStyle = mid.sourceText.color;
-  ctx.font = `${mid.sourceText.size}px ${FONT}`;
+  text(ctx, null, mid.sourceText, { align: "left" });
   const srcLines = wrapText(ctx, ac.source, MAX_TEXT_W);
   for (let i = 0; i < srcLines.length; i++) { ctx.fillText(srcLines[i], srcX, srcY + i * mid.sourceText.lineHeight); }
   y = srcY + srcLines.length * mid.sourceText.lineHeight;
@@ -508,15 +515,39 @@ function generateContent(withHighlights) {
   return { canvas, hlPositions };
 }
 
+// ── Load QR image if configured ──
+async function loadQrImage() {
+  const qrImg = T.bottom?.qrImage;
+  if (qrImg && qrImg.enabled && qrImg.src) {
+    const imgPath = path.join(__dirname, "..", qrImg.src);
+    if (fs.existsSync(imgPath)) {
+      qrImg._img = await loadImage(imgPath);
+      console.log(`✅ Loaded QR image: ${imgPath}`);
+    } else {
+      console.warn(`⚠️  QR image not found: ${imgPath}`);
+    }
+  }
+}
+
+// ── Resize helper (for supersampling) ──
+function resizeCanvas(srcCanvas, targetW, targetH) {
+  const out = createCanvas(targetW, targetH);
+  const octx = out.getContext("2d");
+  octx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+  return out;
+}
+
 // ── Generate ──
+(async () => {
+await loadQrImage();
 const coverCanvas = generateCover();
-fs.writeFileSync(path.join(ASSETS, "page_cover.png"), coverCanvas.toBuffer("image/png"));
+fs.writeFileSync(path.join(ASSETS, "page_cover.png"), resizeCanvas(coverCanvas, W, H).toBuffer("image/png"));
 
 const { canvas: plainCanvas } = generateContent(false);
-fs.writeFileSync(path.join(ASSETS, "page_content_plain.png"), plainCanvas.toBuffer("image/png"));
+fs.writeFileSync(path.join(ASSETS, "page_content_plain.png"), resizeCanvas(plainCanvas, W, H).toBuffer("image/png"));
 
 const { canvas: hlCanvas, hlPositions } = generateContent(true);
-fs.writeFileSync(path.join(ASSETS, "page_content_hl.png"), hlCanvas.toBuffer("image/png"));
-fs.writeFileSync(path.join(ASSETS, "hl_positions.json"), JSON.stringify(hlPositions));
+fs.writeFileSync(path.join(ASSETS, "page_content_hl.png"), resizeCanvas(hlCanvas, W, H).toBuffer("image/png"));
 
 console.log(`✅ Generated: cover + content (plain & hl) + ${hlPositions.length} highlights`);
+})();

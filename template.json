@@ -1,10 +1,9 @@
 {
   "style": {
     "width": 1080,
-    "height": 1440,
+    "height": 1600,
     "font": "Noto Sans SC,Noto Sans CJK SC,sans-serif",
     "margin": 80,
-    "verticalPadding": 80,
     "background": "#ffffff",
     "leftBand": {
       "enabled": false,

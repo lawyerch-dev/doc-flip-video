@@ -31,7 +31,7 @@ const A = JSON.parse(fs.readFileSync(articlePath, "utf-8"));
 
 const S = T.style;
 const W = S.width, H = S.height;
-const VPADDING = S.verticalPadding || 0;
+const OUTPUT_W = 1080, OUTPUT_H = 1440; // Fixed output size
 const MARGIN = S.margin;
 const MAX_TEXT_W = W - MARGIN * 2;
 const FONT = S.font.split(",").map(f => `"${f.trim()}"`).join(",");
@@ -344,9 +344,7 @@ function drawDotDivider(ctx, y) {
 function drawBottom(ctx, contentEndY) {
   const bot = T.bottom;
   const bandH = bot.band && bot.band.enabled ? bot.band.height : 0;
-  // Adjust for vertical padding
-  const adjustedH = H - VPADDING * 2;
-  const lineY = Math.max(contentEndY + 30, adjustedH - bot.bottomMargin - bandH);
+  const lineY = Math.max(contentEndY + 30, H - bot.bottomMargin - bandH);
 
   // Double line
   drawDoubleLine(ctx, lineY, bot.line);
@@ -363,7 +361,7 @@ function drawBottom(ctx, contentEndY) {
 
   // Gray band at bottom (drawn before text so text is on top)
   if (bot.band && bot.band.enabled) {
-    const bandY = adjustedH - bandH;
+    const bandY = H - bandH;
     ctx.fillStyle = bot.band.color;
     ctx.fillRect(0, bandY, W, bandH);
 
@@ -397,14 +395,10 @@ function drawBottom(ctx, contentEndY) {
 // ── Cover (middle section) ──
 function generateCover() {
   const SCALE = 2;
-  const PADDED_H = H + VPADDING * 2;
-  const canvas = createCanvas(W * SCALE, PADDED_H * SCALE);
+  const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
-  // Draw background first
   drawBackground(ctx);
-  // Apply vertical padding - shift header down
-  if (VPADDING) ctx.translate(0, VPADDING);
   drawTop(ctx);
 
   const mid = T.middle;
@@ -448,14 +442,10 @@ function generateCover() {
 // ── Content (middle section) ──
 function generateContent(withHighlights) {
   const SCALE = 2;
-  const PADDED_H = H + VPADDING * 2;
-  const canvas = createCanvas(W * SCALE, PADDED_H * SCALE);
+  const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
-  // Draw background first
   drawBackground(ctx);
-  // Apply vertical padding - shift header down
-  if (VPADDING) ctx.translate(0, VPADDING);
   drawTop(ctx);
 
   const mid = T.middle;
@@ -568,13 +558,13 @@ function resizeCanvas(srcCanvas, targetW, targetH) {
 (async () => {
 await loadQrImage();
 const coverCanvas = generateCover();
-fs.writeFileSync(path.join(ASSETS, "page_cover.png"), resizeCanvas(coverCanvas, W, H).toBuffer("image/png"));
+fs.writeFileSync(path.join(ASSETS, "page_cover.png"), resizeCanvas(coverCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
 
 const { canvas: plainCanvas } = generateContent(false);
-fs.writeFileSync(path.join(ASSETS, "page_content_plain.png"), resizeCanvas(plainCanvas, W, H).toBuffer("image/png"));
+fs.writeFileSync(path.join(ASSETS, "page_content_plain.png"), resizeCanvas(plainCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
 
 const { canvas: hlCanvas, hlPositions } = generateContent(true);
-fs.writeFileSync(path.join(ASSETS, "page_content_hl.png"), resizeCanvas(hlCanvas, W, H).toBuffer("image/png"));
+fs.writeFileSync(path.join(ASSETS, "page_content_hl.png"), resizeCanvas(hlCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
 
 console.log(`✅ Generated: cover + content (plain & hl) + ${hlPositions.length} highlights`);
 })();

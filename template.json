@@ -85,7 +85,7 @@
       "background": "#f5f0e8",
       "paddingX": 16,
       "radius": 6,
-      "width": 180,
+      "width": 120,
       "height": 42,
       "x": 80,
       "y": 650
@@ -96,7 +96,7 @@
       "bold": true,
       "lineHeight": 60,
       "x": 80,
-      "y": 720
+      "y": 750
     },
     "source": {
       "size": 36,
@@ -135,12 +135,12 @@
     },
     "body": {
       "fontSize": 32,
-      "lineHeight": 48,
+      "lineHeight": 56,
       "color": "#1a1a1a",
       "indent": "auto",
       "boldColor": "#cc0000",
-      "highlightColor": "rgba(255,210,0,0.35)",
-      "highlightTextColor": "#8b1a1a"
+      "highlightColor": "#FFD700",
+      "highlightTextColor": "#cc0000"
     },
     "sourceText": {
       "size": 28,

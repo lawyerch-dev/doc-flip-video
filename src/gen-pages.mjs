@@ -41,10 +41,10 @@ function formatDate(m) {
   return `${m.year}年${String(m.month).padStart(2, "0")}月${String(m.day).padStart(2, "0")}日`;
 }
 function formatIssue(m) {
-  return `第${m.issueNumber}期`;
+  return `第${String(m.issueNumber).padStart(3, "0")}期`;
 }
 function formatIssueFull(m) {
-  return `${m.year}年总第${m.issueNumber}期`;
+  return `${m.year}年总第${String(m.issueNumber).padStart(3, "0")}期`;
 }
 
 // ── Helpers ──
@@ -147,13 +147,18 @@ function highlightLines(ctx, lines, lineXs, y, lh, fontSize, keyword, withHighli
     const bw = ctx.measureText(matched).width;
     const ly = y + r.line * lh;
     if (withHighlights) {
-      ctx.fillStyle = bodyCfg.highlightColor || "rgba(255,210,0,0.35)";
-      roundRect(ctx, bx - 4, ly - fontSize * 0.05, bw + 8, fontSize * 1.1, 4); ctx.fill();
-      ctx.fillStyle = bodyCfg.highlightTextColor || "#8b1a1a";
+      // Erase original text with white rect
+      ctx.fillStyle = "#ffffff";
+      roundRect(ctx, bx - 8, ly - fontSize * 0.1, bw + 16, fontSize * 1.5, 4); ctx.fill();
+      // Draw yellow highlight
+      ctx.fillStyle = bodyCfg.highlightColor || "#FFD700";
+      roundRect(ctx, bx - 6, ly - 2, bw + 12, fontSize * 1.4, 4); ctx.fill();
+      // Draw red text
+      ctx.fillStyle = bodyCfg.highlightTextColor || "#cc0000";
       ctx.font = makeFont(fontSize, true);
       ctx.fillText(matched, bx, ly);
     }
-    positions.push({ x: bx - 4, y: ly - fontSize * 0.05, w: bw + 8, h: fontSize * 1.1 });
+    positions.push({ x: bx - 6, y: ly - 2, w: bw + 12, h: fontSize * 1.4 });
   }
   return positions;
 }
@@ -177,7 +182,7 @@ function drawBackground(ctx) {
     // Dynamic watermark: derive from issue number
     let wmText = wm.text;
     if (wmText === "auto") {
-      wmText = `No.${A.meta.issueNumber}`;
+      wmText = `No.${String(A.meta.issueNumber).padStart(3, "0")}`;
     }
     ctx.save();
     ctx.globalAlpha = wm.opacity != null ? wm.opacity : 1;
@@ -289,7 +294,7 @@ function drawTop(ctx) {
   const sealBottom = logo.y + logo.height;
 
   // ── Issue number at absolute x,y ──
-  const num = String(meta.issueNumber);
+  const num = String(meta.issueNumber).padStart(3, "0");
   const partGap = issNum.partSpacing || 8;
   let ix = issNum.x;
   ctx.textBaseline = "middle";

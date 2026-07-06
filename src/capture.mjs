@@ -25,6 +25,7 @@ add('settle', tm.settle || 1.2, {});
 add('cover', tm.cover || 2.0, {});
 add('curl',  tm.curl  || 2.5, {});
 add('sweep', tm.sweep || 2.0, {});
+add('blend', tm.hold || 1.0, { val: 1 }); // hold on highlighted content
 add('blend', tm.final || 2.0, { val: 1 });
 const TOTAL_SEC = segments[segments.length - 1].end;
 const TOTAL_FRAMES = Math.ceil(TOTAL_SEC * FPS);
@@ -92,7 +93,8 @@ async function main() {
   console.log(`${TOTAL_FRAMES} frames (${TOTAL_SEC}s)...`);
 
   fs.mkdirSync(path.join(__dirname, "..", "output"), { recursive: true });
-  const outFile = path.join(__dirname, "..", "output", "output.mp4");
+  const issueNum = String(cfg.meta.issueNumber).padStart(3, "0");
+  const outFile = path.join(__dirname, "..", "output", `法务视频-${issueNum}期.mp4`);
 
   // Pick random background music
   const musicDir = path.join(__dirname, '..', 'assets', 'music');

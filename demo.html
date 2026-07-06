@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gl-transitions Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #eee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 16px; color: #aaa; }
+h1 span { color: #e74c3c; }
+.canvas-wrap { position: relative; width: 960px; height: 540px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+iframe { display: block; width: 100%; height: 100%; border: none; }
+.controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; width: 960px; }
+select, button { background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+select:hover, button:hover { border-color: #888; }
+button.active { background: #e74c3c; border-color: #e74c3c; }
+input[type=range] { flex: 1; accent-color: #e74c3c; }
+.pct { font-size: 13px; color: #888; min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+.info { margin-top: 12px; font-size: 12px; color: #555; }
+.info a { color: #e74c3c; text-decoration: none; }
+</style>
+</head>
+<body>
+<h1><span>gl-transitions</span> Demo</h1>
+<div class="canvas-wrap">
+  <iframe id="frame" src="src/renderer.html"></iframe>
+</div>
+<div class="controls">
+  <select id="sel"></select>
+  <button id="playBtn">▶ Play</button>
+  <button id="revBtn">⟲ Reverse</button>
+  <input type="range" id="slider" min="0" max="1" step="0.001" value="0">
+  <span class="pct" id="pct">0%</span>
+</div>
+<p class="info">
+  Transitions from <a href="https://gl-transitions.com">gl-transitions.com</a> ·
+  InvertedPageCurl (HP, BSD-3) · ZoomRigthWipe (Handk, MIT)
+</p>
+
+<script>
+const frame = document.getElementById("frame");
+const sel = document.getElementById("sel");
+const playBtn = document.getElementById("playBtn");
+const revBtn = document.getElementById("revBtn");
+const slider = document.getElementById("slider");
+const pct = document.getElementById("pct");
+
+let progress = 0;
+let playing = false;
+let direction = 1;
+let rafId = null;
+
+function getWin() { return frame.contentWindow; }
+
+function render(p) {
+  const name = sel.value;
+  const from = name === "ZoomRigthWipe" ? "plain" : "cover";
+  const to = name === "ZoomRigthWipe" ? "hl" : "plain";
+  getWin().__renderTransition(name, p, from, to);
+}
+
+function updateUI() {
+  slider.value = progress;
+  pct.textContent = Math.round(progress * 100) + "%";
+}
+
+function tick() {
+  if (!playing) return;
+  progress += direction * 0.008;
+  if (progress >= 1) { progress = 1; playing = false; playBtn.textContent = "▶ Play"; }
+  if (progress <= 0) { progress = 0; playing = false; playBtn.textContent = "▶ Play"; }
+  render(progress);
+  updateUI();
+  if (playing) rafId = requestAnimationFrame(tick);
+}
+
+// Wait for iframe to be ready
+// Populate dropdown from gl-transitions list inside iframe
+frame.onload = () => {
+  const wait = setInterval(() => {
+    try {
+      const win = getWin();
+      if (win.__ready && win.GLTransitions) {
+        clearInterval(wait);
+        const transitions = win.GLTransitions;
+        // Show a curated subset + all others
+        const featured = ['InvertedPageCurl', 'ZoomRigthWipe'];
+        for (const name of featured) {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name;
+          sel.appendChild(opt);
+        }
+        const sep = document.createElement('option');
+        sep.disabled = true; sep.textContent = '─── All transitions ───';
+        sel.appendChild(sep);
+        for (const t of transitions) {
+          if (featured.includes(t.name)) continue;
+          const opt = document.createElement('option');
+          opt.value = t.name; opt.textContent = t.name;
+          sel.appendChild(opt);
+        }
+        sel.value = 'InvertedPageCurl';
+        render(0);
+        updateUI();
+      }
+    } catch(e) {}
+  }, 100);
+};
+
+playBtn.onclick = () => {
+  if (playing) {
+    playing = false;
+    playBtn.textContent = "▶ Play";
+    if (rafId) cancelAnimationFrame(rafId);
+  } else {
+    if (progress >= 1) progress = 0;
+    direction = 1;
+    playing = true;
+    playBtn.textContent = "⏸ Pause";
+    tick();
+  }
+};
+
+revBtn.onclick = () => {
+  if (playing) {
+    playing = false;
+    if (rafId) cancelAnimationFrame(rafId);
+  }
+  if (progress <= 0) progress = 1;
+  direction = -1;
+  playing = true;
+  playBtn.textContent = "⏸ Pause";
+  tick();
+};
+
+slider.oninput = () => {
+  progress = parseFloat(slider.value);
+  playing = false;
+  playBtn.textContent = "▶ Play";
+  if (rafId) cancelAnimationFrame(rafId);
+  render(progress);
+  updateUI();
+};
+
+sel.onchange = () => render(progress);
+</script>
+</body>
+</html>

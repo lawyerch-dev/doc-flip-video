@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html><head><style>*{margin:0;padding:0}canvas{display:block}</style></head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="https://unpkg.com/gl-transitions@1/gl-transitions.js"></script>
+<script>
+// ── Shader template ──
+// Wraps any gl-transitions GLSL snippet into a full fragment shader.
+// The package uses getFromColor(uv)/getToColor(uv) — we replace them
+// with texture2D(from, uv)/texture2D(to, uv).
+function buildFragShader(transitionGlsl) {
+  // Strip any existing getFromColor/getToColor definitions from the transition
+  let body = transitionGlsl
+    .replace(/vec4\s+getFromColor\s*\([^)]*\)\s*\{[^}]*\}\s*/g, '')
+    .replace(/vec4\s+getToColor\s*\([^)]*\)\s*\{[^}]*\}\s*/g, '');
+
+  // Extract uniform declarations from the body
+  const uniformLines = [];
+  const restLines = [];
+  for (const line of body.split('\n')) {
+    if (/^\s*uniform\s+/.test(line)) uniformLines.push(line);
+    else restLines.push(line);
+  }
+
+  return `precision highp float;
+varying vec2 uv;
+uniform sampler2D from, to;
+uniform float progress, ratio;
+${uniformLines.join('\n')}
+
+vec4 getFromColor(vec2 p) { return texture2D(from, p); }
+vec4 getToColor(vec2 p) { return texture2D(to, p); }
+
+${restLines.join('\n')}
+void main() {
+  gl_FragColor = transition(uv);
+}`;
+}
+
+const VERT = `
+attribute vec2 position;
+varying vec2 uv;
+void main() {
+  uv = position * 0.5 + 0.5;
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+const BLEND_FRAG = `
+precision highp float;
+varying vec2 uv;
+uniform sampler2D plain, highlighted;
+uniform float blend;
+void main() {
+  gl_FragColor = mix(texture2D(plain, uv), texture2D(highlighted, uv), blend);
+}`;
+
+// ── WebGL setup ──
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+const W = 1920, H = 1080;
+
+function compile(src, type) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(s));
+    throw new Error('Shader compile failed');
+  }
+  return s;
+}
+function link(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, compile(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+
+// Fullscreen quad
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+function setupAttribs(prog) {
+  gl.useProgram(prog);
+  const loc = gl.getAttribLocation(prog, "position");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+}
+
+const blendProg = link(VERT, BLEND_FRAG);
+
+// ── Marker sweep shader ──
+// Left-to-right reveal with a soft leading edge, like a highlighter pen
+const SWEEP_FRAG = `
+precision highp float;
+varying vec2 uv;
+uniform sampler2D from, to;
+uniform float progress;
+void main() {
+  vec4 a = texture2D(from, uv);
+  vec4 b = texture2D(to, uv);
+  float edge = 0.03;
+  float mask = smoothstep(progress - edge, progress, uv.x);
+  gl_FragColor = mix(b, a, mask);
+}`;
+const sweepProg = link(VERT, SWEEP_FRAG);
+
+// ── Transition cache ──
+const progCache = {};
+function getTransitionProg(name) {
+  if (progCache[name]) return progCache[name];
+  const t = window.GLTransitions.find(t => t.name === name);
+  if (!t) throw new Error(`Transition "${name}" not found`);
+  const frag = buildFragShader(t.glsl);
+  const prog = link(VERT, frag);
+  progCache[name] = { prog, paramsTypes: t.paramsTypes || {}, defaultParams: t.defaultParams || {} };
+  return progCache[name];
+}
+
+// ── Texture loading ──
+function loadTex(img) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return tex;
+}
+
+const texs = {};
+let loaded = 0;
+const imgSrcs = { cover: 'assets/page_cover.png', plain: 'assets/page_content_plain.png', hl: 'assets/page_content_hl.png' };
+Object.entries(imgSrcs).forEach(([key, src]) => {
+  const img = new Image();
+  img.onload = () => { texs[key] = loadTex(img); if (++loaded === 3) window.__ready = true; };
+  img.onerror = (e) => console.error('Failed to load ' + src, e);
+  img.src = src;
+});
+
+// ── Public API ──
+
+// Render any gl-transitions transition by name
+window.__renderTransition = async function(name, progress, fromTex, toTex, params) {
+  gl.viewport(0, 0, W, H);
+  const { prog, defaultParams } = getTransitionProg(name);
+  setupAttribs(prog);
+  const from = texs[fromTex || 'cover'];
+  const to = texs[toTex || 'plain'];
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, from);
+  gl.uniform1i(gl.getUniformLocation(prog, 'from'), 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, to);
+  gl.uniform1i(gl.getUniformLocation(prog, 'to'), 1);
+  gl.uniform1f(gl.getUniformLocation(prog, 'progress'), progress);
+  gl.uniform1f(gl.getUniformLocation(prog, 'ratio'), W / H);
+  // Set custom params (e.g. zoom_quickness)
+  const allParams = { ...defaultParams, ...(params || {}) };
+  for (const [k, v] of Object.entries(allParams)) {
+    const loc = gl.getUniformLocation(prog, k);
+    if (loc !== null) gl.uniform1f(loc, v);
+  }
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  return new Promise(r => requestAnimationFrame(r));
+};
+
+// Marker sweep: left-to-right reveal with soft edge
+window.__renderHighlightSweep = async function(fromTex, toTex, progress) {
+  gl.viewport(0, 0, W, H);
+  setupAttribs(sweepProg);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texs[fromTex || 'plain']);
+  gl.uniform1i(gl.getUniformLocation(sweepProg, 'from'), 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texs[toTex || 'hl']);
+  gl.uniform1i(gl.getUniformLocation(sweepProg, 'to'), 1);
+  gl.uniform1f(gl.getUniformLocation(sweepProg, 'progress'), progress);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  return new Promise(r => requestAnimationFrame(r));
+};
+
+// Phase-based API for cover/hold
+window.__renderPhase = async function(phase, progress) {
+  gl.viewport(0, 0, W, H);
+  setupAttribs(blendProg);
+  if (phase === 'cover') {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texs.cover);
+    gl.uniform1i(gl.getUniformLocation(blendProg, 'plain'), 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texs.cover);
+    gl.uniform1i(gl.getUniformLocation(blendProg, 'highlighted'), 1);
+    gl.uniform1f(gl.getUniformLocation(blendProg, 'blend'), 0.0);
+  } else {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texs.plain);
+    gl.uniform1i(gl.getUniformLocation(blendProg, 'plain'), 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texs.hl);
+    gl.uniform1i(gl.getUniformLocation(blendProg, 'highlighted'), 1);
+    gl.uniform1f(gl.getUniformLocation(blendProg, 'blend'), progress);
+  }
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  return new Promise(r => requestAnimationFrame(r));
+};
+</script>
+</body></html>

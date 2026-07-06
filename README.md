@@ -2,6 +2,17 @@
 
 从 JSON 配置生成红头文件风格的翻页高亮动画视频。
 
+**GitHub**: https://github.com/BluerAngala/doc-flip-video
+
+## 功能特点
+
+- 红头文件风格（红头、印章、条形码）
+- 翻页卷曲动画
+- 荧光笔高亮涂抹效果
+- 60fps 流畅输出
+- 支持 API 接口调用
+- Docker 一键部署
+
 ## 快速开始
 
 ```bash

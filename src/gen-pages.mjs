@@ -397,10 +397,11 @@ function drawBottom(ctx, contentEndY) {
 // ── Cover (middle section) ──
 function generateCover() {
   const SCALE = 2;
-  const canvas = createCanvas(W * SCALE, H * SCALE);
+  const PADDED_H = H + VPADDING * 2;
+  const canvas = createCanvas(W * SCALE, PADDED_H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
-  // Draw background first (before padding offset)
+  // Draw background first
   drawBackground(ctx);
   // Apply vertical padding - shift header down
   if (VPADDING) ctx.translate(0, VPADDING);
@@ -447,10 +448,11 @@ function generateCover() {
 // ── Content (middle section) ──
 function generateContent(withHighlights) {
   const SCALE = 2;
-  const canvas = createCanvas(W * SCALE, H * SCALE);
+  const PADDED_H = H + VPADDING * 2;
+  const canvas = createCanvas(W * SCALE, PADDED_H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
-  // Draw background first (before padding offset)
+  // Draw background first
   drawBackground(ctx);
   // Apply vertical padding - shift header down
   if (VPADDING) ctx.translate(0, VPADDING);

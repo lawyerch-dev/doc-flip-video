@@ -15,22 +15,88 @@
 
 ## 快速开始
 
-```bash
-# 1. 安装 ffmpeg
-brew install ffmpeg        # macOS
-# apt install ffmpeg       # Ubuntu
+### 环境要求
 
-# 2. 安装依赖
+- Node.js ≥ 18
+- ffmpeg
+- 中文字体
+
+### macOS
+
+```bash
+# 安装 ffmpeg
+brew install ffmpeg
+
+# 安装中文字体（通常已预装）
+# 如需安装：brew install --cask font-noto-sans-cjk
+
+# 安装依赖
 npm install
 
-# 3. 编辑文章内容
-vim article.json
-
-# 4. 生成视频
+# 生成视频
 npm run build
+```
 
-# 5. 查看结果
-open output/output.mp4
+### Ubuntu/Debian
+
+```bash
+# 安装 ffmpeg 和中文字体
+sudo apt update
+sudo apt install -y ffmpeg fonts-noto-cjk
+
+# 安装依赖
+npm install
+
+# 生成视频
+npm run build
+```
+
+### CentOS/RHEL
+
+```bash
+# 安装 ffmpeg
+sudo yum install -y epel-release
+sudo yum install -y ffmpeg
+
+# 安装中文字体
+sudo yum install -y google-noto-sans-cjk-fonts
+
+# 安装依赖
+npm install
+
+# 生成视频
+npm run build
+```
+
+### Windows
+
+```powershell
+# 安装 ffmpeg（使用 scoop）
+scoop install ffmpeg
+
+# 或使用 choco
+choco install ffmpeg
+
+# 安装中文字体（Windows 通常已预装）
+
+# 安装依赖
+npm install
+
+# 生成视频
+npm run build
+```
+
+### Docker（推荐）
+
+```bash
+# 构建镜像
+docker build -t doc-flip-video .
+
+# 运行容器
+docker run -p 3000:3000 --shm-size=2g doc-flip-video
+
+# 或使用 docker-compose
+docker-compose up -d
 ```
 
 ## 配置文件格式

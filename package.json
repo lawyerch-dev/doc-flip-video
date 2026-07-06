@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "build": "node src/build.mjs",
-    "demo": "npx serve . -p 8080 --no-clipboard"
+    "demo": "npx serve . -p 8080 --no-clipboard",
+    "server": "node src/server.mjs",
+    "mcp": "node src/mcp-server.mjs"
   },
   "dependencies": {
     "canvas": "^3.2.3",

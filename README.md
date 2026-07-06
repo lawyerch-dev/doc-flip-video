@@ -229,6 +229,64 @@ npm run demo
 # 打开 http://localhost:8080
 ```
 
+## AI 智能体集成
+
+### 方式一：API 服务器（推荐）
+
+```bash
+# 启动服务
+npm run server
+
+# 或 Docker
+docker-compose up -d
+```
+
+AI 调用示例：
+
+```bash
+curl -X POST http://localhost:3000/generate \
+  -H "Content-Type: application/json" \
+  -d '{ "meta": {...}, "cover": {...}, "content": {...} }' \
+  --output video.mp4
+```
+
+### 方式二：MCP 服务器
+
+MCP（Model Context Protocol）是 AI 工具的标准化接口协议。
+
+```bash
+# 启动 MCP 服务器
+npm run mcp
+```
+
+在 AI 工具中配置：
+
+```json
+{
+  "mcpServers": {
+    "doc-flip-video": {
+      "command": "node",
+      "args": ["src/mcp-server.mjs"]
+    }
+  }
+}
+```
+
+AI 可直接调用 `generate_video` 工具生成视频。
+
+### 方式三：Docker 部署
+
+```bash
+# 构建并启动
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
 ## API 服务
 
 ### 启动服务

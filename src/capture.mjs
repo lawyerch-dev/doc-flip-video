@@ -13,42 +13,43 @@ const templatePath = path.join(__dirname, '..', 'template.json');
 const tmpl = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
 const W = tmpl.style.width, H = tmpl.style.height;
 
-// Load config
 const configPath = process.argv[2] || path.join(__dirname, '..', 'article.json');
 const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 const tm = cfg.timing || {};
 
-// Build timeline from config
+// Build timeline
 let t = 0;
-const T = [];
-function add(name, dur, extra) { const end = t + dur; T.push({ end, fn: name, t0: t, dur, ...extra }); t = end; }
-add('settle', tm.settle || 1.2, {});          // 封面入场（纸张落地）
-add('cover', tm.cover || 2.0, {});            // 封面停留
-add('curl',  tm.curl  || 2.5, {});            // 翻页 cover→plain
-add('sweep', tm.sweep || 2.0, {});            // 荧光涂抹 plain→hl
-add('blend', tm.final || 2.0, { val: 1 });   // 高亮停留
-const TOTAL_SEC = T[T.length - 1].end;
+const segments = [];
+function add(name, dur, extra) { const end = t + dur; segments.push({ end, fn: name, t0: t, dur, ...extra }); t = end; }
+add('settle', tm.settle || 1.2, {});
+add('cover', tm.cover || 2.0, {});
+add('curl',  tm.curl  || 2.5, {});
+add('sweep', tm.sweep || 2.0, {});
+add('blend', tm.final || 2.0, { val: 1 });
+const TOTAL_SEC = segments[segments.length - 1].end;
 const TOTAL_FRAMES = Math.ceil(TOTAL_SEC * FPS);
 
 function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
-function getFrame(sec) {
-  for (const seg of T) {
+// Pre-compute frame calls for in-page batching
+const frameCalls = [];
+for (let f = 0; f < TOTAL_FRAMES; f++) {
+  const sec = f / FPS;
+  for (const seg of segments) {
     if (sec < seg.end) {
-      if (seg.fn === 'cover') return 'cover()';
-      if (seg.fn === 'blend') return `blend(${seg.val})`;
+      if (seg.fn === 'cover') { frameCalls.push('cover'); break; }
+      if (seg.fn === 'blend') { frameCalls.push(`blend(${seg.val})`); break; }
       const p = easeInOut((sec - seg.t0) / seg.dur);
-      return `${seg.fn}(${p.toFixed(4)})`;
+      frameCalls.push(`${seg.fn}(${p.toFixed(4)})`);
+      break;
     }
   }
-  return 'blend(1)';
 }
 
 function startServer(dir, port) {
   const types = { ".html": "text/html", ".png": "image/png", ".ico": "image/x-icon" };
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
-      // Ignore favicon requests
       if (req.url === "/favicon.ico") { res.writeHead(204); res.end(); return; }
       const fp = path.join(dir, req.url === "/" ? "src/renderer.html" : req.url);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
@@ -78,7 +79,8 @@ async function main() {
     ],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: W * 2, height: H * 2 });
+  // 1x viewport — canvas is 1x, ffmpeg upscales with lanczos
+  await page.setViewport({ width: W, height: H });
   page.on("console", msg => { if (msg.type() === "error") console.log("  [page]", msg.text()); });
   page.on("error", err => console.error("  [page error]", err.message));
   page.on("crash", () => console.error("  [page crash]"));
@@ -90,45 +92,44 @@ async function main() {
   fs.mkdirSync(path.join(__dirname, "..", "output"), { recursive: true });
   const outFile = path.join(__dirname, "..", "output", "output.mp4");
 
+  // ffmpeg: decode JPEG, upscale 1x→2x with lanczos, encode h264
+  const outW = W * 2, outH = H * 2;
   const ffmpeg = spawn("ffmpeg", [
-    "-y", "-f", "image2pipe", "-c:v", "png", "-r", `${FPS}`,
+    "-y",
+    "-f", "image2pipe", "-c:v", "mjpeg", "-r", `${FPS}`,
     "-i", "pipe:0",
-    "-vf", `scale=${W}:${H}:flags=lanczos`,
+    "-vf", `scale=${outW}:${outH}:flags=lanczos`,
     "-c:v", "libx264", "-preset", "slow", "-crf", "14",
     "-pix_fmt", "yuv420p", "-movflags", "+faststart", outFile,
   ], { stdio: ["pipe", "inherit", "inherit"] });
 
-  let lastPct = -1;
+  // Batch render: send all frame calls to page, get JPEG frames back in batches
+  const BATCH = 60;
+  let rendered = 0;
 
-  for (let f = 0; f < TOTAL_FRAMES; f++) {
-    const call = getFrame(f / FPS);
-    let retries = 3;
-    let success = false;
+  for (let start = 0; start < TOTAL_FRAMES; start += BATCH) {
+    const end = Math.min(start + BATCH, TOTAL_FRAMES);
+    const batch = frameCalls.slice(start, end);
 
-    while (retries > 0 && !success) {
-      try {
-        const dataUrl = await page.evaluate(async (call) => {
-          const [fn, ...args] = call.replace(')', '').split('(');
-          window['__' + fn](...args.map(Number));
-          const canvas = document.getElementById("c");
-          return canvas.toDataURL('image/png');
-        }, call);
-
-        const base64 = dataUrl.split(',')[1];
-        const rawBuf = Buffer.from(base64, 'base64');
-        const ok = ffmpeg.stdin.write(rawBuf);
-        if (!ok) await new Promise(r => ffmpeg.stdin.once("drain", r));
-        success = true;
-      } catch (err) {
-        retries--;
-        console.error(`\n  Frame ${f} failed, retries left: ${retries}`, err.message);
-        if (retries === 0) throw err;
-        await new Promise(r => setTimeout(r, 100));
+    const jpegBuffers = await page.evaluate(async (calls) => {
+      const results = [];
+      for (const call of calls) {
+        const [fn, ...args] = call.replace(')', '').split('(');
+        window['__' + fn](...args.map(Number));
+        const canvas = document.getElementById("c");
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        results.push(dataUrl.split(',')[1]);
       }
+      return results;
+    }, batch);
+
+    for (const b64 of jpegBuffers) {
+      const ok = ffmpeg.stdin.write(Buffer.from(b64, 'base64'));
+      if (!ok) await new Promise(r => ffmpeg.stdin.once('drain', r));
     }
 
-    const pct = Math.round((f + 1) / TOTAL_FRAMES * 100);
-    if (pct !== lastPct) { process.stdout.write(`\r  ${pct}%`); lastPct = pct; }
+    rendered += batch.length;
+    process.stdout.write(`\r  ${Math.round(rendered / TOTAL_FRAMES * 100)}%`);
   }
 
   ffmpeg.stdin.end();

@@ -222,10 +222,10 @@ function checkReady() {
   if (templateLoaded && imagesLoaded === 3) window.__ready = true;
 }
 
-// Fetch template for canvas dimensions (render at 2x for quality)
+// Fetch template for canvas dimensions (1x — ffmpeg upscales with lanczos)
 fetch('template.json').then(r => r.json()).then(tmpl => {
-  W = tmpl.style.width * 2;
-  H = tmpl.style.height * 2;
+  W = tmpl.style.width;
+  H = tmpl.style.height;
   canvas.width = W;
   canvas.height = H;
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);

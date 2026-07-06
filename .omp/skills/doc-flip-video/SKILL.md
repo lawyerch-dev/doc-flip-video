@@ -6,6 +6,8 @@ tags: [video, animation, legal, document, flip-page]
 
 # Doc Flip Video Generator
 
+**GitHub**: https://github.com/BluerAngala/doc-flip-video
+
 Generates flip-page animation videos from JSON configurations. Produces red-header style (红头文件) videos with page curl transitions and highlight sweep effects, suitable for legal documents, official announcements, and policy content.
 
 ## Quick Start
@@ -15,6 +17,39 @@ cd <project-root>
 npm install
 npm run build                    # Use default article.json
 node src/build.mjs <config.json> # Use custom config
+```
+
+## AI Agent Integration
+
+### API Server (Recommended for most AI agents)
+
+```bash
+npm run server
+# POST http://localhost:3000/generate
+```
+
+### MCP Server (For Claude, Cursor, etc.)
+
+```bash
+npm run mcp
+```
+
+Configure in AI tool:
+```json
+{
+  "mcpServers": {
+    "doc-flip-video": {
+      "command": "node",
+      "args": ["src/mcp-server.mjs"]
+    }
+  }
+}
+```
+
+### Docker
+
+```bash
+docker-compose up -d
 ```
 
 ## Configuration Format
@@ -121,25 +156,26 @@ Edit `template.json` to customize visual appearance:
 - npm packages: `canvas`, `jsbarcode`, `puppeteer`
 - System: `ffmpeg` (must be installed separately)
 
-## Usage Examples
+## Platform Installation
 
-### Basic usage
+### macOS
 
 ```bash
-npm run build
+brew install ffmpeg
+npm install
 ```
 
-### Custom config
+### Ubuntu/Debian
 
 ```bash
-node src/build.mjs my-article.json
+sudo apt install -y ffmpeg fonts-noto-cjk
+npm install
 ```
 
-### Preview in browser
+### Docker (Recommended)
 
 ```bash
-npm run demo
-# Open http://localhost:8080
+docker-compose up -d
 ```
 
 ## Common Issues
@@ -149,17 +185,12 @@ npm run demo
 3. **QR code not showing** — Place QR image at `assets/qrcode.png` and set `bottom.qrImage.enabled: true`
 4. **Highlight misalignment** — Check that highlight keywords exactly match text in paragraphs
 
-## File Structure
+## Commands
 
-```
-├── article.json          # Content config (edit this)
-├── template.json         # Visual style config
-├── src/
-│   ├── build.mjs         # Main entry: generate images → render video
-│   ├── gen-pages.mjs     # Node Canvas page generation
-│   ├── capture.mjs       # Puppeteer + WebGL rendering → FFmpeg
-│   └── renderer.html     # WebGL shaders (curl, sweep, entrance)
-├── assets/               # Generated images (gitignored)
-└── output/
-    └── output.mp4        # Final video
+```bash
+npm run build          # Generate video
+npm run server         # Start API server
+npm run mcp            # Start MCP server
+npm run demo           # Browser preview at http://localhost:8080
+node src/build.mjs X   # Use config file X
 ```

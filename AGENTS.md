@@ -12,6 +12,39 @@ Creates red-header style (红头文件) videos with:
 - Entrance animations
 - 60fps output
 
+## AI Agent Integration
+
+### API Server (Recommended)
+
+```bash
+npm run server
+# POST http://localhost:3000/generate
+```
+
+### MCP Server (For Claude, Cursor, etc.)
+
+```bash
+npm run mcp
+```
+
+Configure in AI tool:
+```json
+{
+  "mcpServers": {
+    "doc-flip-video": {
+      "command": "node",
+      "args": ["src/mcp-server.mjs"]
+    }
+  }
+}
+```
+
+### Docker
+
+```bash
+docker-compose up -d
+```
+
 ## Quick Start
 
 ```bash
@@ -60,7 +93,7 @@ Edit `article.json`:
 
 ### Paragraphs
 
-- `{ "text": "...", "bold": true }` — Red bold text
+- `{ "text": "...", "bold": true }` — Bold red text
 - `{ "text": "...", "highlight": "keyword" }` — Text with highlighted keyword
 - `{ "text": "" }` — Empty line
 
@@ -91,12 +124,32 @@ Edit `template.json` for:
 - ffmpeg (system install)
 - Chinese fonts (for proper rendering)
 
+## Platform Installation
+
+### macOS
+```bash
+brew install ffmpeg
+npm install
+```
+
+### Ubuntu/Debian
+```bash
+sudo apt install -y ffmpeg fonts-noto-cjk
+npm install
+```
+
+### Docker (Recommended)
+```bash
+docker-compose up -d
+```
+
 ## Common Commands
 
 ```bash
-npm run build                    # Generate video
-node src/build.mjs config.json   # Custom config
-npm run demo                     # Browser preview
+npm run build          # Generate video
+npm run server         # Start API server
+npm run mcp            # Start MCP server
+npm run demo           # Browser preview
 ```
 
 ## Troubleshooting

@@ -1,109 +1,8 @@
-# 翻页动画视频生成器
+# Doc Flip Video Generator
 
 从 JSON 配置生成红头文件风格的翻页高亮动画视频。
 
 ## 快速开始
-
-```bash
-npm install
-npm run build                          # 用 article.json 生成 → output/output.mp4
-node src/build.mjs my-article.json     # 用自定义配置
-```
-
-## 配置文件格式
-
-```json
-{
-  "cover": {
-    "org": "中华人民共和国交通运输部",
-    "docNum": "交运发〔2026〕第128号"
-  },
-  "content": {
-    "org": "中华人民共和国交通运输部",
-    "docNum": "交运发〔2026〕第128号",
-    "title": "关于进一步加强道路交通安全管理的通知",
-    "paragraphs": [
-      { "text": "各省、自治区、直辖市交通运输厅（局、委）：", "bold": true },
-      { "text": "为深入贯彻落实《道路交通安全法》修订精神，现就有关事项通知如下：" },
-      { "text": "" },
-      { "text": "一、提高酒驾处罚标准", "bold": true },
-      { "text": "醉酒驾驶的吊销驾照并依法追究刑事责任。", "highlight": "吊销驾照" }
-    ],
-    "signBlock": {
-      "org": "中华人民共和国交通运输部",
-      "date": "2026年7月1日"
-    }
-  }
-}
-```
-
-### cover
-
-封面页抬头信息（与正文共用）：
-
-| 字段 | 说明 |
-|------|------|
-| org | 发文机关（红色大字） |
-| docNum | 文号 |
-
-### content
-
-| 字段 | 说明 |
-|------|------|
-| org | 发文机关（红色抬头） |
-| docNum | 文号 |
-| title | 文件标题 |
-| paragraphs | 段落数组 |
-| signBlock | 落款：`{ "org": "...", "date": "..." }`（可选） |
-
-### paragraphs 段落格式
-
-| 格式 | 效果 | 示例 |
-|------|------|------|
-| `{ "text": "...", "bold": true }` | 红色加粗 | `{ "text": "一、提高酒驾处罚标准", "bold": true }` |
-| `{ "text": "...", "highlight": "关键词" }` | 荧光笔标记 | `{ "text": "...吊销驾照...", "highlight": "吊销驾照" }` |
-| `{ "text": "..." }` | 正文 | `{ "text": "为深入贯彻..." }` |
-| `{ "text": "" }` | 空行分段 | |
-
-### timing（可选）
-
-| 字段 | 默认值 | 说明 |
-|------|--------|------|
-| hold | 1.0 | 正文停留 |
-| curl | 2.5 | 翻页动画 |
-| final | 2.0 | 高亮停留 |
-
-## 视频时间线
-
-```
-[0s ── 1s]    正文（无高亮）
-[1s ── 3.5s]  翻页卷曲（揭示高亮关键词）
-[3.5s ── 5.5s] 高亮停留
-```
-
-## 项目结构
-
-```
-├── article.json          # 内容配置（唯一需要编辑的文件）
-├── src/
-│   ├── build.mjs         # 一键入口：生成图片 → 渲染视频
-│   ├── gen-pages.mjs     # Node Canvas 生成红头文件图片
-│   ├── capture.mjs       # Puppeteer + WebGL 渲染 → FFmpeg 编码
-│   └── renderer.html     # WebGL 渲染器（翻页卷曲 + 荧光笔涂抹）
-├── assets/               # 生成的中间图片（gitignored）
-├── output/
-│   └── output.mp4        # 最终视频
-├── demo.html             # 浏览器交互预览
-└── gl-transitions/       # gl-transitions GLSL 库（开发用）
-```
-
-## 依赖
-
-- [canvas](https://www.npmjs.com/package/canvas) — Node Canvas，生成静态页面图片
-- [puppeteer](https://www.npmjs.com/package/puppeteer) — 无头浏览器，WebGL 渲染 + 帧捕获
-- [ffmpeg](https://ffmpeg.org/) — 视频编码（需系统安装）
-
-## 从零开始
 
 ```bash
 # 1. 安装 ffmpeg
@@ -122,3 +21,144 @@ npm run build
 # 5. 查看结果
 open output/output.mp4
 ```
+
+## 配置文件格式
+
+### `meta` — 文档元数据
+
+```json
+{
+  "meta": {
+    "year": 2026,
+    "month": 7,
+    "day": 1,
+    "issueNumber": 458,
+    "description": "法理明如镜，务知天下事！"
+  }
+}
+```
+
+### `cover` — 封面内容
+
+```json
+{
+  "cover": {
+    "headline": "国家信访局：未依法出具答复文书导致越级信访的，上级信访部门可提出追责建议",
+    "source": "来源：国家信访局关于进一步规范群众来访登记工作的办法（国信发〔2026〕4号）第五条"
+  }
+}
+```
+
+### `content` — 正文内容（支持高亮）
+
+```json
+{
+  "content": {
+    "title": "国家信访局：",
+    "titleHighlight": null,
+    "subtitle": "未依法出具答复文书导致越级信访的，上级信访部门可提出追责建议",
+    "subtitleHighlight": "导致越级信访的",
+    "paragraphs": [
+      { "text": "第五条", "bold": true },
+      { 
+        "text": "地方各级信访部门及有权处理的机关、单位未依法受理办理信访事项，未依法规范出具告知、答复意见等文书，导致信访上行的，上级信访部门应当提出改进工作、完善政策或追究责任的建议。",
+        "highlight": "未依法规范出具告知、答复意见等文书，导致信访上行的"
+      }
+    ],
+    "source": "（来源：国家信访局关于进一步规范群众来访登记工作的办法（国信发〔2026〕4号）第五条）"
+  }
+}
+```
+
+### `timing` — 动画时间配置（可选）
+
+```json
+{
+  "timing": {
+    "settle": 1.2,  // 封面入场动画时长
+    "cover": 2.0,   // 封面停留时长
+    "curl": 2.5,    // 翻页动画时长
+    "sweep": 2.0,   // 高亮涂抹时长
+    "final": 2.0    // 高亮停留时长
+  }
+}
+```
+
+## 模板自定义
+
+编辑 `template.json` 可自定义视觉样式：
+
+- `style.font` — 全局字体
+- `style.background` — 页面背景色
+- `top.logo` — 红色抬头 logo 配置
+- `middle.headline` — 标题样式
+- `middle.body` — 正文样式，包括高亮颜色
+- `bottom.text` — 底部文字配置
+- `bottom.qrImage` — 二维码图片（可选）
+
+## 视频效果
+
+- **入场** — Swap 转场（3D 页面旋转）
+- **翻页** — 卷曲效果 + 阴影
+- **高亮涂抹** — 荧光笔效果从左到右
+- **60fps** — 流畅动画
+
+## 输出文件
+
+- `assets/page_cover.png` — 封面图片
+- `assets/page_content_plain.png` — 正文图片（无高亮）
+- `assets/page_content_hl.png` — 正文图片（有高亮）
+- `output/output.mp4` — 最终视频
+
+## 依赖
+
+- Node.js ≥ 18
+- npm 包：`canvas`、`jsbarcode`、`puppeteer`
+- 系统：`ffmpeg`（需单独安装）
+
+## 项目结构
+
+```
+├── article.json          # 内容配置（编辑此文件）
+├── template.json         # 视觉样式配置
+├── src/
+│   ├── build.mjs         # 主入口：生成图片 → 渲染视频
+│   ├── gen-pages.mjs     # Node Canvas 页面生成
+│   ├── capture.mjs       # Puppeteer + WebGL 渲染 → FFmpeg
+│   └── renderer.html     # WebGL 着色器（翻页、涂抹、入场）
+├── assets/               # 生成的中间图片（gitignored）
+└── output/
+    └── output.mp4        # 最终视频
+```
+
+## 使用示例
+
+### 基本使用
+
+```bash
+npm run build
+```
+
+### 自定义配置
+
+```bash
+node src/build.mjs my-article.json
+```
+
+### 浏览器预览
+
+```bash
+npm run demo
+# 打开 http://localhost:8080
+```
+
+## 常见问题
+
+1. **ffmpeg 未找到** — 使用 `brew install ffmpeg`（macOS）或 `apt install ffmpeg`（Ubuntu）安装
+2. **字体渲染问题** — 确保安装了中文字体（PingFang SC、Noto Sans SC 等）
+3. **二维码不显示** — 将二维码图片放在 `assets/qrcode.png`，并设置 `bottom.qrImage.enabled: true`
+4. **高亮位置偏移** — 检查高亮关键词是否与段落文字完全匹配
+
+## 许可证
+
+MIT

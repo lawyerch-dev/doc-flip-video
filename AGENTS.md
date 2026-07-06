@@ -157,3 +157,27 @@ npm run demo           # Browser preview
 - **ffmpeg not found**: Install with package manager
 - **Font issues**: Install Chinese fonts
 - **Highlight offset**: Check keyword matches exactly
+
+## Technical Gotchas
+
+### WebGL UNPACK_FLIP_Y_WEBGL Race Condition
+
+In `renderer.html`, `gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)` MUST be called **immediately** after WebGL context creation, NOT inside async callbacks (like fetch for template.json). 
+
+**Why:** Texture loading (Image onload) and template fetch run in parallel. If images load before the fetch callback sets the flag, textures upload without Y-flip → video is upside down. The flag only affects `texImage2D` calls made AFTER it's set.
+
+**Correct:** Set flag synchronously right after `getContext()`:
+```js
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // IMMEDIATELY
+```
+
+**Wrong:** Flag inside async callback (race condition):
+```js
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+fetch('template.json').then(tmpl => {
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // TOO LATE
+});
+```
+
+**Never** use ffmpeg `vflip` to work around this — it's a band-aid that causes other issues.

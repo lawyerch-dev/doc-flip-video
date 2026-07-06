@@ -205,17 +205,45 @@ docker-compose up -d
 - npm 包：`canvas`、`jsbarcode`、`puppeteer`
 - 系统：`ffmpeg`（需单独安装）
 
+## 技术要点
+
+### WebGL UNPACK_FLIP_Y_WEBGL 竞态问题
+
+renderer.html 中 `gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)` 必须在 WebGL 上下文创建后**立即**设置，不能放在异步回调（如 fetch template.json）里。原因：
+
+- 纹理加载（Image onload）和 template fetch 是并行的
+- 如果图片先加载完，纹理在 `UNPACK_FLIP_Y` 设置前就上传了，结果就是**画面上下颠倒**
+- 该标志只影响设置之后的 `texImage2D` 调用，不会修正已上传的纹理
+
+正确顺序：
+```js
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);  // 立即设置
+// ... 之后再异步加载图片和模板
+```
+
+错误顺序（会导致画面颠倒）：
+```js
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+fetch('template.json').then(r => r.json()).then(tmpl => {
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);  // 太晚！图片可能已加载
+});
+```
+
+**绝不能用 ffmpeg vflip 来修补这个问题**——那是治标不治本，会引入新的时序问题。
+
 ## 项目结构
 
 ```
 ├── article.json          # 内容配置（编辑此文件）
-├── template.json         # 视觉样式配置
+├── template.json         # 视觉样式配置（所有元素绝对定位）
 ├── src/
 │   ├── build.mjs         # 主入口：生成图片 → 渲染视频
 │   ├── gen-pages.mjs     # Node Canvas 页面生成
 │   ├── capture.mjs       # Puppeteer + WebGL 渲染 → FFmpeg
 │   └── renderer.html     # WebGL 着色器（翻页、涂抹、入场）
-├── assets/               # 生成的中间图片（gitignored）
+├── assets/               # 字体、二维码、背景音乐
+│   └── music/            # 背景音乐（构建时随机选取）
 └── output/
     └── output.mp4        # 最终视频
 ```

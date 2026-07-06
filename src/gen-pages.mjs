@@ -315,11 +315,8 @@ function drawTop(ctx) {
     descBottom = desc.y + desc.size;
   }
 
-  // ── Double line (auto from all bottoms, or fixed y) ──
-  const allBottom = Math.max(sealBottom, issBottom, dt.y + dt.size, descBottom);
-  const lineY = top.line.auto ? (allBottom + (top.line.gapFromContent || 35)) : top.line.y;
-  top.line.y = lineY;
-  drawDoubleLine(ctx, lineY, top.line);
+  // ── Double line (absolute y) ──
+  drawDoubleLine(ctx, top.line.y, top.line);
 
   // Barcode (top-right)
   drawBarcode(ctx);
@@ -337,14 +334,22 @@ function drawDotDivider(ctx, y) {
   for (let x = startX; x < endX; x += gap) {
     ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2); ctx.fill();
   }
-  return (div.marginAbove || 0) + (div.marginBelow || 0) + dotR * 2;
+  return dotR * 2;
 }
 
 // ── Bottom section ──
-function drawBottom(ctx, contentEndY) {
+function drawBottom(ctx) {
   const bot = T.bottom;
   const bandH = bot.band && bot.band.enabled ? bot.band.height : 0;
-  const lineY = Math.max(contentEndY + 30, H - bot.bottomMargin - bandH);
+  const lineY = bot.line.y != null ? bot.line.y : (H - bot.bottomMargin - bandH);
+  const qrImg = bot.qrImage;
+  const qr = bot.qrPlaceholder;
+  const lowestY = [
+    qrImg?.enabled ? qrImg.y : null,
+    qr?.enabled ? qr.y : null,
+    bot.text?.y
+  ].filter(v => v != null);
+  const bandY = bot.band && bot.band.enabled ? Math.min(...lowestY) - 10 : 0;
 
   // Double line
   drawDoubleLine(ctx, lineY, bot.line);
@@ -359,9 +364,8 @@ function drawBottom(ctx, contentEndY) {
   const txtX = txt.x === "center" ? W / 2 : (txt.x != null ? txt.x : W / 2);
   const txtY = txt.y != null ? txt.y : (lineY + bot.gapFromLine);
 
-  // Gray band at bottom (drawn before text so text is on top)
+  // Gray band framing QR area (drawn before text so text is on top)
   if (bot.band && bot.band.enabled) {
-    const bandY = H - bandH;
     ctx.fillStyle = bot.band.color;
     ctx.fillRect(0, bandY, W, bandH);
 
@@ -435,7 +439,7 @@ function generateCover() {
   for (let i = 0; i < srcLines.length; i++) { ctx.fillText(srcLines[i], srcX, srcY + i * mid.source.lineHeight); }
   y = srcY + srcLines.length * mid.source.lineHeight;
 
-  drawBottom(ctx, y);
+  drawBottom(ctx);
   return canvas;
 }
 
@@ -454,9 +458,8 @@ function generateContent(withHighlights) {
   const hlPositions = [];
   const indent = body.indent === "auto" ? ctx.measureText("　　").width : (body.indent || 0);
 
-  // Divider height estimation
+  // Divider (absolute y)
   const div = mid.divider;
-  const dividerH = div && div.enabled ? ((div.marginAbove || 0) + (div.marginBelow || 0) + (div.dotRadius || 2.5) * 2) : 0;
 
   // Center calculation
   let totalLines = 0;
@@ -472,7 +475,7 @@ function generateContent(withHighlights) {
     totalLines += wrapText(ctx, para.text, MAX_TEXT_W, useIndent ? MAX_TEXT_W - indent : MAX_TEXT_W).length;
   }
   totalLines += 3;
-  const contentH = totalLines * body.lineHeight + dividerH;
+  const contentH = totalLines * body.lineHeight;
   const areaTop = mid.y || (T.top.line.y + 40);
   const areaBottom = H - T.bottom.bottomMargin - 60;
   let y = areaTop + Math.max(20, (areaBottom - areaTop - contentH) / 2);
@@ -499,10 +502,12 @@ function generateContent(withHighlights) {
   if (ac.subtitleHighlight) hlPositions.push(...highlightLines(ctx, subLines, subXs, subY, mid.contentSubtitle.lineHeight, mid.contentSubtitle.size, ac.subtitleHighlight, withHighlights, body, mid.contentSubtitle.bold, mid.contentSubtitle.size));
   y = subY + subLines.length * mid.contentSubtitle.lineHeight;
 
-  // Dot divider
-  y += (div && div.enabled ? div.marginAbove : 40);
-  drawDotDivider(ctx, y);
-  y += (div && div.enabled ? (div.marginBelow + (div.dotRadius || 2.5) * 2) : 20);
+  // Dot divider (absolute y)
+  if (div && div.enabled) drawDotDivider(ctx, div.y);
+
+  // Body (centered below divider)
+  const bodyAreaTop = (div && div.enabled ? div.y + (div.dotRadius || 2.5) * 2 + 20 : y);
+  y = bodyAreaTop + Math.max(20, (areaBottom - bodyAreaTop - contentH) / 2);
 
   // Body
   for (const para of ac.paragraphs) {
@@ -528,7 +533,7 @@ function generateContent(withHighlights) {
   for (let i = 0; i < srcLines.length; i++) { ctx.fillText(srcLines[i], srcX, srcY + i * mid.sourceText.lineHeight); }
   y = srcY + srcLines.length * mid.sourceText.lineHeight;
 
-  drawBottom(ctx, y);
+  drawBottom(ctx);
   return { canvas, hlPositions };
 }
 

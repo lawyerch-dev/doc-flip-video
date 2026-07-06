@@ -1,7 +1,7 @@
 {
   "style": {
     "width": 1080,
-    "height": 1600,
+    "height": 1840,
     "font": "Noto Sans SC,Noto Sans CJK SC,sans-serif",
     "margin": 80,
     "background": "#ffffff",
@@ -14,7 +14,7 @@
     "headerBand": {
       "enabled": true,
       "color": "#ffffff",
-      "height": 290
+      "height": 490
     },
     "watermark": {
       "enabled": true,
@@ -22,7 +22,7 @@
       "size": 220,
       "color": "rgba(204,0,0,0.04)",
       "x": 700,
-      "y": 900,
+      "y": 1100,
       "rotate": -0.18,
       "bold": true,
       "opacity": 1
@@ -42,7 +42,7 @@
       "height": 200,
       "radius": 6,
       "x": 120,
-      "y": 150
+      "y": 350
     },
     "issueNumber": {
       "prefixSize": 44,
@@ -51,32 +51,31 @@
       "color": "#333333",
       "numberColor": "#cc0000",
       "x": 600,
-      "y": 180,
+      "y": 380,
       "partSpacing": 8
     },
     "date": {
       "size": 35,
       "color": "#333333",
       "x": 620,
-      "y": 240
+      "y": 440
     },
     "description": {
       "size": 36,
       "color": "#1a1a1a",
       "bold": true,
       "x": 550,
-      "y": 300
+      "y": 500
     },
     "line": {
-      "auto": true,
-      "gapFromContent": 35,
+      "y": 585,
       "color": "#cc0000",
       "width": 2,
       "gap": 7
     }
   },
   "middle": {
-    "y": 150,
+    "y": 350,
     "paddingBottom": 40,
     "tag": {
       "text": "本期内容",
@@ -89,7 +88,7 @@
       "width": 180,
       "height": 42,
       "x": 80,
-      "y": 450
+      "y": 650
     },
     "headline": {
       "size": 50,
@@ -97,14 +96,14 @@
       "bold": true,
       "lineHeight": 60,
       "x": 80,
-      "y": 520
+      "y": 720
     },
     "source": {
       "size": 36,
       "color": "#666666",
       "lineHeight": 36,
       "x": 80,
-      "y": 800
+      "y": 1000
     },
     "spacing": {
       "tagToHeadline": 30,
@@ -116,7 +115,7 @@
       "bold": true,
       "lineHeight": 50,
       "x": 80,
-      "y": 450
+      "y": 650
     },
     "contentSubtitle": {
       "size": 42,
@@ -124,7 +123,7 @@
       "bold": true,
       "lineHeight": 44,
       "x": 80,
-      "y": 540
+      "y": 740
     },
     "divider": {
       "enabled": true,
@@ -132,8 +131,7 @@
       "color": "rgba(204,0,0,0.3)",
       "dotRadius": 2.5,
       "dotGap": 16,
-      "marginAbove": 30,
-      "marginBelow": 30
+      "y": 858
     },
     "body": {
       "fontSize": 32,
@@ -150,11 +148,12 @@
       "gapFromContent": 30,
       "lineHeight": 38,
       "x": 50,
-      "y": 1050
+      "y": 1250
     }
   },
   "bottom": {
     "line": {
+      "y": 1350,
       "color": "#cc0000",
       "width": 2,
       "gap": 7
@@ -166,20 +165,20 @@
       "font": null,
       "bold": true,
       "x": 620,
-      "y": 1280
+      "y": 1470
     },
     "gapFromLine": 15,
-    "bottomMargin": 150,
+    "bottomMargin": 350,
     "band": {
       "enabled": true,
       "color": "#ffffff",
-      "height": 120
+      "height": 160
     },
     "qrPlaceholder": {
       "enabled": false,
       "size": 80,
       "x": 920,
-      "y": 1330,
+      "y": 1520,
       "label": "扫码关注",
       "labelSize": 14,
       "labelColor": "#999999",
@@ -190,7 +189,7 @@
       "src": "assets/qrcode.png",
       "size": 120,
       "x": 80,
-      "y": 1250,
+      "y": 1440,
       "label": "扫码关注",
       "labelSize": 14,
       "labelColor": "#000"
@@ -200,7 +199,7 @@
     "enabled": true,
     "text": "auto",
     "x": 820,
-    "y": 25,
+    "y": 225,
     "width": 200,
     "height": 70,
     "barColor": "#333333",

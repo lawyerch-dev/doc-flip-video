@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><style>*{margin:0;padding:0}canvas{display:block}</style></head>
 <body>
-<canvas id="c" width="1080" height="1440"></canvas>
+<canvas id="c"></canvas>
 <script>
 // ── 3 shaders, that's it ──
 
@@ -172,8 +172,7 @@ void main() {
 // ── WebGL ──
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
-const W = 1080, H = 1440;
-gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+let W, H;
 
 function compile(src, type) {
   const s = gl.createShader(type);
@@ -214,15 +213,33 @@ function bindTex(unit, tex, prog, name) {
   gl.uniform1i(gl.getUniformLocation(prog, name), unit);
 }
 
-// ── Load images ──
+// ── Init: load template dimensions + images in parallel ──
 const texs = {};
-let loaded = 0;
-// Create a white texture for the entrance
+let imagesLoaded = 0;
+let templateLoaded = false;
+
+function checkReady() {
+  if (templateLoaded && imagesLoaded === 3) window.__ready = true;
+}
+
+// Fetch template for canvas dimensions (render at 2x for quality)
+fetch('template.json').then(r => r.json()).then(tmpl => {
+  W = tmpl.style.width * 2;
+  H = tmpl.style.height * 2;
+  canvas.width = W;
+  canvas.height = H;
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  templateLoaded = true;
+  checkReady();
+});
+
+// White texture for entrance
 const whiteTex = gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D, whiteTex);
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
 texs.white = whiteTex;
 
+// Load page images
 for (const [key, src] of Object.entries({ cover: 'assets/page_cover.png', plain: 'assets/page_content_plain.png', hl: 'assets/page_content_hl.png' })) {
   const img = new Image();
   img.onload = () => {
@@ -234,13 +251,13 @@ for (const [key, src] of Object.entries({ cover: 'assets/page_cover.png', plain:
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     texs[key] = tex;
-    if (++loaded === 3) window.__ready = true;
+    imagesLoaded++;
+    checkReady();
   };
   img.src = src;
 }
 
-// ── Public API: 3 functions ──
-// curl: cover → plain (page flip)
+// ── Public API: 4 functions ──
 window.__curl = function(progress) {
   gl.viewport(0, 0, W, H);
   const p = use('curl');

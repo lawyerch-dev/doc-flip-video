@@ -6,7 +6,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const W = 1080, H = 1440, FPS = 60;
+const FPS = 60;
+
+// Load template + config
+const templatePath = path.join(__dirname, '..', 'template.json');
+const tmpl = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
+const W = tmpl.style.width, H = tmpl.style.height;
 
 // Load config
 const configPath = process.argv[2] || path.join(__dirname, '..', 'article.json');
@@ -73,7 +78,7 @@ async function main() {
     ],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: W, height: H });
+  await page.setViewport({ width: W * 2, height: H * 2 });
   page.on("console", msg => { if (msg.type() === "error") console.log("  [page]", msg.text()); });
   page.on("error", err => console.error("  [page error]", err.message));
   page.on("crash", () => console.error("  [page crash]"));
@@ -88,7 +93,8 @@ async function main() {
   const ffmpeg = spawn("ffmpeg", [
     "-y", "-f", "image2pipe", "-c:v", "png", "-r", `${FPS}`,
     "-i", "pipe:0",
-    "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+    "-vf", `scale=${W}:${H}:flags=lanczos`,
+    "-c:v", "libx264", "-preset", "slow", "-crf", "14",
     "-pix_fmt", "yuv420p", "-movflags", "+faststart", outFile,
   ], { stdio: ["pipe", "inherit", "inherit"] });
 

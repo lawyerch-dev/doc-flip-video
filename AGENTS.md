@@ -103,7 +103,30 @@ Edit `article.json`:
 - `cover` — Cover hold time
 - `curl` — Page flip duration
 - `sweep` — Highlight sweep duration
-- `final` — Highlight hold time
+- `hold` — Highlight hold time after sweep
+- `final` — Fade out animation duration
+
+## Character Limits
+
+Based on 1080×1840 canvas with 80px margins:
+
+### Content Page
+
+| Field | Font Size | Per Line | Limit |
+|-------|-----------|----------|-------|
+| title | 48px bold | ~19 chars | ≤20 chars (1 line) |
+| subtitle | 42px bold | ~21 chars | ≤20 chars (1 line) |
+| paragraphs | 32px | ~28 chars | ≤100 chars (3-4 lines) |
+| source | 28px | ~32 chars | ≤60 chars (2 lines) |
+
+### Cover Page
+
+| Field | Font Size | Per Line | Limit |
+|-------|-----------|----------|-------|
+| headline | 50px bold | ~18 chars | ≤20 chars (1 line) |
+| source | 36px | ~25 chars | ≤25 chars (1 line) |
+
+> **Important**: Total lines = title lines + subtitle lines + 1 gap + body lines + 3 source lines. Exceeding limits causes overflow.
 
 ## Visual Customization
 

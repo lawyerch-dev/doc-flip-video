@@ -60,11 +60,23 @@ async function main() {
 
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-webgl", "--no-sandbox", "--enable-unsafe-swiftshader"],
+    args: [
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+      "--enable-webgl",
+      "--no-sandbox",
+      "--enable-unsafe-swiftshader",
+      "--disable-gpu-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--single-process",
+    ],
   });
   const page = await browser.newPage();
   await page.setViewport({ width: W, height: H });
   page.on("console", msg => { if (msg.type() === "error") console.log("  [page]", msg.text()); });
+  page.on("error", err => console.error("  [page error]", err.message));
+  page.on("crash", () => console.error("  [page crash]"));
 
   await page.goto(`http://localhost:${port}/`, { waitUntil: "load", timeout: 15000 });
   await page.waitForFunction(() => window.__ready === true, { timeout: 15000 });
@@ -84,18 +96,30 @@ async function main() {
 
   for (let f = 0; f < TOTAL_FRAMES; f++) {
     const call = getFrame(f / FPS);
-    const dataUrl = await page.evaluate(async (call) => {
-      const [fn, ...args] = call.replace(')', '').split('(');
-      window['__' + fn](...args.map(Number));
-      const canvas = document.getElementById("c");
-      return canvas.toDataURL('image/png');
-    }, call);
+    let retries = 3;
+    let success = false;
 
-    // Extract base64 data and decode to Buffer
-    const base64 = dataUrl.split(',')[1];
-    const rawBuf = Buffer.from(base64, 'base64');
-    const ok = ffmpeg.stdin.write(rawBuf);
-    if (!ok) await new Promise(r => ffmpeg.stdin.once("drain", r));
+    while (retries > 0 && !success) {
+      try {
+        const dataUrl = await page.evaluate(async (call) => {
+          const [fn, ...args] = call.replace(')', '').split('(');
+          window['__' + fn](...args.map(Number));
+          const canvas = document.getElementById("c");
+          return canvas.toDataURL('image/png');
+        }, call);
+
+        const base64 = dataUrl.split(',')[1];
+        const rawBuf = Buffer.from(base64, 'base64');
+        const ok = ffmpeg.stdin.write(rawBuf);
+        if (!ok) await new Promise(r => ffmpeg.stdin.once("drain", r));
+        success = true;
+      } catch (err) {
+        retries--;
+        console.error(`\n  Frame ${f} failed, retries left: ${retries}`, err.message);
+        if (retries === 0) throw err;
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
 
     const pct = Math.round((f + 1) / TOTAL_FRAMES * 100);
     if (pct !== lastPct) { process.stdout.write(`\r  ${pct}%`); lastPct = pct; }

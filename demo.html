@@ -3,147 +3,200 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>gl-transitions Demo</title>
+<title>翻页动画预览</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #111; color: #eee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+body { background: #111; color: #eee; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
 h1 { font-size: 20px; font-weight: 500; margin-bottom: 16px; color: #aaa; }
-h1 span { color: #e74c3c; }
-.canvas-wrap { position: relative; width: 960px; height: 540px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
-iframe { display: block; width: 100%; height: 100%; border: none; }
+.canvas-wrap { width: 960px; height: 540px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.5); background: #000; }
+canvas { display: block; width: 100%; height: 100%; }
 .controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; width: 960px; }
-select, button { background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
-select:hover, button:hover { border-color: #888; }
-button.active { background: #e74c3c; border-color: #e74c3c; }
+button { background: #222; color: #aaa; border: 1px solid #444; border-radius: 6px; padding: 8px 16px; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+button:hover { border-color: #888; color: #eee; }
+button.active { background: #e74c3c; border-color: #e74c3c; color: #fff; }
 input[type=range] { flex: 1; accent-color: #e74c3c; }
 .pct { font-size: 13px; color: #888; min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
-.info { margin-top: 12px; font-size: 12px; color: #555; }
-.info a { color: #e74c3c; text-decoration: none; }
+.status { margin-top: 12px; font-size: 13px; color: #666; text-align: center; }
 </style>
 </head>
 <body>
-<h1><span>gl-transitions</span> Demo</h1>
+<h1>翻页动画预览</h1>
 <div class="canvas-wrap">
-  <iframe id="frame" src="src/renderer.html"></iframe>
+  <canvas id="c" width="1920" height="1080"></canvas>
 </div>
 <div class="controls">
-  <select id="sel"></select>
-  <button id="playBtn">▶ Play</button>
-  <button id="revBtn">⟲ Reverse</button>
+  <button id="curlBtn" class="active">📖 翻页</button>
+  <button id="sweepBtn">🖍️ 涂抹</button>
   <input type="range" id="slider" min="0" max="1" step="0.001" value="0">
   <span class="pct" id="pct">0%</span>
 </div>
-<p class="info">
-  Transitions from <a href="https://gl-transitions.com">gl-transitions.com</a> ·
-  InvertedPageCurl (HP, BSD-3) · ZoomRigthWipe (Handk, MIT)
-</p>
+<p class="status" id="status"></p>
 
 <script>
-const frame = document.getElementById("frame");
-const sel = document.getElementById("sel");
-const playBtn = document.getElementById("playBtn");
-const revBtn = document.getElementById("revBtn");
-const slider = document.getElementById("slider");
-const pct = document.getElementById("pct");
+// ── Shaders ──
+const VERT = `attribute vec2 p;varying vec2 uv;void main(){uv=p*0.5+0.5;gl_Position=vec4(p,0,1);}`;
 
-let progress = 0;
-let playing = false;
-let direction = 1;
-let rafId = null;
+const CURL_FRAG = `
+precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress,ratio;
+const float MIN_AMOUNT=-0.16,MAX_AMOUNT=1.5,PI=3.141592653589793;
+const float scale=512.0,sharpness=3.0,cylinderRadius=1.0/PI/2.0;
+float amount,cylinderCenter,cylinderAngle;
+vec3 hitPoint(float ha,float yc,vec3 p,mat3 r){p.y=ha/(2.0*PI);return r*p;}
+vec4 antiAlias(vec4 c1,vec4 c2,float d){d*=scale;if(d<0.0)return c2;if(d>2.0)return c1;float dd=pow(1.0-d/2.0,sharpness);return(c2-c1)*dd+c1;}
+float dte(vec3 p){float dx=abs(p.x>0.5?1.0-p.x:p.x),dy=abs(p.y>0.5?1.0-p.y:p.y);if(p.x<0.0)dx=-p.x;if(p.x>1.0)dx=p.x-1.0;if(p.y<0.0)dy=-p.y;if(p.y>1.0)dy=p.y-1.0;if((p.x<0.0||p.x>1.0)&&(p.y<0.0||p.y>1.0))return sqrt(dx*dx+dy*dy);return min(dx,dy);}
+vec4 seeThru(float yc,vec2 p,mat3 r,mat3 rr){float ha=PI-(acos(clamp(yc/cylinderRadius,-1.0,1.0))-cylinderAngle);vec3 pt=hitPoint(ha,yc,r*vec3(p,1.0),rr);if(yc<=0.0&&(pt.x<0.0||pt.y<0.0||pt.x>1.0||pt.y>1.0))return texture2D(to,p);if(yc>0.0)return texture2D(from,p);return antiAlias(texture2D(from,pt.xy),vec4(0.0),dte(pt));}
+vec4 seeThruShadow(float yc,vec2 p,vec3 pt,mat3 r,mat3 rr){float sh=dte(pt)*30.0;sh=(1.0-sh)/3.0;if(sh<0.0)sh=0.0;else sh*=amount;vec4 sc=seeThru(yc,p,r,rr);sc.r-=sh;sc.g-=sh;sc.b-=sh;return sc;}
+vec4 backside(float yc,vec3 pt){vec4 c=texture2D(from,pt.xy);float gray=(c.r+c.b+c.g)/15.0+(0.8)*(pow(max(0.0,1.0-abs(yc/cylinderRadius)),0.2)/2.0+0.5);c.rgb=vec3(gray);return c;}
+vec4 behind(vec2 p,float yc,vec3 pt,mat3 rr){float sa=amount>=0.0?max(amount,1e-4):min(amount,-1e-4);float sh=(1.0-((-cylinderRadius-yc)/sa*7.0))/6.0*(1.0-abs(pt.x-0.5));yc=-cylinderRadius-cylinderRadius-yc;float ha=(acos(clamp(yc/cylinderRadius,-1.0,1.0))+cylinderAngle)-PI;pt=hitPoint(ha,yc,pt,rr);if(yc<0.0&&pt.x>=0.0&&pt.y>=0.0&&pt.x<=1.0&&pt.y<=1.0&&(ha<PI||amount>0.5)){float dx=pt.x-0.5,dy=pt.y-0.5;sh=1.0-(sqrt(dx*dx+dy*dy)/0.71);float n=-yc/cylinderRadius;sh*=n*n*n*0.5;}else sh=0.0;return vec4(texture2D(to,p).rgb-sh,1.0);}
+void main(){amount=progress*(MAX_AMOUNT-MIN_AMOUNT)+MIN_AMOUNT;cylinderCenter=amount;cylinderAngle=2.0*PI*amount;float a=100.0*PI/180.0,c=cos(-a),s=sin(-a);mat3 rot=mat3(c,s,0,-s,c,0,-0.801,0.89,1);c=cos(a);s=sin(a);mat3 rrot=mat3(c,s,0,-s,c,0,0.985,0.985,1);vec3 pt=rot*vec3(uv,1.0);float yc=pt.y-cylinderCenter;if(yc<-cylinderRadius){gl_FragColor=behind(uv,yc,pt,rrot);return;}if(yc>cylinderRadius){gl_FragColor=texture2D(from,uv);return;}float ha=(acos(clamp(yc/cylinderRadius,-1.0,1.0))+cylinderAngle)-PI;float ham=mod(ha,2.0*PI);if((ham>PI&&amount<0.5)||(ham>PI/2.0&&amount<0.0)){gl_FragColor=seeThru(yc,uv,rot,rrot);return;}pt=hitPoint(ha,yc,pt,rrot);if(pt.x<0.0||pt.y<0.0||pt.x>1.0||pt.y>1.0){gl_FragColor=seeThruShadow(yc,uv,pt,rot,rrot);return;}vec4 color=backside(yc,pt);vec4 oc;if(yc<0.0){float d=pt.x-0.5,e=pt.y-0.5;float sh=1.0-(sqrt(d*d+e*e)/0.71);float n=-yc/cylinderRadius;sh*=n*n*n*0.5;oc=vec4(0,0,0,sh);}else oc=texture2D(from,uv);color=antiAlias(color,oc,cylinderRadius-abs(yc));vec4 cl=seeThruShadow(yc,uv,pt,rot,rrot);gl_FragColor=antiAlias(color,cl,dte(pt));}`;
 
-function getWin() { return frame.contentWindow; }
+const SWEEP_FRAG = `precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress;
+void main(){vec4 a=texture2D(from,uv);vec4 b=texture2D(to,uv);float mask=smoothstep(progress-0.03,progress,uv.x);gl_FragColor=mix(b,a,mask);}`;
 
-function render(p) {
-  const name = sel.value;
-  const from = name === "ZoomRigthWipe" ? "plain" : "cover";
-  const to = name === "ZoomRigthWipe" ? "hl" : "plain";
-  getWin().__renderTransition(name, p, from, to);
+const BLEND_FRAG = `precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress;
+void main(){gl_FragColor=mix(texture2D(from,uv),texture2D(to,uv),progress);}`;
+
+// ── WebGL ──
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+const W = 1920, H = 1080;
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+function compile(src, type) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+  return s;
+}
+function link(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, compile(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p); return p;
 }
 
-function updateUI() {
-  slider.value = progress;
-  pct.textContent = Math.round(progress * 100) + "%";
+const quad = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+const progs = { curl: link(VERT, CURL_FRAG), sweep: link(VERT, SWEEP_FRAG), blend: link(VERT, BLEND_FRAG) };
+
+function use(name) {
+  const p = progs[name]; gl.useProgram(p);
+  const loc = gl.getAttribLocation(p, "p");
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  return p;
+}
+function bindTex(unit, tex, prog, name) {
+  gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.uniform1i(gl.getUniformLocation(prog, name), unit);
+}
+function loadTex(img) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return tex;
+}
+
+// ── Placeholder images ──
+function makePlaceholder(text, bg, fg) {
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.fillStyle = fg; x.font = "bold 72px serif"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText(text, W/2, H/2);
+  return c;
+}
+
+// ── Load images ──
+const texs = {};
+let loaded = 0, loadErrors = 0;
+const status = document.getElementById("status");
+const sources = { cover: "assets/page_cover.png", plain: "assets/page_content_plain.png", hl: "assets/page_content_hl.png" };
+const placeholders = {
+  cover: () => makePlaceholder("封面", "#c0392b", "#fff"),
+  plain: () => makePlaceholder("正文", "#fdf6ec", "#1a1a1a"),
+  hl:    () => makePlaceholder("高亮", "#fdf6ec", "#d4a017"),
+};
+
+function checkReady() {
+  if (++loaded === 3) {
+    if (loadErrors > 0) status.textContent = "⚠ 使用占位图 · 运行 npm run build 生成实际内容";
+    render(0);
+  }
+}
+
+for (const [key, src] of Object.entries(sources)) {
+  const img = new Image();
+  img.onload = () => { texs[key] = loadTex(img); checkReady(); };
+  img.onerror = () => { loadErrors++; texs[key] = loadTex(placeholders[key]()); checkReady(); };
+  img.src = src;
+}
+
+// ── Render ──
+function renderCurl(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("curl");
+  bindTex(0, texs.cover, pr, "from"); bindTex(1, texs.plain, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.uniform1f(gl.getUniformLocation(pr, "ratio"), W / H);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+function renderSweep(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("sweep");
+  bindTex(0, texs.plain, pr, "from"); bindTex(1, texs.hl, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// ── Controls ──
+const slider = document.getElementById("slider");
+const pct = document.getElementById("pct");
+const curlBtn = document.getElementById("curlBtn");
+const sweepBtn = document.getElementById("sweepBtn");
+
+let progress = 0;
+let currentEffect = "curl";
+let playing = false;
+let rafId = null;
+
+function updateUI() { slider.value = progress; pct.textContent = Math.round(progress * 100) + "%"; }
+
+function render(p) {
+  if (currentEffect === "curl") renderCurl(p); else renderSweep(p);
 }
 
 function tick() {
   if (!playing) return;
-  progress += direction * 0.008;
-  if (progress >= 1) { progress = 1; playing = false; playBtn.textContent = "▶ Play"; }
-  if (progress <= 0) { progress = 0; playing = false; playBtn.textContent = "▶ Play"; }
-  render(progress);
-  updateUI();
+  progress += 0.008;
+  if (progress >= 1) { progress = 1; playing = false; }
+  render(progress); updateUI();
   if (playing) rafId = requestAnimationFrame(tick);
 }
 
-// Wait for iframe to be ready
-// Populate dropdown from gl-transitions list inside iframe
-frame.onload = () => {
-  const wait = setInterval(() => {
-    try {
-      const win = getWin();
-      if (win.__ready && win.GLTransitions) {
-        clearInterval(wait);
-        const transitions = win.GLTransitions;
-        // Show a curated subset + all others
-        const featured = ['InvertedPageCurl', 'ZoomRigthWipe'];
-        for (const name of featured) {
-          const opt = document.createElement('option');
-          opt.value = name; opt.textContent = name;
-          sel.appendChild(opt);
-        }
-        const sep = document.createElement('option');
-        sep.disabled = true; sep.textContent = '─── All transitions ───';
-        sel.appendChild(sep);
-        for (const t of transitions) {
-          if (featured.includes(t.name)) continue;
-          const opt = document.createElement('option');
-          opt.value = t.name; opt.textContent = t.name;
-          sel.appendChild(opt);
-        }
-        sel.value = 'InvertedPageCurl';
-        render(0);
-        updateUI();
-      }
-    } catch(e) {}
-  }, 100);
-};
+function switchEffect(name) {
+  currentEffect = name;
+  playing = false; if (rafId) cancelAnimationFrame(rafId);
+  progress = 0;
+  curlBtn.classList.toggle("active", name === "curl");
+  sweepBtn.classList.toggle("active", name === "sweep");
+  render(0); updateUI();
+  // Auto-play
+  playing = true; tick();
+}
 
-playBtn.onclick = () => {
-  if (playing) {
-    playing = false;
-    playBtn.textContent = "▶ Play";
-    if (rafId) cancelAnimationFrame(rafId);
-  } else {
-    if (progress >= 1) progress = 0;
-    direction = 1;
-    playing = true;
-    playBtn.textContent = "⏸ Pause";
-    tick();
-  }
-};
-
-revBtn.onclick = () => {
-  if (playing) {
-    playing = false;
-    if (rafId) cancelAnimationFrame(rafId);
-  }
-  if (progress <= 0) progress = 1;
-  direction = -1;
-  playing = true;
-  playBtn.textContent = "⏸ Pause";
-  tick();
-};
+curlBtn.onclick = () => switchEffect("curl");
+sweepBtn.onclick = () => switchEffect("sweep");
 
 slider.oninput = () => {
   progress = parseFloat(slider.value);
-  playing = false;
-  playBtn.textContent = "▶ Play";
-  if (rafId) cancelAnimationFrame(rafId);
-  render(progress);
-  updateUI();
+  playing = false; if (rafId) cancelAnimationFrame(rafId);
+  render(progress); updateUI();
 };
-
-sel.onchange = () => render(progress);
 </script>
 </body>
 </html>

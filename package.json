@@ -1,20 +1,12 @@
 {
   "name": "page-flip-demo",
   "version": "1.0.0",
-  "description": "",
   "scripts": {
-    "gen": "node src/gen-pages.mjs",
-    "capture": "node src/capture.mjs",
-    "build": "npm run gen && npm run capture",
+    "build": "node src/build.mjs",
     "demo": "npx serve . -p 8080 --no-clipboard"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "canvas": "^3.2.3",
-    "gl-transitions": "^1.71.0",
     "puppeteer": "^25.3.0"
   }
 }

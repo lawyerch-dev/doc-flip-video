@@ -2,3 +2,4 @@ node_modules/
 output/
 assets/*.png
 assets/*.json
+gl-transitions/

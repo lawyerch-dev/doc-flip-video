@@ -152,6 +152,53 @@ npm run demo
 # 打开 http://localhost:8080
 ```
 
+## API 服务
+
+### 启动服务
+
+```bash
+# 本地启动
+node src/server.mjs
+
+# Docker 启动
+docker-compose up -d
+```
+
+### 接口说明
+
+#### 生成视频
+
+```
+POST /generate
+Content-Type: application/json
+```
+
+请求体格式与 `article.json` 相同。
+
+示例：
+
+```bash
+curl -X POST http://localhost:3000/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "meta": { "year": 2026, "month": 7, "day": 1, "issueNumber": 458 },
+    "cover": { "headline": "标题", "source": "来源" },
+    "content": {
+      "title": "副标题",
+      "subtitle": "摘要",
+      "paragraphs": [{ "text": "正文内容" }],
+      "source": "来源"
+    }
+  }' \
+  --output video.mp4
+```
+
+#### 健康检查
+
+```
+GET /health
+```
+
 ## 常见问题
 
 1. **ffmpeg 未找到** — 使用 `brew install ffmpeg`（macOS）或 `apt install ffmpeg`（Ubuntu）安装

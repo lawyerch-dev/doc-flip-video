@@ -21,17 +21,28 @@
 - ffmpeg
 - 中文字体
 
+### 安装步骤
+
+```bash
+# 1. 安装依赖
+npm install
+
+# 2. 下载字体
+npm run fonts
+
+# 3. 生成视频
+npm run build
+```
+
 ### macOS
 
 ```bash
 # 安装 ffmpeg
 brew install ffmpeg
 
-# 安装中文字体（通常已预装）
-# 如需安装：brew install --cask font-noto-sans-cjk
-
-# 安装依赖
+# 安装依赖和字体
 npm install
+npm run fonts
 
 # 生成视频
 npm run build
@@ -46,6 +57,7 @@ sudo apt install -y ffmpeg fonts-noto-cjk
 
 # 安装依赖
 npm install
+npm run fonts
 
 # 生成视频
 npm run build
@@ -63,6 +75,7 @@ sudo yum install -y google-noto-sans-cjk-fonts
 
 # 安装依赖
 npm install
+npm run fonts
 
 # 生成视频
 npm run build
@@ -77,10 +90,9 @@ scoop install ffmpeg
 # 或使用 choco
 choco install ffmpeg
 
-# 安装中文字体（Windows 通常已预装）
-
-# 安装依赖
+# 安装依赖和字体
 npm install
+npm run fonts
 
 # 生成视频
 npm run build

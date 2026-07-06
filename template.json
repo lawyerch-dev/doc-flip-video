@@ -2,7 +2,7 @@
   "style": {
     "width": 1080,
     "height": 1440,
-    "font": "PingFang SC,Noto Sans SC,SimSun,sans-serif",
+    "font": "Noto Sans SC,Noto Sans CJK SC,sans-serif",
     "margin": 80,
     "background": "#ffffff",
     "leftBand": {
@@ -31,7 +31,7 @@
   "top": {
     "logo": {
       "text": "法务",
-      "font": "华文行楷,STXingkai,Xingkai SC,serif",
+      "font": "Ma Shan Zheng,KaiTi,serif",
       "size": 108,
       "firstCharScale": 1.3,
       "firstCharOffsetY": -0.12,

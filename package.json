@@ -5,7 +5,8 @@
     "build": "node src/build.mjs",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server.mjs",
-    "mcp": "node src/mcp-server.mjs"
+    "mcp": "node src/mcp-server.mjs",
+    "fonts": "bash scripts/download-fonts.sh"
   },
   "dependencies": {
     "canvas": "^3.2.3",

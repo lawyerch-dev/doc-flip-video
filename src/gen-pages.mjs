@@ -1,4 +1,4 @@
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,7 +6,23 @@ import JsBarcode from "jsbarcode";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS = path.join(__dirname, "..", "assets");
+const FONTS_DIR = path.join(ASSETS, "fonts");
 fs.mkdirSync(ASSETS, { recursive: true });
+
+// Register fonts from assets/fonts directory
+if (fs.existsSync(FONTS_DIR)) {
+  const fontFiles = fs.readdirSync(FONTS_DIR);
+  for (const file of fontFiles) {
+    if (file.endsWith('.ttf') || file.endsWith('.otf') || file.endsWith('.ttc')) {
+      const fontPath = path.join(FONTS_DIR, file);
+      try {
+        registerFont(fontPath, { family: file.replace(/\.(ttf|otf|ttc)$/, '').replace(/Regular|Bold|Light/, '').trim() });
+      } catch (e) {
+        // Ignore registration errors
+      }
+    }
+  }
+}
 
 const templatePath = process.argv[3] || path.join(__dirname, "..", "template.json");
 const articlePath = process.argv[2] || path.join(__dirname, "..", "article.json");

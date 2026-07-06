@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libgif7 \
     librsvg2-2 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -26,6 +27,9 @@ RUN npm ci --production
 
 # Copy source code
 COPY . .
+
+# Download fonts
+RUN chmod +x scripts/download-fonts.sh && bash scripts/download-fonts.sh
 
 # Create output directory
 RUN mkdir -p output

@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const W = 1080, H = 1440, FPS = 30;
+const W = 1080, H = 1440, FPS = 60;
 
 // Load config
 const configPath = process.argv[2] || path.join(__dirname, '..', 'article.json');
@@ -17,10 +17,9 @@ const tm = cfg.timing || {};
 let t = 0;
 const T = [];
 function add(name, dur, extra) { const end = t + dur; T.push({ end, fn: name, t0: t, dur, ...extra }); t = end; }
-add('settle', tm.settle || 0.8, {});          // 封面入场（淡入+缩放）
+add('settle', tm.settle || 1.2, {});          // 封面入场（纸张落地）
 add('cover', tm.cover || 2.0, {});            // 封面停留
 add('curl',  tm.curl  || 2.5, {});            // 翻页 cover→plain
-add('blend', tm.hold  || 0.5, { val: 0 });   // 正文停留
 add('sweep', tm.sweep || 2.0, {});            // 荧光涂抹 plain→hl
 add('blend', tm.final || 2.0, { val: 1 });   // 高亮停留
 const TOTAL_SEC = T[T.length - 1].end;

@@ -22,7 +22,7 @@ input[type=range] { flex: 1; accent-color: #e74c3c; }
 <body>
 <h1>翻页动画预览</h1>
 <div class="canvas-wrap">
-  <canvas id="c" width="1920" height="1080"></canvas>
+  <canvas id="c" width="1080" height="1440"></canvas>
 </div>
 <div class="controls">
   <button id="curlBtn" class="active">📖 翻页</button>
@@ -59,7 +59,7 @@ void main(){gl_FragColor=mix(texture2D(from,uv),texture2D(to,uv),progress);}`;
 // ── WebGL ──
 const canvas = document.getElementById("c");
 const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
-const W = 1920, H = 1080;
+const W = 1080, H = 1440;
 gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
 function compile(src, type) {

@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const W = 1920, H = 1080, FPS = 30;
+const W = 1080, H = 1440, FPS = 30;
 
 // Load config
 const configPath = process.argv[2] || path.join(__dirname, '..', 'article.json');
@@ -17,11 +17,11 @@ const tm = cfg.timing || {};
 let t = 0;
 const T = [];
 function add(name, dur, extra) { const end = t + dur; T.push({ end, fn: name, t0: t, dur, ...extra }); t = end; }
-add('cover', tm.cover || 2.0, {});
-add('curl',  tm.curl  || 2.5, {});
-add('blend', tm.hold  || 0.5, { val: 0 });
-add('sweep', tm.sweep || 2.0, {});
-add('blend', tm.final || 2.0, { val: 1 });
+add('cover', tm.cover || 2.0, {});            // 封面停留
+add('curl',  tm.curl  || 2.5, {});            // 翻页 cover→plain
+add('blend', tm.hold  || 1.0, { val: 0 });   // 正文停留
+add('sweep', tm.sweep || 2.0, {});            // 荧光涂抹 plain→hl
+add('blend', tm.final || 2.0, { val: 1 });   // 高亮停留
 const TOTAL_SEC = T[T.length - 1].end;
 const TOTAL_FRAMES = Math.ceil(TOTAL_SEC * FPS);
 
@@ -83,16 +83,16 @@ async function main() {
 
   for (let f = 0; f < TOTAL_FRAMES; f++) {
     const call = getFrame(f / FPS);
-    const pixels = await page.evaluate(async (call) => {
+    const pixels = await page.evaluate(async (call, W, H) => {
       const [fn, ...args] = call.replace(')', '').split('(');
-      await window['__' + fn](...args.map(Number));
+      window['__' + fn](...args.map(Number));
       const gl = document.getElementById("c").getContext("webgl");
-      const buf = new Uint8Array(1920 * 1080 * 4);
-      gl.readPixels(0, 0, 1920, 1080, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      const buf = new Uint8Array(W * H * 4);
+      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
       let b = "";
       for (let i = 0; i < buf.length; i += 8192) b += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
       return btoa(b);
-    }, call);
+    }, call, W, H);
 
     const rawBuf = Buffer.from(pixels, "base64");
     const ok = ffmpeg.stdin.write(rawBuf);

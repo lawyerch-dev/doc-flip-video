@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><style>*{margin:0;padding:0}canvas{display:block}</style></head>
 <body>
-<canvas id="c" width="1920" height="1080"></canvas>
+<canvas id="c" width="1080" height="1440"></canvas>
 <script>
 // ── 3 shaders, that's it ──
 
@@ -102,7 +102,7 @@ void main() { gl_FragColor = mix(texture2D(from, uv), texture2D(to, uv), progres
 // ── WebGL ──
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
-const W = 1920, H = 1080;
+const W = 1080, H = 1440;
 gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
 function compile(src, type) {
@@ -164,48 +164,37 @@ for (const [key, src] of Object.entries({ cover: 'assets/page_cover.png', plain:
 
 // ── Public API: 3 functions ──
 // curl: cover → plain (page flip)
-window.__curl = async function(progress) {
+window.__curl = function(progress) {
   gl.viewport(0, 0, W, H);
   const p = use('curl');
-  bindTex(0, texs.cover, p, 'from');
-  bindTex(1, texs.plain, p, 'to');
+  bindTex(0, texs.cover, p, 'from'); bindTex(1, texs.plain, p, 'to');
   gl.uniform1f(gl.getUniformLocation(p, 'progress'), progress);
   gl.uniform1f(gl.getUniformLocation(p, 'ratio'), W / H);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  return new Promise(r => requestAnimationFrame(r));
 };
 
-// sweep: plain → hl (marker highlight reveal)
-window.__sweep = async function(progress) {
+window.__sweep = function(progress) {
   gl.viewport(0, 0, W, H);
   const p = use('sweep');
-  bindTex(0, texs.plain, p, 'from');
-  bindTex(1, texs.hl, p, 'to');
+  bindTex(0, texs.plain, p, 'from'); bindTex(1, texs.hl, p, 'to');
   gl.uniform1f(gl.getUniformLocation(p, 'progress'), progress);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  return new Promise(r => requestAnimationFrame(r));
 };
 
-// blend: hold on a texture (progress 0=plain, 1=hl)
-window.__blend = async function(progress) {
+window.__blend = function(progress) {
   gl.viewport(0, 0, W, H);
   const p = use('blend');
-  bindTex(0, texs.plain, p, 'from');
-  bindTex(1, texs.hl, p, 'to');
+  bindTex(0, texs.plain, p, 'from'); bindTex(1, texs.hl, p, 'to');
   gl.uniform1f(gl.getUniformLocation(p, 'progress'), progress);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  return new Promise(r => requestAnimationFrame(r));
 };
 
-// Draw cover directly (just show the cover texture)
-window.__cover = async function() {
+window.__cover = function() {
   gl.viewport(0, 0, W, H);
   const p = use('blend');
-  bindTex(0, texs.cover, p, 'from');
-  bindTex(1, texs.cover, p, 'to');
+  bindTex(0, texs.cover, p, 'from'); bindTex(1, texs.cover, p, 'to');
   gl.uniform1f(gl.getUniformLocation(p, 'progress'), 0);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  return new Promise(r => requestAnimationFrame(r));
 };
 </script>
 </body></html>

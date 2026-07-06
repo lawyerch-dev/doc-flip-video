@@ -1,0 +1,116 @@
+{
+  "style": {
+    "width": 1080,
+    "height": 1440,
+    "font": "PingFang SC,Noto Sans SC,SimSun,sans-serif",
+    "margin": 80,
+    "background": "#ffffff"
+  },
+  "top": {
+    "logo": {
+      "text": "两拐",
+      "size": 36,
+      "color": "#ffffff",
+      "background": "#cc0000",
+      "width": 80,
+      "height": 80,
+      "radius": 6,
+      "x": 80,
+      "y": 130
+    },
+    "title": {
+      "size": 28,
+      "color": "#1a1a1a",
+      "bold": true,
+      "x": 230,
+      "y": 140
+    },
+    "tagline": {
+      "size": 22,
+      "color": "#666666",
+      "x": 230,
+      "y": 175
+    },
+    "issue": {
+      "size": 20,
+      "color": "#1a1a1a",
+      "x": 230,
+      "y": 210
+    },
+    "line": {
+      "y": 280,
+      "color": "#cc0000",
+      "width": 2,
+      "gap": 7
+    }
+  },
+  "middle": {
+    "paddingTop": 100,
+    "paddingBottom": 100,
+    "tag": {
+      "text": "本期内容",
+      "size": 22,
+      "color": "#1a1a1a",
+      "bold": true,
+      "background": "#f5f0e8",
+      "paddingX": 16,
+      "radius": 6,
+      "width": 180,
+      "height": 42
+    },
+    "headline": {
+      "size": 50,
+      "color": "#1a1a1a",
+      "bold": true,
+      "lineHeight": 60
+    },
+    "source": {
+      "size": 20,
+      "color": "#666666",
+      "lineHeight": 30
+    },
+    "spacing": {
+      "tagToHeadline": 30,
+      "headlineToSource": 30
+    },
+    "contentTitle": {
+      "size": 38,
+      "color": "#cc0000",
+      "bold": true,
+      "lineHeight": 50
+    },
+    "contentSubtitle": {
+      "size": 32,
+      "color": "#1a1a1a",
+      "bold": true,
+      "lineHeight": 44
+    },
+    "body": {
+      "fontSize": 26,
+      "lineHeight": 48,
+      "color": "#1a1a1a",
+      "indent": "auto",
+      "boldColor": "#cc0000",
+      "highlightColor": "rgba(255,220,0,0.92)",
+      "highlightTextColor": "#8b1a1a"
+    },
+    "sourceText": {
+      "size": 18,
+      "color": "#666666",
+      "gapFromContent": 40,
+      "lineHeight": 28
+    }
+  },
+  "bottom": {
+    "line": {
+      "color": "#cc0000",
+      "width": 2,
+      "gap": 7
+    },
+    "text": "关注两拐，交通安全专业知识每日更新",
+    "size": 18,
+    "color": "#666666",
+    "gapFromLine": 15,
+    "bottomMargin": 200
+  }
+}

@@ -397,6 +397,9 @@ function generateCover() {
   const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
+  // Apply vertical offset
+  const vOffset = S.verticalOffset || 0;
+  if (vOffset) ctx.translate(0, vOffset);
   drawBackground(ctx);
   drawTop(ctx);
 
@@ -444,6 +447,9 @@ function generateContent(withHighlights) {
   const canvas = createCanvas(W * SCALE, H * SCALE);
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
+  // Apply vertical offset
+  const vOffset = S.verticalOffset || 0;
+  if (vOffset) ctx.translate(0, vOffset);
   drawBackground(ctx);
   drawTop(ctx);
 

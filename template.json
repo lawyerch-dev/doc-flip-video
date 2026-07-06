@@ -4,6 +4,7 @@
     "height": 1440,
     "font": "Noto Sans SC,Noto Sans CJK SC,sans-serif",
     "margin": 80,
+    "verticalOffset": 60,
     "background": "#ffffff",
     "leftBand": {
       "enabled": false,

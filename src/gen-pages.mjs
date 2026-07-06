@@ -148,12 +148,12 @@ function highlightLines(ctx, lines, lineXs, y, lh, fontSize, keyword, withHighli
     const ly = y + r.line * lh;
     if (withHighlights) {
       ctx.fillStyle = bodyCfg.highlightColor || "rgba(255,210,0,0.35)";
-      roundRect(ctx, bx - 4, ly - fontSize * 0.2, bw + 8, fontSize * 1.2, 4); ctx.fill();
+      roundRect(ctx, bx - 4, ly - fontSize * 0.05, bw + 8, fontSize * 1.1, 4); ctx.fill();
       ctx.fillStyle = bodyCfg.highlightTextColor || "#8b1a1a";
       ctx.font = makeFont(fontSize, true);
       ctx.fillText(matched, bx, ly);
     }
-    positions.push({ x: bx - 4, y: ly - fontSize * 0.2, w: bw + 8, h: fontSize * 1.2 });
+    positions.push({ x: bx - 4, y: ly - fontSize * 0.05, w: bw + 8, h: fontSize * 1.1 });
   }
   return positions;
 }

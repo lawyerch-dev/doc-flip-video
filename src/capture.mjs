@@ -59,7 +59,7 @@ async function main() {
   const srv = await startServer(path.join(__dirname, ".."), port);
 
   const browser = await puppeteer.launch({
-    headless: "new",
+    headless: true,
     args: [
       "--use-gl=angle",
       "--use-angle=swiftshader",

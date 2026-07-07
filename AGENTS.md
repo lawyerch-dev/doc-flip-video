@@ -54,7 +54,11 @@ npm run build
 
 ## Configuration
 
-Edit `article.json`:
+Edit `article.json`.
+
+> **Default date rule**: Always use today's date (`year`/`month`/`day`) unless the user explicitly specifies otherwise. Generate the date programmatically at config creation time.
+>
+> **Config file organization**: All article JSON configs go in `configs/` directory, named `article-NNN.json` (e.g. `configs/article-001.json`). Build command: `node src/build.mjs configs/article-002.json` or just `node src/build.mjs article-002.json` (auto-prefixed).
 
 ```json
 {
@@ -116,7 +120,7 @@ Based on 1080×1840 canvas with 80px margins:
 |-------|-----------|----------|-------|
 | title | 48px bold | ~19 chars | ≤20 chars (1 line) |
 | subtitle | 42px bold | ~21 chars | ≤20 chars (1 line) |
-| paragraphs | 32px | ~28 chars | ≤100 chars (3-4 lines) |
+| paragraphs | 32px | ~28 chars | **See rules below** |
 | source | 28px | ~32 chars | ≤60 chars (2 lines) |
 
 ### Cover Page
@@ -126,7 +130,81 @@ Based on 1080×1840 canvas with 80px margins:
 | headline | 50px bold | ~18 chars | ≤20 chars (1 line) |
 | source | 36px | ~25 chars | ≤25 chars (1 line) |
 
-> **Important**: Total lines = title lines + subtitle lines + 1 gap + body lines + 3 source lines. Exceeding limits causes overflow.
+### Paragraph Rules (Critical)
+
+The content page has fixed height. Title + subtitle + body + source must all fit **above the bottom red line**.
+
+**Total available body area ≈ 6 lines** (after title, subtitle, gap, and source).
+
+| Paragraphs Count | Max Chars Per Paragraph | Max Lines Per Paragraph |
+|------------------|------------------------|------------------------|
+| 2 paragraphs | ~70 chars each | 2-3 lines each |
+| 3 paragraphs | ~50 chars each | ~2 lines each |
+
+**Recommended: 2 paragraphs, ≤50 chars each.** When in doubt, keep it short.
+
+> **Important**: Total lines = 1 title + 1 subtitle + 1 gap + body lines + 1 gap + 2 source lines. Exceeding limits causes overflow beyond the red line.
+
+## Content Extraction Rules (Critical)
+
+When generating article JSON from a source URL, follow these rules to produce audience-oriented content:
+
+### Writing Principles
+
+1. **Audience-first**: Viewers are ordinary citizens, not lawyers. Answer "这跟我有什么关系?" (how does this affect me?) in every paragraph.
+2. **Concrete over abstract**: Replace legal jargon with everyday scenarios. "按份共有财产" → "各付各的钱，各退各的份".
+3. **Actionable takeaway**: Each video should leave viewers with something they can DO or REMEMBER.
+4. **No filler**: Every word must earn its place. Cut procedural details, court names, case numbers — keep only what matters to the viewer.
+
+### Extraction Process
+
+```
+Step 1: Read the full article
+Step 2: Identify the ONE thing a viewer should remember
+Step 3: Write cover headline — the "hook" (why should I watch?)
+Step 4: Write 2 body paragraphs:
+   - Para 1: What happened? (specific scenario, relatable)
+   - Para 2: What's the takeaway? (what to do / what the rule is)
+Step 5: Highlight only the KEY PHRASE that carries the core message
+```
+
+### Highlight Rules
+
+- Highlight is a **glowing marker sweep** — it draws the eye. Use it on the ONE phrase that IS the takeaway.
+- NEVER highlight generic words like "法院", "判决", "法律".
+- Highlight the specific rule or outcome: "押金各退各的", "信用修复免费".
+- One highlight per paragraph maximum.
+
+### Paragraph Structure
+
+| Paragraph | Purpose | Example Pattern |
+|-----------|---------|------------------|
+| Para 1 | Concrete scenario (what happened) | [谁] [做了什么]，[结果怎样] |
+| Para 2 | Takeaway (what to do / remember) | [规则/建议]，[具体怎么做] |
+
+Para 1 can use `highlight` to mark the key fact. Para 2 can be `bold` if it's the critical warning/takeaway.
+
+### Bad vs Good Examples
+
+**BAD** (procedural, abstract, no audience value):
+```json
+{"text": "法院认定押金系按份共有财产，赖某某无权截留。但颜某某提前退租有过错，最终赖某某返还1200元。", "highlight": "按份共有财产"}
+```
+
+**GOOD** (concrete, actionable, audience-oriented):
+```json
+{"text": "各出的押金归各人，室友不能代扣。提前退租的违约金应找房东要，不能扣别人押金。", "highlight": "室友不能代扣"}
+```
+
+**BAD** (jargon-heavy):
+```json
+{"text": "失信被执行人主动履行义务后，可向法院申请信用修复，删除失信信息并解除限制消费。", "highlight": "申请信用修复"}
+```
+
+**GOOD** (plain language):
+```json
+{"text": "还清欠款后，去法院申请就能恢复信用，坐飞机高铁不再受限。", "highlight": "恢复信用"}
+```
 
 ## Visual Customization
 

@@ -97,6 +97,8 @@ async function main() {
   fs.mkdirSync(path.join(__dirname, "..", "output"), { recursive: true });
   const issueNum = String(cfg.meta.issueNumber).padStart(3, "0");
   const outFile = path.join(__dirname, "..", "output", `法务视频-${issueNum}期.mp4`);
+  const progressPath = path.join(__dirname, "..", "temp", `issue-${issueNum}`, "progress.json");
+  fs.mkdirSync(path.dirname(progressPath), { recursive: true });
 
   // Pick random background music
   const musicDir = path.join(__dirname, '..', 'assets', 'music');
@@ -157,10 +159,13 @@ async function main() {
 
     rendered += batch.length;
     process.stdout.write(`\r  ${Math.round(rendered / TOTAL_FRAMES * 100)}%`);
+    try { fs.writeFileSync(progressPath, JSON.stringify({ rendered, total: TOTAL_FRAMES, pct: Math.round(rendered / TOTAL_FRAMES * 100) })); } catch {}
   }
 
   ffmpeg.stdin.end();
   await new Promise((res, rej) => ffmpeg.on("close", c => c === 0 ? res() : rej(new Error(`exit ${c}`))));
+  // Mark progress complete
+  try { fs.writeFileSync(progressPath, JSON.stringify({ rendered: TOTAL_FRAMES, total: TOTAL_FRAMES, pct: 100, done: true })); } catch {}
 
   // Embed cover image as video poster
   const issueNum2 = String(cfg.meta.issueNumber).padStart(3, "0");

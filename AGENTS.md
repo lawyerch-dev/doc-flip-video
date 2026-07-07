@@ -216,8 +216,9 @@ Edit `template.json` for:
 
 ## Output Files
 
-- `output/output.mp4` — Final video
-- `assets/*.png` — Intermediate images
+- `output/法务视频-NNN期.mp4` — Final video
+- `temp/issue-NNN/` — Intermediate images (cover.png, content-plain.png, content-hl.png)
+- `configs/article-NNN.json` — Article configurations
 
 ## Requirements
 
@@ -247,11 +248,58 @@ docker-compose up -d
 ## Common Commands
 
 ```bash
-npm run build          # Generate video
-npm run server         # Start API server
+npm run build          # Generate video from config
+npm run studio         # Start Web Studio (port 3000)
+npm run server          # Start API server (same as studio)
 npm run mcp            # Start MCP server
 npm run demo           # Browser preview
 ```
+
+## Web Studio
+
+A visual web UI for the full pipeline: URL input → AI content → preview → video.
+
+### Quick Start
+
+```bash
+# Set your AI API key
+export AI_API_KEY="sk-..."
+export AI_BASE_URL="https://api.openai.com/v1"  # optional
+export AI_MODEL="gpt-4o-mini"                    # optional
+
+npm run studio
+# Open http://localhost:3000
+```
+
+### Workflow
+
+1. **粘贴链接** — 输入法律文章URL，点击“抓取内容”
+2. **确认抓取** — 查看抓取的原文，确认后点击“AI 生成内容”
+3. **编辑调整** — AI 自动生成标题/正文/高亮，可手动编辑或通过AI对话调整
+4. **预览图片** — 点击“预览图片”查看封面和正文效果
+5. **生成视频** — 点击“生成视频”，完成后在页面内预览和下载
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/generate` | Original video generation (returns MP4) |
+| GET | `/health` | Health check |
+| POST | `/api/scrape` | Scrape article from URL |
+| POST | `/api/generate-config` | AI generates config from text |
+| POST | `/api/refine` | AI refines config |
+| POST | `/api/preview` | Generate preview images |
+| POST | `/api/build` | Start video generation |
+| GET | `/api/status?issue=N` | Check video status |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AI_API_KEY` | (required) | OpenAI-compatible API key |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | API base URL |
+| `AI_MODEL` | `deepseek-v4-flash` | Model name |
+| `PORT` | `3000` | Server port |
 
 ## Troubleshooting
 

@@ -17,6 +17,10 @@ button.active { background: #e74c3c; border-color: #e74c3c; color: #fff; }
 input[type=range] { flex: 1; accent-color: #e74c3c; }
 .pct { font-size: 13px; color: #888; min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
 .status { margin-top: 12px; font-size: 13px; color: #666; text-align: center; }
+/* Embed mode: fill iframe, hide extras */
+body.embed { padding: 0; background: #000; }
+body.embed h1, body.embed .status, body.embed .controls { display: none; }
+body.embed .canvas-wrap { width: 100%; height: auto; aspect-ratio: 3/4; border-radius: 0; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -115,7 +119,8 @@ function makePlaceholder(text, bg, fg) {
 const texs = {};
 let loaded = 0, loadErrors = 0;
 const status = document.getElementById("status");
-const sources = { cover: "assets/page_cover.png", plain: "assets/page_content_plain.png", hl: "assets/page_content_hl.png" };
+const imgPrefix = new URLSearchParams(location.search).get('img') || 'assets';
+const sources = { cover: `${imgPrefix}/cover.png`, plain: `${imgPrefix}/content-plain.png`, hl: `${imgPrefix}/content-hl.png` };
 const placeholders = {
   cover: () => makePlaceholder("封面", "#c0392b", "#fff"),
   plain: () => makePlaceholder("正文", "#fdf6ec", "#1a1a1a"),
@@ -197,6 +202,27 @@ slider.oninput = () => {
   playing = false; if (rafId) cancelAnimationFrame(rafId);
   render(progress); updateUI();
 };
+
+// ── Autoplay on ?autoplay=1 ──
+if (new URLSearchParams(location.search).get('autoplay')) {
+  const waitForReady = setInterval(() => {
+    if (loaded >= 3) {
+      clearInterval(waitForReady);
+      setTimeout(() => {
+        switchEffect('curl');
+        const chain = setInterval(() => {
+          if (!playing) { clearInterval(chain); setTimeout(() => switchEffect('sweep'), 300); }
+        }, 50);
+      }, 300);
+    }
+  }, 100);
+}
+
+// ── Embed mode ──
+if (new URLSearchParams(location.search).get('embed')) {
+  document.body.classList.add('embed');
+}
+
 </script>
 </body>
 </html>

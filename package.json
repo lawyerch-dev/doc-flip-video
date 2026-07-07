@@ -5,6 +5,8 @@
     "build": "node src/build.mjs",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server.mjs",
+    "studio": "node src/server.mjs",
+    "dev": "nodemon --watch src --watch web -e mjs,html,js,css --delay 1 src/server.mjs",
     "mcp": "node src/mcp-server.mjs",
     "fonts": "bash scripts/download-fonts.sh"
   },
@@ -12,5 +14,8 @@
     "canvas": "^3.2.3",
     "jsbarcode": "^3.12.3",
     "puppeteer": "^25.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "issueNumber": 98,
+    "year": 2026,
+    "month": 7,
+    "day": 8,
+    "description": "test"
+  },
+  "timing": {
+    "settle": 1.2,
+    "cover": 2,
+    "curl": 2.5,
+    "sweep": 2,
+    "hold": 1,
+    "final": 2
+  },
+  "cover": {
+    "headline": "测试",
+    "source": "来源：测试"
+  },
+  "content": {
+    "title": "测试",
+    "subtitle": "测试",
+    "paragraphs": [
+      {
+        "text": "测试段落。",
+        "highlight": "测试"
+      }
+    ],
+    "source": "来源：测试"
+  }
+}

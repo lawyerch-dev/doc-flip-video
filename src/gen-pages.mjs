@@ -568,13 +568,21 @@ function resizeCanvas(srcCanvas, targetW, targetH) {
 (async () => {
 await loadQrImage();
 const coverCanvas = generateCover();
-fs.writeFileSync(path.join(ASSETS, "page_cover.png"), resizeCanvas(coverCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
-
 const { canvas: plainCanvas } = generateContent(false);
-fs.writeFileSync(path.join(ASSETS, "page_content_plain.png"), resizeCanvas(plainCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
-
 const { canvas: hlCanvas, hlPositions } = generateContent(true);
-fs.writeFileSync(path.join(ASSETS, "page_content_hl.png"), resizeCanvas(hlCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
 
-console.log(`✅ Generated: cover + content (plain & hl) + ${hlPositions.length} highlights`);
+const issueNum = String(A.meta.issueNumber).padStart(3, "0");
+const tempDir = path.join(__dirname, "..", "temp", `issue-${issueNum}`);
+fs.mkdirSync(tempDir, { recursive: true });
+
+const coverPath = path.join(tempDir, "cover.png");
+const plainPath = path.join(tempDir, "content-plain.png");
+const hlPath = path.join(tempDir, "content-hl.png");
+
+fs.writeFileSync(coverPath, resizeCanvas(coverCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
+fs.writeFileSync(plainPath, resizeCanvas(plainCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
+fs.writeFileSync(hlPath, resizeCanvas(hlCanvas, OUTPUT_W, OUTPUT_H).toBuffer("image/png"));
+
+console.log(`✅ Generated → temp/issue-${issueNum}/: cover.png, content-plain.png, content-hl.png`);
+console.log(`   Highlights: ${hlPositions.length}`);
 })();

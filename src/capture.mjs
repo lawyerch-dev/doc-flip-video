@@ -53,8 +53,9 @@ function startServer(dir, port) {
   const types = { ".html": "text/html", ".png": "image/png", ".ico": "image/x-icon" };
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
-      if (req.url === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      const fp = path.join(dir, req.url === "/" ? "src/renderer.html" : req.url);
+      const urlPath = req.url.split('?')[0];
+      if (urlPath === "/favicon.ico") { res.writeHead(204); res.end(); return; }
+      const fp = path.join(dir, urlPath === "/" ? "src/renderer.html" : urlPath);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(fp)] || "application/octet-stream" });
       fs.createReadStream(fp).pipe(res);
@@ -88,7 +89,8 @@ async function main() {
   page.on("error", err => console.error("  [page error]", err.message));
   page.on("crash", () => console.error("  [page crash]"));
 
-  await page.goto(`http://localhost:${port}/`, { waitUntil: "load", timeout: 15000 });
+  const imgPath = `temp/issue-${String(cfg.meta.issueNumber).padStart(3, "0")}`;
+  await page.goto(`http://localhost:${port}/?img=${encodeURIComponent(imgPath)}`, { waitUntil: "load", timeout: 15000 });
   await page.waitForFunction(() => window.__ready === true, { timeout: 15000 });
   console.log(`${TOTAL_FRAMES} frames (${TOTAL_SEC}s)...`);
 
@@ -161,7 +163,8 @@ async function main() {
   await new Promise((res, rej) => ffmpeg.on("close", c => c === 0 ? res() : rej(new Error(`exit ${c}`))));
 
   // Embed cover image as video poster
-  const coverPng = path.join(__dirname, '..', 'assets', 'page_cover.png');
+  const issueNum2 = String(cfg.meta.issueNumber).padStart(3, "0");
+  const coverPng = path.join(__dirname, '..', 'temp', `issue-${issueNum2}`, 'cover.png');
   if (fs.existsSync(coverPng)) {
     const tmpOut = outFile + '.tmp.mp4';
     const posterArgs = ['-y', '-i', outFile, '-i', coverPng,

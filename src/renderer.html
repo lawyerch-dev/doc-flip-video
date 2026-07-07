@@ -239,8 +239,10 @@ gl.bindTexture(gl.TEXTURE_2D, whiteTex);
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
 texs.white = whiteTex;
 
-// Load page images
-for (const [key, src] of Object.entries({ cover: 'assets/page_cover.png', plain: 'assets/page_content_plain.png', hl: 'assets/page_content_hl.png' })) {
+// Load page images — path prefix from URL param or default to assets/
+const imgPrefix = new URLSearchParams(location.search).get('img') || 'assets';
+const imgMap = { cover: `${imgPrefix}/cover.png`, plain: `${imgPrefix}/content-plain.png`, hl: `${imgPrefix}/content-hl.png` };
+for (const [key, src] of Object.entries(imgMap)) {
   const img = new Image();
   img.onload = () => {
     const tex = gl.createTexture();

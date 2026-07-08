@@ -245,7 +245,7 @@ async function handleBuild(req, res) {
 
   // If a template is specified, load it and write to TEMPLATE_PATH
   // so the build process picks it up (queue processes builds sequentially)
-  resolveTemplate(config.template);
+  resolveTemplate(config.meta?.template);
 
   // Enqueue the build job (queue handles config writing & processing)
   const jobId = enqueue(config);

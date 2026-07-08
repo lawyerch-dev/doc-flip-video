@@ -1,0 +1,328 @@
+import fs from "fs";
+import path from "path";
+import { execFileSync, execFile, execSync, spawn } from "child_process";
+import { randomUUID } from "crypto";
+
+import {
+  ROOT,
+  CONFIGS_DIR,
+  TEMP_DIR,
+  OUTPUT_DIR,
+  TEMPLATE_PATH,
+  json,
+  parseJson,
+  nextIssueNumber,
+  defaultTemplate,
+  DIRNAME,
+} from "../shared.mjs";
+
+// ── Image generation ──
+function generateImages(configPath) {
+  execFileSync("node", [path.join(DIRNAME, "gen-pages.mjs"), configPath], {
+    cwd: ROOT,
+    stdio: "pipe",
+    timeout: 15000,
+  });
+}
+
+// ── Video generation (returns job ID, runs async) ──
+function generateVideoAsync(configPath, issueNum) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "node",
+      [path.join(DIRNAME, "build.mjs"), configPath],
+      { cwd: ROOT, timeout: 120000 },
+      (err, stdout, stderr) => {
+        if (err) reject(new Error(stderr || err.message));
+        else resolve({ issueNum, stdout });
+      }
+    );
+  });
+}
+
+// ── Original generate function (preserved for POST /generate) ──
+function generateVideo(content) {
+  const jobId = randomUUID();
+  const jobDir = path.join(OUTPUT_DIR, jobId);
+  fs.mkdirSync(jobDir, { recursive: true });
+
+  const articlePath = path.join(jobDir, "article.json");
+  fs.writeFileSync(articlePath, JSON.stringify(content, null, 2));
+
+  const templatePath = path.join(jobDir, "template.json");
+  fs.writeFileSync(templatePath, JSON.stringify(defaultTemplate, null, 2));
+
+  const outputPath = path.join(jobDir, "output.mp4");
+
+  try {
+    execFileSync(
+      "node",
+      [path.join(DIRNAME, "build.mjs"), articlePath],
+      { cwd: ROOT, stdio: "pipe", timeout: 120000 }
+    );
+
+    const generatedPath = path.join(OUTPUT_DIR, "output.mp4");
+    if (fs.existsSync(generatedPath)) {
+      fs.renameSync(generatedPath, outputPath);
+    }
+
+    return { jobId, outputPath };
+  } catch (error) {
+    fs.rmSync(jobDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+/**
+ * Register build/video/image routes.
+ * Returns true if the route was handled, false otherwise.
+ */
+export function register(method, urlPath, req, res, params) {
+  // ── Original endpoint (preserved for MCP/Docker) ──
+  if (method === "POST" && urlPath === "/generate") {
+    return handleGenerate(req, res);
+  }
+
+  // ── Health check (preserved) ──
+  if (method === "GET" && urlPath === "/health") {
+    json(res, { status: "ok" });
+    return true;
+  }
+
+  // ── Preview images ──
+  if (method === "POST" && urlPath === "/api/preview") {
+    return handlePreview(req, res);
+  }
+
+  // ── Download images as zip ──
+  if (method === "GET" && urlPath.startsWith("/api/download-images/")) {
+    return handleDownloadImages(urlPath, res);
+  }
+
+  // ── SSE video build ──
+  if (method === "POST" && urlPath === "/api/build") {
+    return handleBuild(req, res);
+  }
+
+  // ── Check video status ──
+  if (method === "GET" && urlPath === "/api/status") {
+    return handleStatus(params, res);
+  }
+
+  return false;
+}
+
+// ── Route handlers ──
+
+async function handleGenerate(req, res) {
+  const content = await parseJson(req);
+  if (!content.meta || !content.cover || !content.content) {
+    json(res, { error: "Missing required fields: meta, cover, content" }, 400);
+    return true;
+  }
+  const { jobId, outputPath } = generateVideo(content);
+  const stat = fs.statSync(outputPath);
+  res.writeHead(200, {
+    "Content-Type": "video/mp4",
+    "Content-Length": stat.size,
+    "Content-Disposition": `attachment; filename="${jobId}.mp4"`,
+  });
+  fs.createReadStream(outputPath).pipe(res);
+  fs.createReadStream(outputPath).on("end", () => {
+    setTimeout(
+      () =>
+        fs.rmSync(path.join(OUTPUT_DIR, jobId), {
+          recursive: true,
+          force: true,
+        }),
+      5000
+    );
+  });
+  return true;
+}
+
+async function handlePreview(req, res) {
+  const config = await parseJson(req);
+  if (!config.meta) {
+    json(res, { error: "Invalid config" }, 400);
+    return true;
+  }
+  const issueNum = config.meta.issueNumber || nextIssueNumber();
+  config.meta.issueNumber = issueNum;
+  const configPath = path.join(
+    CONFIGS_DIR,
+    `article-${String(issueNum).padStart(3, "0")}.json`
+  );
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  generateImages(configPath);
+  const imgDir = `temp/issue-${String(issueNum).padStart(3, "0")}`;
+  json(res, {
+    issueNum,
+    images: {
+      cover: `/${imgDir}/cover.png`,
+      plain: `/${imgDir}/content-plain.png`,
+      hl: `/${imgDir}/content-hl.png`,
+    },
+  });
+  return true;
+}
+
+function handleDownloadImages(urlPath, res) {
+  const issueNum = urlPath.split("/").pop();
+  const padded = String(issueNum).padStart(3, "0");
+  const imgDir = path.join(TEMP_DIR, `issue-${padded}`);
+  const files = ["cover.png", "content-plain.png", "content-hl.png"].filter(
+    (f) => fs.existsSync(path.join(imgDir, f))
+  );
+  if (!files.length) {
+    json(res, { error: "No images found" }, 404);
+    return true;
+  }
+  const zipName = `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f-\u56fe\u7247.zip`;
+  const zipPath = path.join(TEMP_DIR, zipName);
+  try {
+    execSync(
+      `cd "${imgDir}" && zip -j "${zipPath}" ${files.join(" ")}`,
+      { stdio: "pipe" }
+    );
+    const stat = fs.statSync(zipPath);
+    res.writeHead(200, {
+      "Content-Type": "application/zip",
+      "Content-Length": stat.size,
+      "Content-Disposition": `attachment; filename="${encodeURIComponent(zipName)}"`,
+    });
+    fs.createReadStream(zipPath).pipe(res);
+    res.on("finish", () => {
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(zipPath);
+        } catch {}
+      }, 1000);
+    });
+  } catch (e) {
+    json(res, { error: "Failed to create zip: " + e.message }, 500);
+  }
+  return true;
+}
+
+async function handleBuild(req, res) {
+  const config = await parseJson(req);
+  if (!config.meta) {
+    json(res, { error: "Invalid config" }, 400);
+    return true;
+  }
+  const issueNum = config.meta.issueNumber || nextIssueNumber();
+  config.meta.issueNumber = issueNum;
+  const configPath = path.join(
+    CONFIGS_DIR,
+    `article-${String(issueNum).padStart(3, "0")}.json`
+  );
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+  // SSE: stream build logs to client
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+  });
+
+  const child = spawn(
+    "node",
+    [path.join(DIRNAME, "build.mjs"), configPath],
+    { cwd: ROOT, timeout: 120000 }
+  );
+  child.stdout.on("data", (d) => {
+    d.toString()
+      .split("\n")
+      .filter(Boolean)
+      .forEach((line) => {
+        // Clean: remove \r, strip ANSI codes
+        const clean = line
+          .replace(/\r/g, "")
+          .replace(/\x1b\[[0-9;]*m/g, "")
+          .trim();
+        if (clean && clean.length > 1 && !clean.match(/^[\s]*$/)) {
+          res.write(
+            `data: ${JSON.stringify({ type: "log", text: clean })}\n\n`
+          );
+        }
+      });
+  });
+  // Don't pipe stderr to client (ffmpeg noise)
+  child.stderr.on("data", (d) => {
+    const clean = d
+      .toString()
+      .replace(/\r/g, "")
+      .replace(/\x1b\[[0-9;]*m/g, "")
+      .trim();
+    // Only forward meaningful stderr (errors, not ffmpeg progress)
+    if (
+      clean &&
+      !clean.match(/^(frame=|\s*\d+%|.*kb\/s)/) &&
+      clean.length > 2
+    ) {
+      res.write(
+        `data: ${JSON.stringify({ type: "log", text: clean })}\n\n`
+      );
+    }
+  });
+  child.on("close", (code) => {
+    const padded = String(issueNum).padStart(3, "0");
+    const videoPath = path.join(
+      OUTPUT_DIR,
+      `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+    );
+    const ready = fs.existsSync(videoPath);
+    res.write(
+      `data: ${JSON.stringify({
+        type: "done",
+        code,
+        ready,
+        videoUrl: ready
+          ? `/output/\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+          : null,
+        issueNum,
+      })}\n\n`
+    );
+    res.end();
+  });
+  return true;
+}
+
+function handleStatus(params, res) {
+  const issueNum = params.get("issue");
+  if (!issueNum) {
+    json(res, { error: "Missing issue param" }, 400);
+    return true;
+  }
+  const padded = String(issueNum).padStart(3, "0");
+  const videoPath = path.join(
+    OUTPUT_DIR,
+    `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+  );
+  const exists = fs.existsSync(videoPath);
+  const stat = exists ? fs.statSync(videoPath) : null;
+  let progress = null;
+  if (!exists) {
+    try {
+      const progressFile = path.join(
+        TEMP_DIR,
+        `issue-${padded}`,
+        "progress.json"
+      );
+      if (fs.existsSync(progressFile)) {
+        progress = JSON.parse(fs.readFileSync(progressFile, "utf-8"));
+      }
+    } catch {}
+  }
+  json(res, {
+    issueNum,
+    ready: exists,
+    size: stat?.size || 0,
+    videoUrl: exists
+      ? `/output/\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+      : null,
+    progress,
+  });
+  return true;
+}

@@ -2,7 +2,7 @@ import http from "http";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { execFileSync, execFile, spawn } from "child_process";
+import { execFileSync, execFile, execSync, spawn } from "child_process";
 import { randomUUID } from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -629,6 +629,32 @@ const server = http.createServer(async (req, res) => {
           hl: `/${imgDir}/content-hl.png`,
         },
       });
+    }
+
+    if (method === "GET" && urlPath.startsWith("/api/download-images/")) {
+      const issueNum = urlPath.split("/").pop();
+      const padded = String(issueNum).padStart(3, "0");
+      const imgDir = path.join(TEMP_DIR, `issue-${padded}`);
+      const files = ["cover.png", "content-plain.png", "content-hl.png"].filter(f => fs.existsSync(path.join(imgDir, f)));
+      if (!files.length) return json(res, { error: "No images found" }, 404);
+      const zipName = `法务视频-${padded}期-图片.zip`;
+      const zipPath = path.join(TEMP_DIR, zipName);
+      try {
+        execSync(`cd "${imgDir}" && zip -j "${zipPath}" ${files.join(" ")}`, { stdio: "pipe" });
+        const stat = fs.statSync(zipPath);
+        res.writeHead(200, {
+          "Content-Type": "application/zip",
+          "Content-Length": stat.size,
+          "Content-Disposition": `attachment; filename="${encodeURIComponent(zipName)}"`,
+        });
+        fs.createReadStream(zipPath).pipe(res);
+        fs.createReadStream(zipPath).on("end", () => {
+          setTimeout(() => { try { fs.unlinkSync(zipPath); } catch {} }, 5000);
+        });
+      } catch (e) {
+        return json(res, { error: "Failed to create zip: " + e.message }, 500);
+      }
+      return;
     }
 
     if (method === "POST" && urlPath === "/api/save") {

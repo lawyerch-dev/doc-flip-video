@@ -371,6 +371,7 @@ textarea { resize: vertical; min-height: 56px; }
         <!-- Bottom actions -->
         <div style="display:flex;gap:8px;margin-top:16px">
           <button class="btn green" id="downloadBtn" onclick="doDownload()" style="flex:1">📥 下载视频</button>
+          <button class="btn green" onclick="doDownloadImages()" style="flex:1">🖼️ 下载图片</button>
           <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
           <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
         </div>
@@ -814,6 +815,12 @@ function doDownload() {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+function doDownloadImages() {
+  if (!config?.meta?.issueNumber) return toast('没有可下载的图片', 'error');
+  const issueNum = config.meta.issueNumber;
+  window.open(`/api/download-images/${issueNum}`, '_blank');
 }
 
 // ── Modal ──

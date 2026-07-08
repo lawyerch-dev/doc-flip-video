@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>法务视频工作台</title>
 <link rel="stylesheet" href="/css/style.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
 <div class="app">
@@ -12,7 +13,8 @@
     <h1><span>法务视频</span>工作台</h1>
     <div class="header-actions">
       <span class="ai-badge" id="aiStatus">检查中...</span>
-      <button class="gear-btn" onclick="toggleSettings()">⚙</button>
+      <button class="theme-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i></button>
+      <button class="gear-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i></button>
     </div>
   </header>
 
@@ -52,7 +54,7 @@
       <div class="url-bar">
         <input type="text" id="urlInput" placeholder="粘贴法律文章链接..." onkeydown="if(event.key==='Enter')doScrape()" />
         <button class="btn" id="scrapeBtn" onclick="doScrape()">抓取</button>
-        <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap">📋 示例</button>
+        <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap"><i data-lucide="clipboard-list" class="icon"></i> 示例</button>
       </div>
       <div class="scraped-box" id="scrapedBox" style="display:none">
         <label style="margin-bottom:6px">抓取结果 — <span id="scrapedTitle" style="color:var(--text);font-weight:600"></span></label>
@@ -66,14 +68,14 @@
     </div>
     <!-- History -->
     <div class="card" style="margin-top:14px" id="historyCard">
-      <h2>📋 历史项目</h2>
+      <h2><i data-lucide="history" class="icon"></i> 历史项目</h2>
       <div id="historyList" style="max-height:480px;overflow-y:auto"></div>
     </div>
   </div>
   <div class="step-panel" id="panel2">
     <!-- Meta section -->
     <div class="card" style="margin-bottom:14px">
-      <h2>📋 基本信息</h2>
+      <h2><i data-lucide="file-text" class="icon"></i> 基本信息</h2>
       <div class="form-grid">
         <div>
           <label>期号</label>
@@ -152,8 +154,8 @@
 
     <!-- Actions -->
     <div class="btn-group" style="justify-content:flex-end">
-      <button class="btn secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容">🔄 重新生成</button>
-      <button class="btn secondary" onclick="doSave()">💾 保存</button>
+      <button class="btn secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+      <button class="btn secondary" onclick="doSave()"><i data-lucide="save" class="icon"></i> 保存</button>
       <button class="btn blue" onclick="goStep(3)">下一步 →</button>
     </div>
   </div>
@@ -178,7 +180,7 @@
         </div>
         <!-- Right: Animation Preview -->
         <div class="preview-col">
-          <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">🎬 动画预览</label>
+          <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block"><i data-lucide="play" class="icon"></i> 动画预览</label>
           <div class="anim-wrap">
             <iframe id="animFrame" src="about:blank"></iframe>
           </div>
@@ -186,7 +188,7 @@
       </div>
       <div class="btn-group" style="justify-content:flex-end;margin-top:12px;flex-shrink:0">
         <button class="btn secondary" onclick="goStep(2)">← 返回编辑</button>
-        <button class="btn green" onclick="doBuild()">🎬 生成视频</button>
+        <button class="btn green" onclick="doBuild()"><i data-lucide="video" class="icon"></i> 生成视频</button>
       </div>
     </div>
   </div>
@@ -209,20 +211,20 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
           <!-- Left: Publish info -->
           <div>
-            <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">📋 发布信息</h3>
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="share-2" class="icon"></i> 发布信息</h3>
             <div style="margin-bottom:12px">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <label style="font-size:12px;font-weight:600">视频标题</label>
-                <button class="btn small secondary" onclick="copyText('publishTitle')">📋 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo(this)">🔄 重新生成</button>
+                <button class="btn small secondary" onclick="copyText('publishTitle')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
               </div>
               <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
             </div>
             <div style="margin-bottom:0">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <label style="font-size:12px;font-weight:600">视频介绍</label>
-                <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo(this)">🔄 重新生成</button>
+                <button class="btn small secondary" onclick="copyText('publishDesc')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
               </div>
               <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
             </div>
@@ -234,8 +236,8 @@
         </div>
         <!-- Bottom actions -->
         <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="btn green" id="downloadBtn" onclick="doDownload()" style="flex:1">📥 下载视频</button>
-          <button class="btn green" onclick="doDownloadImages()" style="flex:1">🖼️ 下载图片</button>
+          <button class="btn green" id="downloadBtn" onclick="doDownload()" style="flex:1"><i data-lucide="download" class="icon"></i> 下载视频</button>
+          <button class="btn green" onclick="doDownloadImages()" style="flex:1"><i data-lucide="image" class="icon"></i> 下载图片</button>
           <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
           <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
         </div>
@@ -246,7 +248,7 @@
 
 <!-- Settings panel -->
 <div class="settings-panel" id="settingsPanel">
-  <button class="close-btn" onclick="toggleSettings()">✕</button>
+  <button class="close-btn" onclick="toggleSettings()"><i data-lucide="x" class="icon"></i></button>
   <h2>设置</h2>
   <div class="settings-group">
     <label>AI API Key</label>
@@ -277,7 +279,7 @@
 <div class="modal-overlay" id="modal" onclick="this.classList.remove('show')"><img id="modalImg" /></div>
 
 <script type="module">
-import { state, setStatus, goStep, toast, updateCC, showModal, copyText } from '/js/app.mjs';
+import { state, setStatus, goStep, toast, updateCC, showModal, copyText, toggleTheme } from '/js/app.mjs';
 import { api } from '/js/api.mjs';
 import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample } from '/js/step1-scrape.mjs';
 import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
@@ -291,7 +293,7 @@ Object.assign(window, {
   doPreview, switchTab, doChat,
   doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
   loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,
-  toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis,
+  toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis, toggleTheme,
   goStep, toast, showModal, copyText, updateCC,
   doSave: async () => {
     state.config = readForm();
@@ -308,9 +310,12 @@ Object.assign(window, {
 });
 
 // Init
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
 loadTemplates();
 loadSettingsUI();
 loadHistory();
+if (window.lucide) lucide.createIcons();
 </script>
 </body>
 </html>

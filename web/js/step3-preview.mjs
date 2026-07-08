@@ -38,7 +38,7 @@ export async function doChat() {
   state.chatHistory.push({ role:'user', content:msg });
   if (!state.config) { addMsg('请先完成前面的步骤。', 'ai'); return; }
   setStatus('AI 处理中...', 'working');
-  const thinkingEl = addMsg('⏳ 正在思考...', 'ai thinking');
+  const thinkingEl = addMsg('正在思考...', 'ai thinking');
   try {
     const refined = await api('/api/refine', { config: state.config, message:msg, history:state.chatHistory.slice(-6) });
     thinkingEl.remove();

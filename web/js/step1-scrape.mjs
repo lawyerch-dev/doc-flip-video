@@ -52,7 +52,7 @@ export async function doRegenerate() {
   if (!confirm('重新生成将覆盖当前所有编辑内容，确定继续？')) return;
   const btn = document.getElementById('regenBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ 生成中...';
+  btn.textContent = '生成中...';
   setStatus('AI 正在重新生成内容...', 'working');
   try {
     state.config = await api('/api/generate-config', {
@@ -66,7 +66,7 @@ export async function doRegenerate() {
     setStatus('重新生成失败: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = '🔄 重新生成';
+    btn.textContent = '重新生成';
   }
 }
 

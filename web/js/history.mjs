@@ -126,7 +126,7 @@ export async function loadHistory() {
     container.innerHTML = list.map(e => `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="background:var(--red);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap">第${String(e.issueNum).padStart(3,'0')}期</span>
-        ${e.videoReady ? '<span style="background:#16a34a;color:#fff;font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;white-space:nowrap">🎬 已生成</span>' : ''}
+        ${e.videoReady ? '<span style="background:#16a34a;color:#fff;font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> 已生成</span>' : ''}
         <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.headline}</span>
         <span style="font-size:11px;color:var(--muted);white-space:nowrap">${e.date}</span>
         ${e.videoReady ? `<button class="btn small" style="background:#16a34a;border-color:#16a34a" onclick="viewVideo(${e.issueNum})">查看视频</button>` : ''}

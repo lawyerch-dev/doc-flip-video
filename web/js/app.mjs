@@ -67,6 +67,19 @@ export function goStep(n) {
   }
 }
 
+// ── Theme ──
+export function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  // Update icon
+  const icon = document.querySelector('.theme-btn i');
+  if (icon) icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun-moon');
+  if (window.lucide) lucide.createIcons();
+}
+
 // ── Modal ──
 export function showModal(src) {
   document.getElementById('modalImg').src = src;

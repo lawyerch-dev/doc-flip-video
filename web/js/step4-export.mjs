@@ -158,7 +158,7 @@ export function populatePublishInfo() {
 
 export async function regeneratePublishInfo(btn) {
   if (!state.config) { toast('请先加载配置', 'error'); return; }
-  btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  btn.disabled = true; btn.textContent = '生成中...';
   try {
     const padded = String(state.config.meta?.issueNumber || 0).padStart(3, '0');
     const headline = state.config.cover?.headline || '';
@@ -170,5 +170,5 @@ export async function regeneratePublishInfo(btn) {
     if (result?.desc) document.getElementById('publishDesc').value = result.desc;
     toast('已重新生成', 'success');
   } catch(e) { toast('生成失败: '+e.message, 'error'); }
-  finally { btn.disabled = false; btn.textContent = '🔄 重新生成'; }
+  finally { btn.disabled = false; btn.textContent = '重新生成'; }
 }

@@ -2,7 +2,7 @@
   "name": "doc-flip-video",
   "version": "1.0.0",
   "scripts": {
-    "build": "node src/build.mjs",
+    "build": "node pipeline/build.mjs",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server/index.mjs",
     "studio": "node src/server/index.mjs",

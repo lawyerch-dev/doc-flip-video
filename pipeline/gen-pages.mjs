@@ -24,7 +24,7 @@ if (fs.existsSync(FONTS_DIR)) {
   }
 }
 
-const templatePath = process.argv[3] || path.join(__dirname, "..", "template.json");
+const templatePath = process.argv[3] || path.join(__dirname, "..", "templates", "default.json");
 const articlePath = process.argv[2] || path.join(__dirname, "..", "article.json");
 const T = JSON.parse(fs.readFileSync(templatePath, "utf-8"));
 const A = JSON.parse(fs.readFileSync(articlePath, "utf-8"));

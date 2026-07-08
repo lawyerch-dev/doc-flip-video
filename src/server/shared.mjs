@@ -12,7 +12,7 @@ const CONFIGS_DIR = path.join(ROOT, "configs");
 const TEMP_DIR = path.join(ROOT, "temp");
 const OUTPUT_DIR = path.join(ROOT, "output");
 const TEMPLATES_DIR = path.join(ROOT, "templates");
-const TEMPLATE_PATH = path.join(ROOT, "template.json");
+const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
 
 const SETTINGS_PATH = path.join(CONFIGS_DIR, "settings.json");
 

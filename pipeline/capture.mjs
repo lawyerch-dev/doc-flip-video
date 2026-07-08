@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FPS = 60;
 
 // Load template + config
-const templatePath = path.join(__dirname, '..', 'template.json');
+const templatePath = path.join(__dirname, '..', 'templates', 'default.json');
 const tmpl = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
 const W = tmpl.style.width, H = tmpl.style.height;
 
@@ -55,7 +55,7 @@ function startServer(dir, port) {
     const srv = http.createServer((req, res) => {
       const urlPath = req.url.split('?')[0];
       if (urlPath === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      const fp = path.join(dir, urlPath === "/" ? "src/renderer.html" : urlPath);
+      const fp = path.join(dir, urlPath === "/" ? "pipeline/renderer.html" : urlPath);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(fp)] || "application/octet-stream" });
       fs.createReadStream(fp).pipe(res);

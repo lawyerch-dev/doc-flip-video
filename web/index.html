@@ -358,6 +358,7 @@ textarea { resize: vertical; min-height: 56px; }
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <label style="font-size:12px;font-weight:600">视频介绍</label>
                 <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo()">🔄 重新生成</button>
               </div>
               <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
             </div>

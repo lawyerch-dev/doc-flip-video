@@ -648,8 +648,8 @@ const server = http.createServer(async (req, res) => {
           "Content-Disposition": `attachment; filename="${encodeURIComponent(zipName)}"`,
         });
         fs.createReadStream(zipPath).pipe(res);
-        fs.createReadStream(zipPath).on("end", () => {
-          setTimeout(() => { try { fs.unlinkSync(zipPath); } catch {} }, 5000);
+        res.on("finish", () => {
+          setTimeout(() => { try { fs.unlinkSync(zipPath); } catch {} }, 1000);
         });
       } catch (e) {
         return json(res, { error: "Failed to create zip: " + e.message }, 500);

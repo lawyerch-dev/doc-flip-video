@@ -540,7 +540,9 @@ const server = http.createServer(async (req, res) => {
       const configs = files.map(f => {
         try {
           const data = JSON.parse(fs.readFileSync(path.join(CONFIGS_DIR, f), "utf-8"));
-          return { issueNum: data.meta?.issueNumber, headline: data.cover?.headline, date: `${data.meta?.year}-${String(data.meta?.month).padStart(2,'0')}-${String(data.meta?.day).padStart(2,'0')}`, filename: f };
+          const padded = String(data.meta?.issueNumber).padStart(3, '0');
+          const videoReady = fs.existsSync(path.join(OUTPUT_DIR, `法务视频-${padded}期.mp4`));
+          return { issueNum: data.meta?.issueNumber, headline: data.cover?.headline, date: `${data.meta?.year}-${String(data.meta?.month).padStart(2,'0')}-${String(data.meta?.day).padStart(2,'0')}`, filename: f, videoReady };
         } catch { return null; }
       }).filter(Boolean);
       return json(res, configs);

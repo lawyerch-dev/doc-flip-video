@@ -249,8 +249,9 @@ docker-compose up -d
 
 ```bash
 npm run build          # Generate video from config
-npm run studio         # Start Web Studio (port 3000)
-npm run server          # Start API server (same as studio)
+npm run studio         # Start Web Studio (port 33011)
+npm run server         # Start API server (same as studio)
+npm run dev            # Dev mode with hot reload
 npm run mcp            # Start MCP server
 npm run demo           # Browser preview
 ```

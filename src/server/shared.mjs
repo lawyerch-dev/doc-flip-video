@@ -11,6 +11,7 @@ const WEB_DIR = path.join(ROOT, "web");
 const CONFIGS_DIR = path.join(ROOT, "configs");
 const TEMP_DIR = path.join(ROOT, "temp");
 const OUTPUT_DIR = path.join(ROOT, "output");
+const TEMPLATES_DIR = path.join(ROOT, "templates");
 const TEMPLATE_PATH = path.join(ROOT, "template.json");
 
 const SETTINGS_PATH = path.join(CONFIGS_DIR, "settings.json");
@@ -81,6 +82,10 @@ function json(res, data, status = 200) {
   res.end(JSON.stringify(data));
 }
 
+export function errorResponse(res, message, status = 500, details = null) {
+  json(res, { error: message, details, timestamp: new Date().toISOString() }, status);
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -108,7 +113,7 @@ function today() {
 }
 
 // ── Exports ──
-export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, TEMPLATE_PATH };
+export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, TEMPLATES_DIR, TEMPLATE_PATH };
 export { __dirname as DIRNAME };
 export { MIME, json, readBody, parseJson, nextIssueNumber, today, defaultTemplate };
 export { http, fs, path, fileURLToPath, execFileSync, execFile, execSync, spawn, randomUUID };

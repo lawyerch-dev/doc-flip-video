@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { CONFIGS_DIR, OUTPUT_DIR, json, parseJson, nextIssueNumber, getSettings, updateSettings, saveSettings } from "../shared.mjs";
+import { CONFIGS_DIR, OUTPUT_DIR, TEMPLATES_DIR, json, errorResponse, parseJson, nextIssueNumber, getSettings, updateSettings, saveSettings } from "../shared.mjs";
 
 /**
  * Register project/config route handlers.
@@ -33,6 +33,31 @@ export async function register(method, urlPath, req, res, params) {
     return true;
   }
 
+  // ── GET /api/templates — list available templates ──
+  if (method === "GET" && urlPath === "/api/templates") {
+    const files = fs.readdirSync(TEMPLATES_DIR)
+      .filter(f => f.endsWith(".json"))
+      .sort();
+    const templates = files.map(f => {
+      const name = f.replace(/\.json$/, "");
+      const isDefault = name === "template";
+      // Read description from the template's top.logo.text if available
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(TEMPLATES_DIR, f), "utf-8"));
+        return {
+          id: name,
+          name: isDefault ? "默认（红色头部）" : name,
+          logo: data.top?.logo?.text || "",
+          default: isDefault,
+        };
+      } catch {
+        return { id: name, name, logo: "", default: isDefault };
+      }
+    });
+    json(res, templates);
+    return true;
+  }
+
   // ── DELETE /api/configs/:num — delete a config ──
   if (method === "DELETE" && urlPath.startsWith("/api/configs/")) {
     const num = urlPath.split("/").pop();
@@ -42,7 +67,7 @@ export async function register(method, urlPath, req, res, params) {
       fs.unlinkSync(filePath);
       json(res, { deleted: num });
     } else {
-      json(res, { error: "Not found" }, 404);
+      errorResponse(res, "Not found", 404);
     }
     return true;
   }
@@ -72,7 +97,7 @@ export async function register(method, urlPath, req, res, params) {
   if (method === "POST" && urlPath === "/api/save") {
     const config = await parseJson(req);
     if (!config.meta) {
-      json(res, { error: "Invalid config" }, 400);
+      errorResponse(res, "Invalid config", 400);
       return true;
     }
     const issueNum = config.meta.issueNumber || nextIssueNumber();

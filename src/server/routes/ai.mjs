@@ -1,4 +1,4 @@
-import { getSettings, json, parseJson, nextIssueNumber, today } from "../shared.mjs";
+import { getSettings, json, errorResponse, parseJson, nextIssueNumber, today } from "../shared.mjs";
 import { aiChat } from "../services/ai.mjs";
 
 // ── AI: Generate article config from scraped content ──
@@ -224,7 +224,7 @@ export async function register(method, urlPath, req, res, params) {
   if (method === "POST" && urlPath === "/api/generate-config") {
     const { text, sourceInfo } = await parseJson(req);
     if (!text) {
-      json(res, { error: "Missing text" }, 400);
+      errorResponse(res, "Missing text", 400);
       return true;
     }
     const config = await generateConfig(text, sourceInfo || "");
@@ -235,7 +235,7 @@ export async function register(method, urlPath, req, res, params) {
   if (method === "POST" && urlPath === "/api/refine") {
     const { config, message, history } = await parseJson(req);
     if (!config || !message) {
-      json(res, { error: "Missing config or message" }, 400);
+      errorResponse(res, "Missing config or message", 400);
       return true;
     }
     const refined = await refineConfig(config, message, history || []);
@@ -246,7 +246,7 @@ export async function register(method, urlPath, req, res, params) {
   if (method === "POST" && urlPath === "/api/generate-publish-info") {
     const { articleText, issueNum } = await parseJson(req);
     if (!articleText) {
-      json(res, { error: "Missing articleText" }, 400);
+      errorResponse(res, "Missing articleText", 400);
       return true;
     }
     const result = await aiChat([
@@ -255,7 +255,7 @@ export async function register(method, urlPath, req, res, params) {
     ], 0.5);
     const jsonMatch = result.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      json(res, { error: "AI did not return valid JSON" }, 500);
+      errorResponse(res, "AI did not return valid JSON", 500);
       return true;
     }
     json(res, JSON.parse(jsonMatch[0]));

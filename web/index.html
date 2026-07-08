@@ -132,6 +132,12 @@
           <div class="char-count" id="cc_subtitle"></div>
         </div>
       </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600">模板风格</label>
+        <select id="f_template" style="width:100%" onchange="state.dirty=true">
+          <option value="default">🔴 红头文件（默认）</option>
+        </select>
+      </div>
       <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:block">段落内容</label>
       <div id="paragraphs"></div>
     </div>
@@ -195,6 +201,9 @@
           <span id="buildTimer" style="margin-left:12px;color:var(--text);font-size:16px;font-weight:600"></span>
         </div>
         <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
+        <div id="buildActions" style="text-align:center;margin-top:16px">
+          <button class="btn secondary" id="cancelBuildBtn" onclick="cancelBuild()" style="color:var(--danger);border-color:var(--danger)">取消生成</button>
+        </div>
       </div>
       <div id="videoResult" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
@@ -271,16 +280,16 @@
 import { state, setStatus, goStep, toast, updateCC, showModal, copyText } from '/js/app.mjs';
 import { api } from '/js/api.mjs';
 import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample } from '/js/step1-scrape.mjs';
-import { populateForm, readForm } from '/js/step2-edit.mjs';
+import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
 import { doPreview, switchTab, doChat, addMsg } from '/js/step3-preview.mjs';
-import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo } from '/js/step4-export.mjs';
+import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild } from '/js/step4-export.mjs';
 import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis } from '/js/history.mjs';
 
 // Expose to HTML onclick handlers
 Object.assign(window, {
   doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample,
   doPreview, switchTab, doChat,
-  doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo,
+  doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
   loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,
   toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis,
   goStep, toast, showModal, copyText, updateCC,
@@ -299,6 +308,7 @@ Object.assign(window, {
 });
 
 // Init
+loadTemplates();
 loadSettingsUI();
 loadHistory();
 </script>

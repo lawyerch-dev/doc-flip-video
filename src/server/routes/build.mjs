@@ -8,13 +8,17 @@ import {
   CONFIGS_DIR,
   TEMP_DIR,
   OUTPUT_DIR,
+  TEMPLATES_DIR,
   TEMPLATE_PATH,
   json,
+  errorResponse,
   parseJson,
   nextIssueNumber,
   defaultTemplate,
   DIRNAME,
 } from "../shared.mjs";
+
+import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
@@ -74,8 +78,28 @@ function generateVideo(content) {
 }
 
 /**
+ * Resolve and apply a named template. Writes the resolved template to
+ * TEMPLATE_PATH so the build process (gen-pages.mjs) picks it up from the
+ * standard location. Builds are processed sequentially by the queue, so
+ * overwriting TEMPLATE_PATH is safe. If no template name is given, writes
+ * the default template (red header style).
+ */
+function resolveTemplate(templateName) {
+  if (templateName && typeof templateName === "string") {
+    const templateFile = path.join(TEMPLATES_DIR, `${templateName}.json`);
+    if (fs.existsSync(templateFile)) {
+      const templateData = JSON.parse(fs.readFileSync(templateFile, "utf-8"));
+      fs.writeFileSync(TEMPLATE_PATH, JSON.stringify(templateData, null, 2));
+      return;
+    }
+  }
+  // Fallback to default red-header template
+  fs.writeFileSync(TEMPLATE_PATH, JSON.stringify(defaultTemplate, null, 2));
+}
+
+/**
  * Register build/video/image routes.
- * Returns true if the route was handled, false otherwise.
+ * Returns true if the request was handled, false otherwise.
  */
 export function register(method, urlPath, req, res, params) {
   // ── Original endpoint (preserved for MCP/Docker) ──
@@ -99,9 +123,14 @@ export function register(method, urlPath, req, res, params) {
     return handleDownloadImages(urlPath, res);
   }
 
-  // ── SSE video build ──
+  // ── Enqueue video build ──
   if (method === "POST" && urlPath === "/api/build") {
     return handleBuild(req, res);
+  }
+
+  // ── Cancel running build ──
+  if (method === "POST" && urlPath === "/api/build/cancel") {
+    return handleCancel(req, res);
   }
 
   // ── Check video status ──
@@ -117,7 +146,7 @@ export function register(method, urlPath, req, res, params) {
 async function handleGenerate(req, res) {
   const content = await parseJson(req);
   if (!content.meta || !content.cover || !content.content) {
-    json(res, { error: "Missing required fields: meta, cover, content" }, 400);
+    errorResponse(res, "Missing required fields: meta, cover, content", 400);
     return true;
   }
   const { jobId, outputPath } = generateVideo(content);
@@ -144,7 +173,7 @@ async function handleGenerate(req, res) {
 async function handlePreview(req, res) {
   const config = await parseJson(req);
   if (!config.meta) {
-    json(res, { error: "Invalid config" }, 400);
+    errorResponse(res, "Invalid config", 400);
     return true;
   }
   const issueNum = config.meta.issueNumber || nextIssueNumber();
@@ -175,7 +204,7 @@ function handleDownloadImages(urlPath, res) {
     (f) => fs.existsSync(path.join(imgDir, f))
   );
   if (!files.length) {
-    json(res, { error: "No images found" }, 404);
+    errorResponse(res, "No images found", 404);
     return true;
   }
   const zipName = `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f-\u56fe\u7247.zip`;
@@ -200,7 +229,7 @@ function handleDownloadImages(urlPath, res) {
       }, 1000);
     });
   } catch (e) {
-    json(res, { error: "Failed to create zip: " + e.message }, 500);
+    errorResponse(res, "Failed to create zip: " + e.message, 500);
   }
   return true;
 }
@@ -208,100 +237,40 @@ function handleDownloadImages(urlPath, res) {
 async function handleBuild(req, res) {
   const config = await parseJson(req);
   if (!config.meta) {
-    json(res, { error: "Invalid config" }, 400);
+    errorResponse(res, "Invalid config", 400);
     return true;
   }
   const issueNum = config.meta.issueNumber || nextIssueNumber();
   config.meta.issueNumber = issueNum;
-  const configPath = path.join(
-    CONFIGS_DIR,
-    `article-${String(issueNum).padStart(3, "0")}.json`
-  );
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
-  // SSE: stream build logs to client
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-  });
+  // If a template is specified, load it and write to TEMPLATE_PATH
+  // so the build process picks it up (queue processes builds sequentially)
+  resolveTemplate(config.template);
 
-  const child = spawn(
-    "node",
-    [path.join(DIRNAME, "build.mjs"), configPath],
-    { cwd: ROOT, timeout: 120000 }
-  );
-  child.stdout.on("data", (d) => {
-    d.toString()
-      .split("\n")
-      .filter(Boolean)
-      .forEach((line) => {
-        // Clean: remove \r, strip ANSI codes
-        const clean = line
-          .replace(/\r/g, "")
-          .replace(/\x1b\[[0-9;]*m/g, "")
-          .trim();
-        if (clean && clean.length > 1 && !clean.match(/^[\s]*$/)) {
-          res.write(
-            `data: ${JSON.stringify({ type: "log", text: clean })}\n\n`
-          );
-        }
-      });
-  });
-  // Don't pipe stderr to client (ffmpeg noise)
-  child.stderr.on("data", (d) => {
-    const clean = d
-      .toString()
-      .replace(/\r/g, "")
-      .replace(/\x1b\[[0-9;]*m/g, "")
-      .trim();
-    // Only forward meaningful stderr (errors, not ffmpeg progress)
-    if (
-      clean &&
-      !clean.match(/^(frame=|\s*\d+%|.*kb\/s)/) &&
-      clean.length > 2
-    ) {
-      res.write(
-        `data: ${JSON.stringify({ type: "log", text: clean })}\n\n`
-      );
-    }
-  });
-  child.on("close", (code) => {
-    const padded = String(issueNum).padStart(3, "0");
-    const videoPath = path.join(
-      OUTPUT_DIR,
-      `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
-    );
-    const ready = fs.existsSync(videoPath);
-    res.write(
-      `data: ${JSON.stringify({
-        type: "done",
-        code,
-        ready,
-        videoUrl: ready
-          ? `/output/\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
-          : null,
-        issueNum,
-      })}\n\n`
-    );
-    res.end();
-  });
+  // Enqueue the build job (queue handles config writing & processing)
+  const jobId = enqueue(config);
+
+  json(res, { jobId, issueNum });
   return true;
 }
 
 function handleStatus(params, res) {
   const issueNum = params.get("issue");
   if (!issueNum) {
-    json(res, { error: "Missing issue param" }, 400);
+    errorResponse(res, "Missing issue param", 400);
     return true;
   }
   const padded = String(issueNum).padStart(3, "0");
   const videoPath = path.join(
     OUTPUT_DIR,
-    `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+    `法务视频-${padded}期.mp4`
   );
   const exists = fs.existsSync(videoPath);
   const stat = exists ? fs.statSync(videoPath) : null;
+
+  // Check queue for active job
+  const queueJob = listJobs().find(j => j.issueNum === Number(issueNum)) || null;
+
   let progress = null;
   if (!exists) {
     try {
@@ -315,14 +284,36 @@ function handleStatus(params, res) {
       }
     } catch {}
   }
+
   json(res, {
     issueNum,
     ready: exists,
     size: stat?.size || 0,
     videoUrl: exists
-      ? `/output/\u6cd5\u52a1\u89c6\u9891-${padded}\u671f.mp4`
+      ? `/output/法务视频-${padded}期.mp4`
       : null,
     progress,
+    queueJob: queueJob
+      ? {
+          jobId: queueJob.jobId,
+          status: queueJob.status,
+          startedAt: queueJob.startedAt,
+          finishedAt: queueJob.finishedAt,
+          progress: queueJob.progress,
+          error: queueJob.error,
+        }
+      : null,
   });
+  return true;
+}
+
+async function handleCancel(req, res) {
+  const body = await parseJson(req);
+  if (!body.jobId) {
+    errorResponse(res, "Missing jobId", 400);
+    return true;
+  }
+  const result = cancelJob(body.jobId);
+  json(res, result);
   return true;
 }

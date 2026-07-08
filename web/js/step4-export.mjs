@@ -4,68 +4,106 @@ import { populateForm, readForm } from './step2-edit.mjs';
 
 // ── State ──
 let currentVideoUrl = '';
+let currentJobId = null;
+let cancelBuildHandler = false;
 
 // ── Step 4: Build ──
 export async function doBuild() {
   state.config = readForm();
   if (!state.config) return setStatus('没有可生成的内容', 'error');
   goStep(4);
-  document.getElementById('buildStatus').style.display = '';
-  document.getElementById('videoResult').style.display = 'none';
-  document.getElementById('buildLog').textContent = '';
-  document.getElementById('buildTimer').textContent = '';
+
+  const buildStatus = document.getElementById('buildStatus');
+  const videoResult = document.getElementById('videoResult');
+  const buildLog = document.getElementById('buildLog');
+  const buildTimer = document.getElementById('buildTimer');
+  const buildActions = document.getElementById('buildActions');
+
+  buildStatus.style.display = '';
+  videoResult.style.display = 'none';
+  buildLog.textContent = '';
+  buildTimer.textContent = '';
+  if (buildActions) buildActions.style.display = '';
   setStatus('视频生成中...', 'working');
+
+  cancelBuildHandler = false;
+  currentJobId = null;
   const startTime = Date.now();
   const timerInterval = setInterval(() => {
-    document.getElementById('buildTimer').textContent = `已用时 ${Math.round((Date.now() - startTime) / 1000)}s`;
+    if (cancelBuildHandler) return;
+    buildTimer.textContent = `已用时 ${Math.round((Date.now() - startTime) / 1000)}s`;
   }, 1000);
 
   try {
-    const resp = await fetch('/api/build', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state.config),
-    });
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
+    // 1. POST /api/build to trigger the build
+    const { jobId, issueNum } = await api('/api/build', state.config);
+    currentJobId = jobId;
+    buildLog.textContent += `任务已提交 (第 ${issueNum} 期)\n`;
+    state.config.meta.issueNumber = issueNum;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      // Process complete SSE messages (terminated by \n\n)
-      while (buffer.includes('\n\n')) {
-        const idx = buffer.indexOf('\n\n');
-        const msg = buffer.slice(0, idx).trim();
-        buffer = buffer.slice(idx + 2);
-        if (!msg.startsWith('data: ')) continue;
-        try {
-          const data = JSON.parse(msg.slice(6));
-          if (data.type === 'log') {
-            const logEl = document.getElementById('buildLog');
-            logEl.textContent += data.text + '\n';
-            logEl.scrollTop = logEl.scrollHeight;
-          } else if (data.type === 'done') {
-            clearInterval(timerInterval);
-            const elapsed = Math.round((Date.now() - startTime) / 1000);
-            if (data.ready && data.videoUrl) {
-              document.getElementById('buildStatus').style.display = 'none';
-              document.getElementById('videoResult').style.display = '';
-              document.getElementById('videoPlayer').src = data.videoUrl;
-              currentVideoUrl = data.videoUrl;
-              setStatus(`视频已完成 (${elapsed}s)`, 'done');
-              populatePublishInfo();
-            } else {
-              setStatus(`生成失败 (${elapsed}s)`, 'error');
-            }
-          }
-        } catch {}
+    // 2. Poll GET /api/status every 2 seconds
+    let pending = true;
+    while (pending && !cancelBuildHandler) {
+      await new Promise(r => setTimeout(r, 2000));
+      if (cancelBuildHandler) break;
+
+      const status = await api(`/api/status?issue=${issueNum}`);
+
+      // Show progress if available
+      if (status.progress) {
+        const msg = status.progress.message || status.progress.phase || '';
+        if (msg) {
+          buildLog.textContent += `  ${msg}\n`;
+          buildLog.scrollTop = buildLog.scrollHeight;
+        }
+        if (status.progress.percent != null) {
+          setStatus(`视频生成中... ${status.progress.percent}%`, 'working');
+        }
       }
+
+      // Check if done
+      if (status.ready) {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        clearInterval(timerInterval);
+        buildStatus.style.display = 'none';
+        videoResult.style.display = '';
+        const videoPlayer = document.getElementById('videoPlayer');
+        videoPlayer.src = status.videoUrl;
+        currentVideoUrl = status.videoUrl;
+        setStatus(`视频已完成 (${elapsed}s)`, 'done');
+        if (buildActions) buildActions.style.display = 'none';
+        populatePublishInfo();
+        pending = false;
+      }
+    }
+
+    // Handle cancellation
+    if (cancelBuildHandler) {
+      clearInterval(timerInterval);
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      buildLog.textContent += `\n已取消 (${elapsed}s)\n`;
+      setStatus('已取消', 'error');
+      if (buildActions) buildActions.style.display = 'none';
     }
   } catch(e) {
     clearInterval(timerInterval);
-    setStatus('生成失败: '+e.message, 'error');
+    if (buildActions) buildActions.style.display = 'none';
+    if (cancelBuildHandler) {
+      setStatus('已取消', 'error');
+    } else {
+      setStatus('生成失败: '+e.message, 'error');
+    }
+  }
+}
+
+export async function cancelBuild() {
+  cancelBuildHandler = true;
+  const jobId = currentJobId;
+  try {
+    await api('/api/build/cancel', { jobId });
+  } catch (e) {
+    // Still mark as cancelled even if cancel endpoint is not available
+    console.warn('Cancel request failed:', e.message);
   }
 }
 

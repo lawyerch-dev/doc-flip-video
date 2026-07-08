@@ -1,4 +1,4 @@
-import { json, parseJson } from "../shared.mjs";
+import { json, errorResponse, parseJson } from "../shared.mjs";
 
 // ── Scraper: Fetch article content via puppeteer ──
 async function scrapeUrl(url) {
@@ -106,7 +106,7 @@ export async function register(method, urlPath, req, res, params) {
   if (method === "POST" && urlPath === "/api/scrape") {
     const { url } = await parseJson(req);
     if (!url) {
-      json(res, { error: "Missing url" }, 400);
+      errorResponse(res, "Missing url", 400);
       return true;
     }
     const data = await scrapeUrl(url);

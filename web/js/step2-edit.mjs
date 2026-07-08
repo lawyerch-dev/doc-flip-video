@@ -1,7 +1,28 @@
-import { state } from './app.mjs';
+import { state, setStatus } from './app.mjs';
 import { updateCC } from './app.mjs';
+import { api } from './api.mjs';
 
 // ── Step 2: Edit ──
+
+export async function loadTemplates() {
+  const sel = document.getElementById('f_template');
+  if (!sel) return;
+  try {
+    const data = await api('/api/templates');
+    const templates = data.templates || data || [];
+    // Keep the default option, append API results
+    templates.forEach(t => {
+      if (t.id === 'default') return;
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.label || t.name || t.id;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    // Templates endpoint may not exist yet; silently degrade
+    console.warn('Failed to load templates:', e.message);
+  }
+}
 
 export function populateForm() {
   if (!state.config) return;
@@ -12,6 +33,7 @@ export function populateForm() {
   document.getElementById('f_month').value = meta?.month || (d.getMonth() + 1);
   document.getElementById('f_day').value = meta?.day || d.getDate();
   document.getElementById('f_description').value = meta?.description || '';
+  document.getElementById('f_template').value = meta?.template || 'default';
   document.getElementById('f_headline').value = cover.headline || '';
   document.getElementById('f_coverSource').value = cover.source || '';
   document.getElementById('f_title').value = content.title || '';
@@ -48,6 +70,7 @@ export function readForm() {
   c.meta.month = parseInt(document.getElementById('f_month').value) || (d.getMonth() + 1);
   c.meta.day = parseInt(document.getElementById('f_day').value) || d.getDate();
   c.meta.description = document.getElementById('f_description').value || c.meta.description;
+  c.meta.template = document.getElementById('f_template').value || 'default';
   c.cover.headline = document.getElementById('f_headline').value;
   c.cover.source = document.getElementById('f_coverSource').value;
   c.content.title = document.getElementById('f_title').value;

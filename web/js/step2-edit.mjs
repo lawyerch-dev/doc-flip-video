@@ -49,12 +49,12 @@ export function populateForm() {
     const d = document.createElement('div');
     d.className = 'para-editor';
     d.innerHTML = `<div class="para-header"><span class="para-num">${i + 1}</span><span class="para-label">段落 ${i + 1}</span><span class="limit" style="margin-left:auto">30-50字</span></div>
-      <textarea id="f_para_${i}" oninput="updateCC(this,50);dirty=true">${p.text || ''}</textarea>
+      <textarea id="f_para_${i}" oninput="updateCC(this,50);state.dirty=true">${p.text || ''}</textarea>
       <div class="char-count" id="cc_para_${i}"></div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
         <label style="font-size:12px;white-space:nowrap">高亮</label>
-        <input type="text" id="f_hl_${i}" value="${p.highlight || ''}" oninput="dirty=true" placeholder="标记核心关键词" style="flex:1" />
-        <label style="white-space:nowrap;font-size:12px"><input type="checkbox" id="f_bold_${i}" ${p.bold ? 'checked' : ''} onchange="dirty=true" /> 加粗</label>
+        <input type="text" id="f_hl_${i}" value="${p.highlight || ''}" oninput="state.dirty=true" placeholder="标记核心关键词" style="flex:1" />
+        <label style="white-space:nowrap;font-size:12px"><input type="checkbox" id="f_bold_${i}" ${p.bold ? 'checked' : ''} onchange="state.dirty=true" /> 加粗</label>
       </div>`;
     c.appendChild(d);
     updateCC(document.getElementById(`f_para_${i}`), 50);

@@ -77,26 +77,26 @@
       <div class="form-grid">
         <div>
           <label>期号</label>
-          <input type="number" id="f_issueNum" min="1" oninput="dirty=true" placeholder="自动生成" style="width:100%" />
+          <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" style="width:100%" />
         </div>
         <div style="display:flex;gap:8px">
           <div style="flex:1">
             <label>年</label>
-            <input type="number" id="f_year" min="2020" max="2030" oninput="dirty=true" style="width:100%" />
+            <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" style="width:100%" />
           </div>
           <div style="flex:1">
             <label>月</label>
-            <input type="number" id="f_month" min="1" max="12" oninput="dirty=true" style="width:100%" />
+            <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" style="width:100%" />
           </div>
           <div style="flex:1">
             <label>日</label>
-            <input type="number" id="f_day" min="1" max="31" oninput="dirty=true" style="width:100%" />
+            <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" style="width:100%" />
           </div>
         </div>
       </div>
       <div style="margin-top:10px">
         <label>描述文字</label>
-        <input type="text" id="f_description" oninput="dirty=true" placeholder="法理明如镜，务知天下事！" style="width:100%" />
+        <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" style="width:100%" />
       </div>
     </div>
 
@@ -106,12 +106,12 @@
       <div class="form-grid">
         <div>
           <label>标题 <span class="limit">≤20字</span> <span class="hint-inline">吸引观众的第一句话</span></label>
-          <input type="text" id="f_headline" oninput="updateCC(this,20);dirty=true" />
+          <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" />
           <div class="char-count" id="cc_headline"></div>
         </div>
         <div>
           <label>来源 <span class="limit">≤25字</span> <span class="hint-inline">格式：来源：XX（日期）</span></label>
-          <input type="text" id="f_coverSource" oninput="updateCC(this,25);dirty=true" />
+          <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" />
           <div class="char-count" id="cc_coverSource"></div>
         </div>
       </div>
@@ -123,12 +123,12 @@
       <div class="form-grid" style="margin-bottom:14px">
         <div>
           <label>内容标题 <span class="limit">≤20字</span></label>
-          <input type="text" id="f_title" oninput="updateCC(this,20);dirty=true" />
+          <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" />
           <div class="char-count" id="cc_title"></div>
         </div>
         <div>
           <label>副标题 <span class="limit">≤20字</span></label>
-          <input type="text" id="f_subtitle" oninput="updateCC(this,20);dirty=true" />
+          <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" />
           <div class="char-count" id="cc_subtitle"></div>
         </div>
       </div>
@@ -146,7 +146,7 @@
     <div class="card" style="margin-bottom:14px">
       <h2>📎 来源</h2>
       <label>来源说明 <span class="limit">≤60字</span> <span class="hint-inline">显示在正文底部</span></label>
-      <input type="text" id="f_source" oninput="updateCC(this,60);dirty=true" />
+      <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" />
       <div class="char-count" id="cc_source"></div>
     </div>
 
@@ -287,7 +287,7 @@ import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, 
 
 // Expose to HTML onclick handlers
 Object.assign(window, {
-  doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample,
+  state,  doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample,
   doPreview, switchTab, doChat,
   doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
   loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,

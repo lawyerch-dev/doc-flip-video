@@ -347,20 +347,20 @@ textarea { resize: vertical; min-height: 56px; }
           <div>
             <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">📋 发布信息</h3>
             <div style="margin-bottom:12px">
-              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频标题</label>
-              <div style="display:flex;gap:6px">
-                <input type="text" id="publishTitle" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
-                <button class="btn small secondary" onclick="copyText('publishTitle')">📋</button>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <label style="font-size:12px;font-weight:600">视频标题</label>
+                <button class="btn small secondary" onclick="copyText('publishTitle')">📋 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo()">🔄 重新生成</button>
               </div>
+              <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
             </div>
-            <div style="margin-bottom:12px">
-              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频介绍</label>
-              <div style="display:flex;gap:6px">
-                <textarea id="publishDesc" rows="5" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
-                <button class="btn small secondary" onclick="copyText('publishDesc')">📋</button>
+            <div style="margin-bottom:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <label style="font-size:12px;font-weight:600">视频介绍</label>
+                <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
               </div>
+              <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
             </div>
-            <button class="btn secondary small" onclick="regeneratePublishInfo()">🔄 重新生成标题和介绍</button>
           </div>
           <!-- Right: Video preview -->
           <div>

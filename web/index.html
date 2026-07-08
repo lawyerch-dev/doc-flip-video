@@ -342,33 +342,36 @@ textarea { resize: vertical; min-height: 56px; }
         <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
       </div>
       <div id="videoResult" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch">
           <!-- Left: Publish info -->
-          <div>
+          <div style="display:flex;flex-direction:column">
             <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">📋 发布信息</h3>
             <div style="margin-bottom:12px">
               <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频标题</label>
               <div style="display:flex;gap:6px">
-                <input type="text" id="publishTitle" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
+                <input type="text" id="publishTitle" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
                 <button class="btn small secondary" onclick="copyText('publishTitle')">📋 复制</button>
               </div>
             </div>
-            <div style="margin-bottom:16px">
+            <div style="margin-bottom:12px;flex:1">
               <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频介绍</label>
-              <div style="display:flex;gap:6px">
-                <textarea id="publishDesc" readonly rows="6" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
+              <div style="display:flex;gap:6px;height:100%">
+                <textarea id="publishDesc" rows="6" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
                 <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
               </div>
             </div>
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;margin-top:auto">
+              <button class="btn secondary" onclick="regeneratePublishInfo()" style="flex:1">🔄 重新生成</button>
               <a class="btn green" id="downloadBtn" download style="flex:1;text-align:center">下载视频</a>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
               <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
               <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
             </div>
           </div>
           <!-- Right: Video preview -->
-          <div>
-            <video id="videoPlayer" controls style="width:100%;max-height:calc(100vh - 280px);border-radius:8px;background:#000;display:block"></video>
+          <div style="display:flex;flex-direction:column">
+            <video id="videoPlayer" controls style="width:100%;flex:1;border-radius:8px;background:#000;display:block;min-height:0;object-fit:contain"></video>
           </div>
         </div>
       </div>
@@ -820,6 +823,22 @@ function populatePublishInfo() {
   const desc = `${headline}\n\n${paras.join('\n\n')}${source ? '\n\n' + source : ''}\n\n#法律 #普法 #法务视频`;
   document.getElementById('publishTitle').value = title;
   document.getElementById('publishDesc').value = desc;
+}
+
+async function regeneratePublishInfo() {
+  if (!config) return;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  try {
+    const result = await api('/api/refine', {
+      config,
+      message: '请为这个法律短视频生成发布用的标题和介绍。标题20字以内，吸引眼球。介绍100字以内，包含核心内容概括和3个话题标签。返回JSON格式：{"publishTitle":"...","publishDesc":"..."}',
+    });
+    if (result?.publishTitle) document.getElementById('publishTitle').value = result.publishTitle;
+    if (result?.publishDesc) document.getElementById('publishDesc').value = result.publishDesc;
+    toast('已重新生成', 'success');
+  } catch(e) { toast('生成失败: '+e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '🔄 重新生成'; }
 }
 
 // ── Toast ──

@@ -13,7 +13,7 @@ import {
   DIRNAME,
 } from "../shared.mjs";
 
-const BUILD_SCRIPT = path.join(DIRNAME, "build.mjs");
+const BUILD_SCRIPT = path.join(DIRNAME, "..", "build.mjs");
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }

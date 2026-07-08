@@ -348,6 +348,24 @@ textarea { resize: vertical; min-height: 56px; }
           <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
           <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
         </div>
+        <!-- Publish info -->
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">📋 发布信息</h3>
+          <div style="margin-bottom:12px">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频标题</label>
+            <div style="display:flex;gap:6px">
+              <input type="text" id="publishTitle" readonly style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
+              <button class="btn small secondary" onclick="copyText('publishTitle')">📋 复制</button>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">视频介绍</label>
+            <div style="display:flex;gap:6px">
+              <textarea id="publishDesc" readonly rows="4" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
+              <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -747,6 +765,7 @@ async function doBuild() {
               dl.href = data.videoUrl;
               dl.download = `法务视频-${String(data.issueNum).padStart(3,'0')}期.mp4`;
               setStatus(`视频已完成 (${elapsed}s)`, 'done');
+              populatePublishInfo();
             } else {
               setStatus(`生成失败 (${elapsed}s)`, 'error');
             }
@@ -773,10 +792,30 @@ async function viewVideo(issueNum) {
   dl.href = videoUrl;
   dl.download = `法务视频-${padded}期.mp4`;
   setStatus(`第 ${padded} 期视频`, 'done');
+  populatePublishInfo();
 }
 
 // ── Modal ──
 function showModal(src) { document.getElementById('modalImg').src = src; document.getElementById('modal').classList.add('show'); }
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.value || el.textContent).then(() => toast('已复制', 'success')).catch(() => {
+    el.select(); document.execCommand('copy'); toast('已复制', 'success');
+  });
+}
+
+function populatePublishInfo() {
+  if (!config) return;
+  const padded = String(config.meta?.issueNumber || 0).padStart(3, '0');
+  const headline = config.cover?.headline || '';
+  const title = `法务视频第${padded}期：${headline}`;
+  const paras = (config.content?.paragraphs || []).map(p => p.text).filter(Boolean);
+  const source = config.content?.source || '';
+  const desc = `${headline}\n\n${paras.join('\n\n')}${source ? '\n\n' + source : ''}\n\n#法律 #普法 #法务视频`;
+  document.getElementById('publishTitle').value = title;
+  document.getElementById('publishDesc').value = desc;
+}
 
 // ── Toast ──
 function toast(msg, type='info') {

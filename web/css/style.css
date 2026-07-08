@@ -8,8 +8,8 @@
   --border: #e4e4e7;
   --border-subtle: #f0f0f2;
   --text: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717a;
   --surface: #f4f4f5;
 
   /* Accent */
@@ -27,6 +27,15 @@
   --error-soft: #fef2f2;
   --info: #2563eb;
   --info-soft: #eff6ff;
+
+  /* Backward compat aliases */
+  --muted: var(--text-muted);
+  --red: var(--accent);
+  --red-dim: var(--accent-hover);
+  --green: var(--success);
+  --blue: var(--info);
+  --yellow: var(--warning);
+  --danger: var(--error);
 
   /* Spacing */
   --space-1: 4px;

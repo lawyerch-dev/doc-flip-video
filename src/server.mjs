@@ -600,6 +600,18 @@ const server = http.createServer(async (req, res) => {
       return json(res, refined);
     }
 
+    if (method === "POST" && urlPath === "/api/generate-publish-info") {
+      const { articleText, issueNum } = await parseJson(req);
+      if (!articleText) return json(res, { error: "Missing articleText" }, 400);
+      const result = await aiChat([
+        { role: "system", content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括，末尾加3个话题标签。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}` },
+        { role: "user", content: `期号：${issueNum || '001'}\n\n视频内容：\n${articleText}` },
+      ], 0.5);
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return json(res, { error: "AI did not return valid JSON" }, 500);
+      return json(res, JSON.parse(jsonMatch[0]));
+    }
+
     if (method === "POST" && urlPath === "/api/preview") {
       const config = await parseJson(req);
       if (!config.meta) return json(res, { error: "Invalid config" }, 400);

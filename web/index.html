@@ -350,7 +350,7 @@ textarea { resize: vertical; min-height: 56px; }
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <label style="font-size:12px;font-weight:600">视频标题</label>
                 <button class="btn small secondary" onclick="copyText('publishTitle')">📋 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo()">🔄 重新生成</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)">🔄 重新生成</button>
               </div>
               <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
             </div>
@@ -358,7 +358,7 @@ textarea { resize: vertical; min-height: 56px; }
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                 <label style="font-size:12px;font-weight:600">视频介绍</label>
                 <button class="btn small secondary" onclick="copyText('publishDesc')">📋 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo()">🔄 重新生成</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)">🔄 重新生成</button>
               </div>
               <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
             </div>
@@ -825,17 +825,18 @@ function populatePublishInfo() {
   document.getElementById('publishDesc').value = desc;
 }
 
-async function regeneratePublishInfo() {
-  if (!config) return;
-  const btn = event.target;
+async function regeneratePublishInfo(btn) {
+  if (!config) { toast('请先加载配置', 'error'); return; }
   btn.disabled = true; btn.textContent = '⏳ 生成中...';
   try {
-    const result = await api('/api/refine', {
-      config,
-      message: '请为这个法律短视频生成发布用的标题和介绍。标题20字以内，吸引眼球。介绍100字以内，包含核心内容概括和3个话题标签。返回JSON格式：{"publishTitle":"...","publishDesc":"..."}',
-    });
-    if (result?.publishTitle) document.getElementById('publishTitle').value = result.publishTitle;
-    if (result?.publishDesc) document.getElementById('publishDesc').value = result.publishDesc;
+    const padded = String(config.meta?.issueNumber || 0).padStart(3, '0');
+    const headline = config.cover?.headline || '';
+    const paras = (config.content?.paragraphs || []).map(p => p.text).filter(Boolean);
+    const source = config.content?.source || '';
+    const articleText = `${headline}\n${paras.join('\n')}\n${source}`;
+    const result = await api('/api/generate-publish-info', { articleText, issueNum: padded });
+    if (result?.title) document.getElementById('publishTitle').value = result.title;
+    if (result?.desc) document.getElementById('publishDesc').value = result.desc;
     toast('已重新生成', 'success');
   } catch(e) { toast('生成失败: '+e.message, 'error'); }
   finally { btn.disabled = false; btn.textContent = '🔄 重新生成'; }

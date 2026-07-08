@@ -113,7 +113,9 @@ export async function viewVideo(issueNum) {
   // Load config so form and publish info work across steps
   try {
     const resp = await fetch(`/configs/article-${padded}.json`);
-    if (resp.ok) state.config = await resp.json();
+    if (resp.ok && (resp.headers.get('content-type')||'').includes('json')) {
+      state.config = await resp.json();
+    }
   } catch {}
   populateForm();
   goStep(4);

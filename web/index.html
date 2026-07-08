@@ -790,6 +790,11 @@ async function doBuild() {
 async function viewVideo(issueNum) {
   const padded = String(issueNum).padStart(3, '0');
   const videoUrl = `/output/法务视频-${padded}期.mp4`;
+  // Load config so publish info can be generated
+  try {
+    const resp = await fetch(`/configs/article-${padded}.json`);
+    if (resp.ok) config = await resp.json();
+  } catch {}
   goStep(4);
   document.getElementById('buildStatus').style.display = 'none';
   document.getElementById('buildLog').textContent = '';

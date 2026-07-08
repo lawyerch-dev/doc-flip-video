@@ -68,6 +68,7 @@ const defaultTemplate = JSON.parse(fs.readFileSync(TEMPLATE_PATH, "utf-8"));
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript",
+  ".mjs": "application/javascript",
   ".css": "text/css",
   ".png": "image/png",
   ".jpg": "image/jpeg",

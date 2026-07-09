@@ -285,9 +285,12 @@ function handleStatus(params, res) {
     } catch {}
   }
 
+  // If current build failed, don't report ready even if old video file exists
+  const buildFailed = queueJob?.status === 'failed';
+
   json(res, {
     issueNum,
-    ready: exists,
+    ready: exists && !buildFailed,
     size: stat?.size || 0,
     videoUrl: exists
       ? `/output/法务视频-${padded}期.mp4`

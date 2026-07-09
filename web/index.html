@@ -203,6 +203,7 @@
           <span id="buildTimer" style="margin-left:12px;color:var(--text);font-size:16px;font-weight:600"></span>
         </div>
         <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
+        <div style="text-align:right;margin-top:4px"><button class="btn secondary" id="copyBuildLog" onclick="navigator.clipboard.writeText(document.getElementById('buildLog').textContent)" style="font-size:12px;padding:4px 12px">📋 复制日志</button></div>
         <div id="buildActions" style="text-align:center;margin-top:16px">
           <button class="btn secondary" id="cancelBuildBtn" onclick="cancelBuild()" style="color:var(--danger);border-color:var(--danger)">取消生成</button>
         </div>

@@ -43,22 +43,31 @@ export async function doBuild() {
 
     // 2. Poll GET /api/status every 2 seconds
     let pending = true;
+    let shownCount = 0;
     while (pending && !cancelBuildHandler) {
       await new Promise(r => setTimeout(r, 2000));
       if (cancelBuildHandler) break;
 
       const status = await api(`/api/status?issue=${issueNum}`);
 
-      // Show progress if available
-      if (status.progress) {
-        const msg = status.progress.message || status.progress.phase || '';
-        if (msg) {
-          buildLog.textContent += `  ${msg}\n`;
-          buildLog.scrollTop = buildLog.scrollHeight;
+      // Show progress from queue job
+      const qj = status.queueJob;
+      if (qj?.progress?.length > shownCount) {
+        for (let i = shownCount; i < qj.progress.length; i++) {
+          const line = qj.progress[i];
+          buildLog.textContent += `  ${line}\n`;
         }
-        if (status.progress.percent != null) {
-          setStatus(`视频生成中... ${status.progress.percent}%`, 'working');
-        }
+        shownCount = qj.progress.length;
+        buildLog.scrollTop = buildLog.scrollHeight;
+      }
+
+      // Check if build failed
+      if (qj?.status === 'failed') {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        clearInterval(timerInterval);
+        if (buildActions) buildActions.style.display = 'none';
+        setStatus(`生成失败 (${elapsed}s): ${qj.error || '未知错误'}`, 'error');
+        pending = false;
       }
 
       // Check if done

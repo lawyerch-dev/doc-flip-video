@@ -1,4 +1,4 @@
-#!/bin/bash
+npm run dev #!/bin/bash
 
 # Upload image to GitHub repository and get raw URL
 # Usage: ./scripts/upload-image.sh <image-path> [repo-name]

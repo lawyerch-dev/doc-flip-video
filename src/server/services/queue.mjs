@@ -133,7 +133,7 @@ export function listJobs() {
       jobId,
       status: job.status,
       issueNum: job.issueNum,
-      progress: job.status === "running" ? [...job.progress] : [],
+      progress: [...job.progress],
       videoUrl: job.videoUrl,
       error: job.error,
       startedAt: job.startedAt,

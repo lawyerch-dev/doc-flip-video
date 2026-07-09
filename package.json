@@ -6,7 +6,7 @@
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server/index.mjs",
     "studio": "node src/server/index.mjs",
-    "dev": "nodemon --watch src/server --watch web -e mjs,html,js,css --delay 1 src/server/index.mjs",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; nodemon --watch src/server --watch web -e mjs,html,js,css --delay 1 src/server/index.mjs",
     "mcp": "node src/mcp-server.mjs",
     "fonts": "bash scripts/download-fonts.sh"
   },

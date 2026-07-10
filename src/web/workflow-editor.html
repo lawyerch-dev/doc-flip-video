@@ -401,7 +401,7 @@ function workflowToGraph(wf) {
       const inputIdx = node.findInputSlot(portName);
       const outputIdx = srcNode.findOutputSlot('out');
       if (inputIdx >= 0 && outputIdx >= 0) {
-        node.connect(inputIdx, srcNode, outputIdx);
+        srcNode.connect(outputIdx, node, inputIdx);
       }
     }
   }

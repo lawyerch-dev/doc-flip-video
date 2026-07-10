@@ -13,4 +13,7 @@ console.log(`📄 Config: ${config}`);
 console.log("─── Generating images ───");
 execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), config], { stdio: "inherit" });
 console.log("─── Rendering video ───");
-execFileSync("node", [path.join(__dirname, "capture.mjs"), config], { stdio: "inherit" });
+// Use xfade capture (pure FFmpeg, no Puppeteer)
+// Set CAPTURE=puppeteer env to use legacy WebGL capture
+const captureScript = process.env.CAPTURE === "puppeteer" ? "capture.mjs" : "capture-xfade.mjs";
+execFileSync("node", [path.join(__dirname, captureScript), config], { stdio: "inherit" });

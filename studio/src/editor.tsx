@@ -8,11 +8,12 @@ import {
   WorkflowDocument,
 } from '@flowgram.ai/free-layout-editor';
 import { Button, Toast } from '@douyinfe/semi-ui';
+
 import '@flowgram.ai/free-layout-editor/index.css';
 import './styles/index.css';
 import { nodeRegistries, fetchDefaultWorkflow, toEngineJSON } from './nodes';
-import type { FlowDocumentJSON } from './typings';
 import { initialData } from './initial-data';
+import type { FlowDocumentJSON } from './typings';
 import { useEditorProps } from './hooks';
 
 function Toolbar() {
@@ -21,11 +22,8 @@ function Toolbar() {
   const [saving, setSaving] = useState(false);
 
   const handleLoad = useCallback(async () => {
-    try {
-      doc.fromJSON(await fetchDefaultWorkflow());
-      tools.fitView(false);
-      Toast.success('已加载');
-    } catch { Toast.error('加载失败'); }
+    try { doc.fromJSON(await fetchDefaultWorkflow()); tools.fitView(false); Toast.success('已加载'); }
+    catch { Toast.error('加载失败'); }
   }, [doc, tools]);
 
   const handleSave = useCallback(() => {
@@ -46,7 +44,12 @@ function Toolbar() {
   }, [doc]);
 
   return (
-    <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 100, display: 'flex', gap: 6, background: 'rgba(255,255,255,0.9)', padding: '6px 14px', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+    <div style={{
+      position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 100, display: 'flex', gap: 6,
+      background: 'rgba(255,255,255,0.9)', padding: '6px 14px',
+      borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+    }}>
       <Button size="small" onClick={handleLoad}>📂 加载默认</Button>
       <Button size="small" onClick={handleSave} loading={saving}>💾 导出</Button>
       <Button size="small" type="primary" onClick={handleRun}>▶ 运行</Button>
@@ -60,7 +63,7 @@ export const Editor = () => {
     <div className="doc-free-feature-overview">
       <FreeLayoutEditorProvider {...editorProps}>
         <DockedPanelLayer>
-          <div className="demo-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <div className="demo-container" style={{ position: 'relative' }}>
             <Toolbar />
             <EditorRenderer className="demo-editor" />
           </div>

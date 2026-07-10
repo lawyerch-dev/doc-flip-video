@@ -180,7 +180,7 @@
         </div>
         <!-- Right: Animation Preview -->
         <div class="preview-col">
-          <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block"><i data-lucide="play" class="icon"></i> 动画预览</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><label style="font-size:13px;font-weight:600;color:var(--text)"><i data-lucide="play" class="icon"></i> 动画预览</label><button class="btn small secondary" onclick="loadExamplePreview()" style="font-size:11px">示例</button></div>
           <div class="anim-wrap">
             <iframe id="animFrame" src="about:blank"></iframe>
           </div>
@@ -288,7 +288,7 @@ import { state, setStatus, goStep, toast, updateCC, showModal, copyText, toggleT
 import { api } from '/js/api.mjs';
 import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample } from '/js/step1-scrape.mjs';
 import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
-import { doPreview, switchTab, doChat, addMsg } from '/js/step3-preview.mjs';
+import { doPreview, switchTab, doChat, addMsg, loadExamplePreview } from '/js/step3-preview.mjs';
 import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild } from '/js/step4-export.mjs';
 import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis, markSettingsDirty } from '/js/history.mjs';
 

@@ -12,12 +12,19 @@ export async function doPreview() {
     const r = await api('/api/preview', state.config);
     state.previewImages = r.images;
     state.config.meta.issueNumber = r.issueNum;
-    const dir = `temp/issue-${String(r.issueNum).padStart(3,'0')}`;
+    const dir = `data/temp/issue-${String(r.issueNum).padStart(3,'0')}`;
     document.getElementById('animFrame').src = `/demo.html?img=${encodeURIComponent(dir)}&autoplay=1&embed=1`;
     state.dirty = false;
     setStatus('预览已生成', 'done');
   } catch(e) { setStatus('预览失败: '+e.message, 'error'); }
 }
+
+// ── Example preview (placeholder images) ──
+export function loadExamplePreview() {
+  document.getElementById('animFrame').src = '/demo.html?autoplay=1&embed=1';
+  setStatus('显示示例动画', 'done');
+}
+window.loadExamplePreview = loadExamplePreview;
 
 // ── Step 3: Preview tabs ──
 export function switchTab(btn, key) {

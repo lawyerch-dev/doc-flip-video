@@ -184,7 +184,7 @@ async function handlePreview(req, res) {
   );
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   generateImages(configPath);
-  const imgDir = `temp/issue-${String(issueNum).padStart(3, "0")}`;
+  const imgDir = `data/temp/issue-${String(issueNum).padStart(3, "0")}`;
   json(res, {
     issueNum,
     images: {

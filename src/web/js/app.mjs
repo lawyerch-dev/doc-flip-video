@@ -61,8 +61,16 @@ export function goStep(n) {
   // Auto-preview when entering Step 3
   if (n === 3 && state.config) {
     setTimeout(() => {
-      // doPreview is defined in the host page
-      if (typeof doPreview === 'function') doPreview();
+      if (state.previewImages.cover) {
+        // Already have preview images, just load in iframe
+        const issueNum = state.config.meta?.issueNumber;
+        if (issueNum) {
+          const dir = `data/temp/issue-${String(issueNum).padStart(3,'0')}`;
+          document.getElementById('animFrame').src = `/demo.html?img=${encodeURIComponent(dir)}&autoplay=1&embed=1`;
+        }
+      } else if (typeof doPreview === 'function') {
+        doPreview();
+      }
     }, 100);
   }
 }

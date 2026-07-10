@@ -89,7 +89,7 @@ async function main() {
   page.on("error", err => console.error("  [page error]", err.message));
   page.on("crash", () => console.error("  [page crash]"));
 
-  const imgPath = `temp/issue-${String(cfg.meta.issueNumber).padStart(3, "0")}`;
+  const imgPath = `data/temp/issue-${String(cfg.meta.issueNumber).padStart(3, "0")}`;
   await page.goto(`http://localhost:${port}/?img=${encodeURIComponent(imgPath)}`, { waitUntil: "load", timeout: 15000 });
   await page.waitForFunction(() => window.__ready === true, { timeout: 15000 });
   console.log(`${TOTAL_FRAMES} frames (${TOTAL_SEC}s)...`);

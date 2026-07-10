@@ -127,6 +127,9 @@ export async function viewVideo(issueNum) {
     }
   } catch {}
   populateForm();
+  // Pre-populate preview images so step 3 shows real data
+  const imgDir = `data/temp/issue-${padded}`;
+  state.previewImages = { cover: `/${imgDir}/cover.png`, plain: `/${imgDir}/content-plain.png`, hl: `/${imgDir}/content-hl.png` };
   goStep(4);
   document.getElementById('buildStatus').style.display = 'none';
   document.getElementById('buildLog').textContent = '';

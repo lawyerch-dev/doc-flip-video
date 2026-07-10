@@ -1,10 +1,10 @@
 /**
  * Variable Node — Set or get workflow variables
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const SET_VARIABLE_NODE: CommonNodeManifest = {
+export const SET_VARIABLE_NODE: NodeManifest = {
   id: 'common:set-variable',
   name: '设置变量',
   category: 'variable',

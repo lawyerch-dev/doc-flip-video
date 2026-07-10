@@ -33,7 +33,6 @@ import {
   createVariablePanelPlugin,
   createPanelManagerPlugin,
 } from '../plugins';
-import { defaultFormMeta } from '../nodes/default-form-meta';
 import { WorkflowNodeType } from '../nodes';
 import { SelectorBoxPopover } from '../components/selector-box-popover';
 import { BaseNode, CommentRender, GroupNodeRender, LineAddButton } from '../components';
@@ -93,7 +92,9 @@ export function useEditorProps(
           meta: {
             defaultExpanded: true,
           },
-          formMeta: defaultFormMeta,
+          formMeta: {
+            render: () => null,
+          },
         };
       },
       /**

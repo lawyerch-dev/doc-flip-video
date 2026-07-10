@@ -1,10 +1,10 @@
 /**
  * LLM Node — Coze-inspired AI model invocation node
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const LLM_NODE: CommonNodeManifest = {
+export const LLM_NODE: NodeManifest = {
   id: 'common:llm',
   name: 'LLM 调用',
   category: 'llm',

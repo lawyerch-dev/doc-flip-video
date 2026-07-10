@@ -1,10 +1,10 @@
 /**
  * Code Node — Execute custom JavaScript/Python code
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const CODE_NODE: CommonNodeManifest = {
+export const CODE_NODE: NodeManifest = {
   id: 'common:code',
   name: '代码执行',
   category: 'code',

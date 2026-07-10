@@ -2,10 +2,10 @@
  * Function Node — simple data transformation using expressions
  * Simpler than Code node: just transforms input to output with a formula
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const FUNCTION_NODE: CommonNodeManifest = {
+export const FUNCTION_NODE: NodeManifest = {
   id: 'common:function',
   name: '数据转换',
   category: 'utility',

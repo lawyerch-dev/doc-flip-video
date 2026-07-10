@@ -229,13 +229,13 @@ export const Editor = ({ workflowId, onBack }: EditorProps) => {
       style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
     >
       <FreeLayoutEditorProvider {...editorProps}>
-        <DockedPanelLayer>
-          <ToolboxContext.Provider
-            value={{
-              visible: toolboxVisible,
-              toggle: () => setToolboxVisible((v) => !v),
-            }}
-          >
+        <ToolboxContext.Provider
+          value={{
+            visible: toolboxVisible,
+            toggle: () => setToolboxVisible((v) => !v),
+          }}
+        >
+          <DockedPanelLayer>
             <div
               style={{
                 display: 'flex',
@@ -263,10 +263,10 @@ export const Editor = ({ workflowId, onBack }: EditorProps) => {
                 </div>
               </div>
             </div>
-          </ToolboxContext.Provider>
-        </DockedPanelLayer>
-        {/* DemoTools outside DockedPanelLayer — positions relative to root */}
-        <DemoTools />
+          </DockedPanelLayer>
+          {/* DemoTools — now inside ToolboxContext.Provider */}
+          <DemoTools />
+        </ToolboxContext.Provider>
       </FreeLayoutEditorProvider>
     </div>
   );

@@ -15,7 +15,7 @@ import {
 
 import { nodeRegistries } from '../../nodes';
 import type { FlowNodeRegistry } from '../../typings';
-import { getPluginIcon } from '../../nodes-video/icons';
+import { getNodeName, getNodeColor, getNodeCategory, getNodeIcon } from '../../nodes-shared';
 
 // ─── Styles ───
 
@@ -138,48 +138,7 @@ const EmptyState = styled.div`
   font-size: 12px;
 `;
 
-// ─── Category config ───
-
-interface CatInfo {
-  label: string;
-  color: string;
-  order: number;
-}
-
-function getNodeCategory(type: string): CatInfo {
-  if (type.startsWith('system:')) return { label: '系统', color: '#999', order: 0 };
-  if (type.startsWith('source:')) return { label: '来源', color: '#4ecdc4', order: 1 };
-  if (type.startsWith('effect:')) return { label: '效果', color: '#f9ca24', order: 2 };
-  if (type.startsWith('transition:')) return { label: '转场', color: '#6c5ce7', order: 3 };
-  if (type.startsWith('output:')) return { label: '输出', color: '#e94560', order: 4 };
-  if (type.startsWith('common:')) return { label: '通用', color: '#4e40e5', order: 5 };
-  return { label: '其他', color: '#999', order: 99 };
-}
-
-const DISPLAY_NAMES: Record<string, string> = {
-  'system:start': '开始',
-  'system:end': '结束',
-  'source:page-renderer': '页面渲染',
-  'source:audio-picker': '背景音乐',
-  'source:glow-strip': '光晕条',
-  'effect:fade-in': '淡入',
-  'effect:fade-out': '淡出',
-  'effect:hold': '停留',
-  'effect:sweep-glow': '高亮扫描',
-  'transition:page-curl': '翻页',
-  'transition:crossfade': '交叉溶解',
-  'output:mp4': 'MP4 输出',
-  'common:llm': 'LLM 调用',
-  'common:code': '代码执行',
-  'common:http': 'HTTP 请求',
-  'common:set-variable': '设置变量',
-  'common:condition': '条件分支',
-  'common:dataset': '知识库查询',
-};
-
-function getDisplayName(type: string): string {
-  return DISPLAY_NAMES[type] ?? type.split(':').pop() ?? type;
-}
+// ─── Category config (from central registry) ───
 
 interface NodeToolboxProps {
   visible: boolean;
@@ -195,12 +154,12 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = ({ visible, onClose }) =>
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const groups: Record<string, { info: CatInfo; nodes: FlowNodeRegistry[] }> = {};
+    const groups: Record<string, { info: { label: string; color: string; order: number }; nodes: FlowNodeRegistry[] }> = {};
 
     for (const reg of nodeRegistries) {
       if (reg.meta.nodePanelVisible === false) continue;
       if (reg.type === 'system:start' || reg.type === 'system:end') continue;
-      const name = getDisplayName(reg.type as string);
+      const name = getNodeName(reg.type as string);
       if (q && !name.includes(q) && !(reg.type as string).toLowerCase().includes(q)) continue;
 
       const cat = getNodeCategory(reg.type as string);
@@ -257,9 +216,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = ({ visible, onClose }) =>
                 {group.info.label}
               </CategoryLabel>
               {group.nodes.map((registry) => {
-                const IconComp =
-                  registry.info?.iconComponent ||
-                  getPluginIcon(registry.type as string);
+                const IconComp = registry.info?.iconComponent || getNodeIcon(registry.type as string);
                 return (
                   <NodeButton
                     key={registry.type}
@@ -275,7 +232,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = ({ visible, onClose }) =>
                         <span style={{ fontSize: 11 }}>▣</span>
                       )}
                     </NodeIconWrap>
-                    <NodeName>{getDisplayName(registry.type as string)}</NodeName>
+                    <NodeName>{getNodeName(registry.type as string)}</NodeName>
                   </NodeButton>
                 );
               })}

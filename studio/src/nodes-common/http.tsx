@@ -1,10 +1,10 @@
 /**
  * HTTP Node — Make API requests
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const HTTP_NODE: CommonNodeManifest = {
+export const HTTP_NODE: NodeManifest = {
   id: 'common:http',
   name: 'HTTP 请求',
   category: 'http',

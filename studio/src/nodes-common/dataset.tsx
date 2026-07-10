@@ -1,10 +1,10 @@
 /**
  * Dataset / Knowledge Node — Query knowledge base or dataset
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const DATASET_NODE: CommonNodeManifest = {
+export const DATASET_NODE: NodeManifest = {
   id: 'common:dataset',
   name: '知识库查询',
   category: 'dataset',

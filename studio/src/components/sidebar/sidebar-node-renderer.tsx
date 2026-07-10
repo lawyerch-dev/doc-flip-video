@@ -9,62 +9,7 @@ import { IconDelete, IconClose } from '@douyinfe/semi-icons';
 
 import { NodeRenderContext } from '../../context';
 import { useNodeFormPanel } from '../../plugins/panel-manager-plugin/hooks';
-import { getPluginIcon as getVideoIcon } from '../../nodes-video/icons';
-import { commonIcons } from '../../nodes-common/icons';
-
-/** Look up icon component by node type */
-function lookupIcon(type: string): React.FC<{ size?: number; color?: string }> | null {
-  const video = getVideoIcon(type);
-  if (video) return video;
-  // Common nodes use category-based lookup from the icon map
-  const catMap: Record<string, string> = {
-    'common:llm': 'llm',
-    'common:code': 'code',
-    'common:http': 'http',
-    'common:set-variable': 'variable',
-    'common:condition': 'condition',
-    'common:dataset': 'dataset',
-  };
-  const cat = catMap[type];
-  if (cat && commonIcons[cat]) return commonIcons[cat];
-  return null;
-}
-
-/** Get node color from its type */
-function getNodeColor(type: string): string {
-  if (type.startsWith('system:')) return '#4e40e5';
-  if (type.startsWith('source:')) return '#4ecdc4';
-  if (type.startsWith('effect:')) return '#f9ca24';
-  if (type.startsWith('transition:')) return '#6c5ce7';
-  if (type.startsWith('output:')) return '#e94560';
-  if (type.startsWith('common:')) return '#5c62ff';
-  return '#999';
-}
-
-/** Get node display name */
-function getNodeDisplayName(type: string): string {
-  const names: Record<string, string> = {
-    'system:start': '开始',
-    'system:end': '结束',
-    'source:page-renderer': '页面渲染',
-    'source:audio-picker': '背景音乐',
-    'source:glow-strip': '光晕条',
-    'effect:fade-in': '淡入',
-    'effect:fade-out': '淡出',
-    'effect:hold': '停留',
-    'effect:sweep-glow': '高亮扫描',
-    'transition:page-curl': '翻页',
-    'transition:crossfade': '交叉溶解',
-    'output:mp4': 'MP4 输出',
-    'common:llm': 'LLM 调用',
-    'common:code': '代码执行',
-    'common:http': 'HTTP 请求',
-    'common:set-variable': '设置变量',
-    'common:condition': '条件分支',
-    'common:dataset': '知识库查询',
-  };
-  return names[type] ?? type;
-}
+import { getNodeName, getNodeColor, getNodeIcon } from '../../nodes-shared';
 
 export function SidebarNodeRenderer(props: { node: FlowNodeEntity }) {
   const { node } = props;
@@ -72,8 +17,8 @@ export function SidebarNodeRenderer(props: { node: FlowNodeEntity }) {
   const { close: closePanel } = useNodeFormPanel();
   const nodeType = node.flowNodeType as string;
   const color = getNodeColor(nodeType);
-  const displayName = getNodeDisplayName(nodeType);
-  const IconComp = lookupIcon(nodeType);
+  const displayName = getNodeName(nodeType);
+  const IconComp = getNodeIcon(nodeType);
 
   const handleClose = useCallback(() => closePanel(), [closePanel]);
   const handleDelete = useCallback(() => {

@@ -1,10 +1,10 @@
 /**
  * Loop Node — repeat a sub-process N times or iterate over a list
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const LOOP_NODE: CommonNodeManifest = {
+export const LOOP_NODE: NodeManifest = {
   id: 'common:loop',
   name: '循环',
   category: 'loop',

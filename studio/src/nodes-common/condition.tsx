@@ -1,10 +1,10 @@
 /**
  * Condition Node — If/Else branch
  */
-import type { CommonNodeManifest } from './types';
+import type { NodeManifest } from '../nodes-shared';
 import { commonIcons } from './icons';
 
-export const CONDITION_NODE: CommonNodeManifest = {
+export const CONDITION_NODE: NodeManifest = {
   id: 'common:condition',
   name: '条件分支',
   category: 'condition',

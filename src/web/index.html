@@ -248,31 +248,35 @@
 </div>
 
 <!-- Settings panel -->
+<div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
 <div class="settings-panel" id="settingsPanel">
   <button class="close-btn" onclick="toggleSettings()"><i data-lucide="x" class="icon"></i></button>
   <h2>设置</h2>
   <div class="settings-group">
     <label>AI API Key</label>
     <div style="display:flex;gap:6px">
-      <input type="password" id="s_apiKey" placeholder="sk-..." style="flex:1" />
+      <input type="password" id="s_apiKey" placeholder="sk-..." style="flex:1" oninput="markSettingsDirty()" />
       <button class="btn secondary small" onclick="toggleKeyVis()" id="keyToggleBtn" style="white-space:nowrap">显示</button>
     </div>
     <div class="hint">OpenAI 兼容 API 密钥（如 DeepSeek）</div>
   </div>
   <div class="settings-group">
     <label>API Base URL</label>
-    <input type="text" id="s_baseUrl" placeholder="https://api.deepseek.com/v1" />
+    <input type="text" id="s_baseUrl" placeholder="https://api.deepseek.com/v1" oninput="markSettingsDirty()" />
   </div>
   <div class="settings-group">
     <label>模型</label>
-    <input type="text" id="s_model" placeholder="deepseek-v4-flash" />
+    <input type="text" id="s_model" placeholder="deepseek-v4-flash" oninput="markSettingsDirty()" />
   </div>
   <div class="settings-group">
     <label>描述文字</label>
-    <input type="text" id="s_description" placeholder="法理明如镜，务知天下事！" />
+    <input type="text" id="s_description" placeholder="法理明如镜，务知天下事！" oninput="markSettingsDirty()" />
     <div class="hint">视频中显示的标语</div>
   </div>
-  <button class="btn" onclick="saveSettings()">保存设置</button>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn" onclick="saveSettings()">保存设置</button>
+    <span id="settingsUnsaved" style="display:none;font-size:12px;color:var(--accent);font-weight:600">● 未保存</span>
+  </div>
   <div id="settingsStatus" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
 </div>
 
@@ -286,7 +290,7 @@ import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExa
 import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
 import { doPreview, switchTab, doChat, addMsg } from '/js/step3-preview.mjs';
 import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild } from '/js/step4-export.mjs';
-import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis } from '/js/history.mjs';
+import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis, markSettingsDirty } from '/js/history.mjs';
 
 // Expose to HTML onclick handlers
 Object.assign(window, {
@@ -294,7 +298,7 @@ Object.assign(window, {
   doPreview, switchTab, doChat,
   doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
   loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,
-  toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis, toggleTheme,
+  toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis, markSettingsDirty, toggleTheme,
   goStep, toast, showModal, copyText, updateCC,
   doSave: async () => {
     state.config = readForm();

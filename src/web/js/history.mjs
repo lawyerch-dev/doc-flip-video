@@ -65,7 +65,7 @@ export function renderHistory() {
 }
 
 // ── Settings ──
-export function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); }
+export function toggleSettings() { const panel = document.getElementById('settingsPanel'); const overlay = document.getElementById('settingsOverlay'); const isOpen = panel.classList.toggle('open'); overlay.classList.toggle('show', isOpen); }
 window.toggleSettings = toggleSettings;
 
 export async function loadSettingsUI() {
@@ -98,6 +98,7 @@ export async function saveSettingsUI() {
     const s = await api('/api/settings', up);
     document.getElementById('s_apiKey').value = '';
     document.getElementById('settingsStatus').textContent = '✓ 已保存';
+    const unsavedEl = document.getElementById('settingsUnsaved'); if (unsavedEl) unsavedEl.style.display = 'none';
     const el = document.getElementById('aiStatus');
     el.textContent = s.aiConfigured ? 'AI: 已配置' : 'AI: 未配置';
     el.className = 'ai-badge ' + (s.aiConfigured ? 'ok' : 'err');
@@ -105,6 +106,9 @@ export async function saveSettingsUI() {
   } catch(e) { document.getElementById('settingsStatus').textContent = '✗ '+e.message; }
 }
 window.saveSettings = saveSettingsUI;
+
+export function markSettingsDirty() { const el = document.getElementById('settingsUnsaved'); if (el) el.style.display = ''; }
+window.markSettingsDirty = markSettingsDirty;
 
 export function toggleKeyVis() {
   const inp = document.getElementById('s_apiKey');

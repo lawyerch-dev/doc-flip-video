@@ -426,12 +426,14 @@ select {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ─── Settings Panel ─── */
+.settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+.settings-overlay.show { display: block; }
 .settings-panel {
   position: fixed; top: 0; right: -420px;
   width: 400px; height: 100vh;
   background: var(--card);
   border-left: 1px solid var(--border);
-  z-index: 50;
+  z-index: 1000;
   transition: right var(--transition-slow);
   padding: var(--space-6);
   overflow-y: auto;

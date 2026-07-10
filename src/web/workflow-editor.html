@@ -430,7 +430,7 @@ function updateTitle() { /* auto-saved via title input */ }
 
 function updateStatus() {
   document.getElementById('nodeCount').textContent = graph._nodes.length;
-  document.getElementById('edgeCount').textContent = graph._links.length + ' 连接';
+  document.getElementById('edgeCount').textContent = (Object.keys(graph._links || {}).length) + ' 连接';
 }
 
 function saveWorkflow() {

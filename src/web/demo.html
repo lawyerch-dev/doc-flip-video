@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>翻页动画预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #eee; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 16px; color: #aaa; }
+.canvas-wrap { width: 960px; height: 540px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.5); background: #000; }
+canvas { display: block; width: 100%; height: 100%; }
+.controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; width: 960px; }
+button { background: #222; color: #aaa; border: 1px solid #444; border-radius: 6px; padding: 8px 16px; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+button:hover { border-color: #888; color: #eee; }
+button.active { background: #e74c3c; border-color: #e74c3c; color: #fff; }
+input[type=range] { flex: 1; accent-color: #e74c3c; }
+.pct { font-size: 13px; color: #888; min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+.status { margin-top: 12px; font-size: 13px; color: #666; text-align: center; }
+/* Embed mode: fill iframe, hide extras */
+body.embed { padding: 0; background: #000; }
+body.embed h1, body.embed .status, body.embed .controls { display: none; }
+body.embed .canvas-wrap { width: 100%; height: auto; aspect-ratio: 1080/1840; border-radius: 0; box-shadow: none; }
+</style>
+</head>
+<body>
+<h1>翻页动画预览</h1>
+<div class="canvas-wrap">
+  <canvas id="c"></canvas>
+</div>
+<div class="controls">
+  <input type="range" id="slider" min="0" max="1" step="0.001" value="0">
+  <span class="pct" id="pct">0%</span>
+</div>
+<p class="status" id="status"></p>
+
+<script>
+// ── Shaders (identical to renderer.html) ──
+const VERT = `attribute vec2 position;varying vec2 uv;void main(){uv=position*0.5+0.5;gl_Position=vec4(position,0,1);}`;
+
+const CURL = `
+precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress,ratio;
+const float MIN_AMOUNT=-0.16,MAX_AMOUNT=1.5,PI=3.141592653589793;
+const float scale=512.0,sharpness=3.0,cylinderRadius=1.0/PI/2.0;
+float amount,cylinderCenter,cylinderAngle;
+vec3 hitPoint(float ha,float yc,vec3 p,mat3 r){p.y=ha/(2.0*PI);return r*p;}
+vec4 antiAlias(vec4 c1,vec4 c2,float d){d*=scale;if(d<0.0)return c2;if(d>2.0)return c1;float dd=pow(1.0-d/2.0,sharpness);return(c2-c1)*dd+c1;}
+float dte(vec3 p){float dx=abs(p.x>0.5?1.0-p.x:p.x),dy=abs(p.y>0.5?1.0-p.y:p.y);if(p.x<0.0)dx=-p.x;if(p.x>1.0)dx=p.x-1.0;if(p.y<0.0)dy=-p.y;if(p.y>1.0)dy=p.y-1.0;if((p.x<0.0||p.x>1.0)&&(p.y<0.0||p.y>1.0))return sqrt(dx*dx+dy*dy);return min(dx,dy);}
+vec4 seeThru(float yc,vec2 p,mat3 r,mat3 rr){float ha=PI-(acos(clamp(yc/cylinderRadius,-1.0,1.0))-cylinderAngle);vec3 pt=hitPoint(ha,yc,r*vec3(p,1.0),rr);if(yc<=0.0&&(pt.x<0.0||pt.y<0.0||pt.x>1.0||pt.y>1.0))return texture2D(to,p);if(yc>0.0)return texture2D(from,p);return antiAlias(texture2D(from,pt.xy),vec4(0.0),dte(pt));}
+vec4 seeThruShadow(float yc,vec2 p,vec3 pt,mat3 r,mat3 rr){float sh=dte(pt)*30.0;sh=(1.0-sh)/3.0;if(sh<0.0)sh=0.0;else sh*=amount;vec4 sc=seeThru(yc,p,r,rr);sc.r-=sh;sc.g-=sh;sc.b-=sh;return sc;}
+vec4 backside(float yc,vec3 pt){vec4 c=texture2D(from,pt.xy);float gray=(c.r+c.b+c.g)/15.0+(0.8)*(pow(max(0.0,1.0-abs(yc/cylinderRadius)),0.2)/2.0+0.5);c.rgb=vec3(gray);return c;}
+vec4 behind(vec2 p,float yc,vec3 pt,mat3 rr){float sa=amount>=0.0?max(amount,1e-4):min(amount,-1e-4);float sh=(1.0-((-cylinderRadius-yc)/sa*7.0))/6.0*(1.0-abs(pt.x-0.5));yc=-cylinderRadius-cylinderRadius-yc;float ha=(acos(clamp(yc/cylinderRadius,-1.0,1.0))+cylinderAngle)-PI;pt=hitPoint(ha,yc,pt,rr);if(yc<0.0&&pt.x>=0.0&&pt.y>=0.0&&pt.x<=1.0&&pt.y<=1.0&&(ha<PI||amount>0.5)){float dx=pt.x-0.5,dy=pt.y-0.5;sh=1.0-(sqrt(dx*dx+dy*dy)/0.71);float n=-yc/cylinderRadius;sh*=n*n*n*0.5;}else sh=0.0;return vec4(texture2D(to,p).rgb-sh,1.0);}
+void main(){amount=progress*(MAX_AMOUNT-MIN_AMOUNT)+MIN_AMOUNT;cylinderCenter=amount;cylinderAngle=2.0*PI*amount;float a=100.0*PI/180.0,c=cos(-a),s=sin(-a);mat3 rot=mat3(c,s,0,-s,c,0,-0.801,0.89,1);c=cos(a);s=sin(a);mat3 rrot=mat3(c,s,0,-s,c,0,0.985,0.985,1);vec3 pt=rot*vec3(uv,1.0);float yc=pt.y-cylinderCenter;if(yc<-cylinderRadius){gl_FragColor=behind(uv,yc,pt,rrot);return;}if(yc>cylinderRadius){gl_FragColor=texture2D(from,uv);return;}float ha=(acos(clamp(yc/cylinderRadius,-1.0,1.0))+cylinderAngle)-PI;float ham=mod(ha,2.0*PI);if((ham>PI&&amount<0.5)||(ham>PI/2.0&&amount<0.0)){gl_FragColor=seeThru(yc,uv,rot,rrot);return;}pt=hitPoint(ha,yc,pt,rrot);if(pt.x<0.0||pt.y<0.0||pt.x>1.0||pt.y>1.0){gl_FragColor=seeThruShadow(yc,uv,pt,rot,rrot);return;}vec4 color=backside(yc,pt);vec4 oc;if(yc<0.0){float d=pt.x-0.5,e=pt.y-0.5;float sh=1.0-(sqrt(d*d+e*e)/0.71);float n=-yc/cylinderRadius;sh*=n*n*n*0.5;oc=vec4(0,0,0,sh);}else oc=texture2D(from,uv);color=antiAlias(color,oc,cylinderRadius-abs(yc));vec4 cl=seeThruShadow(yc,uv,pt,rot,rrot);gl_FragColor=antiAlias(color,cl,dte(pt));}`;
+
+const SWEEP = `
+precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress;
+void main(){vec4 a=texture2D(from,uv);vec4 b=texture2D(to,uv);float mask=smoothstep(progress-0.08,progress+0.02,uv.x);float edge=smoothstep(0.0,0.06,abs(uv.x-progress));float glow=(1.0-edge)*0.5;vec4 result=mix(b,a,mask);result.rgb+=vec3(1.0,0.9,0.3)*glow;gl_FragColor=result;}`;
+
+const BLEND = `
+precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress;
+void main(){gl_FragColor=mix(texture2D(from,uv),texture2D(to,uv),progress);}`;
+
+const SETTLE = `
+precision highp float;varying vec2 uv;uniform sampler2D from,to;uniform float progress,reflection,perspective,depth;
+const vec4 black=vec4(0.0,0.0,0.0,1.0);const vec2 boundMin=vec2(0.0,0.0);const vec2 boundMax=vec2(1.0,1.0);
+bool inBounds(vec2 p){return all(lessThan(boundMin,p))&&all(lessThan(p,boundMax));}
+vec2 project(vec2 p){return p*vec2(1.0,-1.2)+vec2(0.0,-0.02);}
+vec4 bgColor(vec2 p,vec2 pfr,vec2 pto){vec4 c=black;pfr=project(pfr);if(inBounds(pfr))c+=mix(black,texture2D(from,pfr),reflection*mix(1.0,0.0,pfr.y));pto=project(pto);if(inBounds(pto))c+=mix(black,texture2D(to,pto),reflection*mix(1.0,0.0,pto.y));return c;}
+void main(){vec2 pfr,pto=vec2(-1.0);float size=mix(1.0,depth,progress);float persp=perspective*progress;pfr=(uv+vec2(0.0,-0.5))*vec2(size/(1.0-perspective*progress),size/(1.0-size*persp*uv.x))+vec2(0.0,0.5);size=mix(1.0,depth,1.0-progress);persp=perspective*(1.0-progress);pto=(uv+vec2(-1.0,-0.5))*vec2(size/(1.0-perspective*(1.0-progress)),size/(1.0-size*persp*(0.5-uv.x)))+vec2(1.0,0.5);if(progress<0.5){if(inBounds(pfr))gl_FragColor=texture2D(from,pfr);else if(inBounds(pto))gl_FragColor=texture2D(to,pto);else gl_FragColor=bgColor(uv,pfr,pto);}else{if(inBounds(pto))gl_FragColor=texture2D(to,pto);else if(inBounds(pfr))gl_FragColor=texture2D(from,pfr);else gl_FragColor=bgColor(uv,pfr,pto);}}`;
+
+// ── Params ──
+const params = new URLSearchParams(location.search);
+
+// ── WebGL ──
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+const W = parseInt(params.get('w')) || 1080, H = parseInt(params.get('h')) || 1840;
+canvas.width = W; canvas.height = H;
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+function compile(src, type) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+  return s;
+}
+function link(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(vs, gl.VERTEX_SHADER));
+  gl.attachShader(p, compile(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(p); return p;
+}
+
+const quad = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+const progs = { curl: link(VERT, CURL), sweep: link(VERT, SWEEP), blend: link(VERT, BLEND), settle: link(VERT, SETTLE) };
+
+function use(name) {
+  const p = progs[name]; gl.useProgram(p);
+  const loc = gl.getAttribLocation(p, "position");
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  return p;
+}
+function bindTex(unit, tex, prog, name) {
+  gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.uniform1i(gl.getUniformLocation(prog, name), unit);
+}
+function loadTex(img) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return tex;
+}
+
+// ── Placeholder images ──
+function makePlaceholder(text, bg, fg) {
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.fillStyle = fg; x.font = "bold 72px serif"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText(text, W/2, H/2);
+  return c;
+}
+
+// ── White texture for settle entrance ──
+const whiteTex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, whiteTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
+// ── Load images ──
+const texs = { white: whiteTex };
+let loaded = 0, loadErrors = 0;
+const status = document.getElementById("status");
+const imgPrefix = params.get('img') || 'assets';
+const sources = { cover: `${imgPrefix}/cover.png`, plain: `${imgPrefix}/content-plain.png`, hl: `${imgPrefix}/content-hl.png` };
+const placeholders = {
+  cover: () => makePlaceholder("封面", "#c0392b", "#fff"),
+  plain: () => makePlaceholder("正文", "#fdf6ec", "#1a1a1a"),
+  hl:    () => makePlaceholder("高亮", "#fdf6ec", "#d4a017"),
+};
+
+function checkReady() {
+  if (++loaded === 3) {
+    if (loadErrors > 0) status.textContent = "⚠ 使用占位图";
+    window.dispatchEvent(new Event('imagesReady'));
+  }
+}
+
+for (const [key, src] of Object.entries(sources)) {
+  const img = new Image();
+  img.onload = () => { texs[key] = loadTex(img); checkReady(); };
+  img.onerror = () => { loadErrors++; texs[key] = loadTex(placeholders[key]()); checkReady(); };
+  img.src = src;
+}
+
+// ── Render functions (match renderer.html exactly) ──
+function renderSettle(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("settle");
+  bindTex(0, texs.white, pr, "from"); bindTex(1, texs.cover, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.uniform1f(gl.getUniformLocation(pr, "reflection"), 0.4);
+  gl.uniform1f(gl.getUniformLocation(pr, "perspective"), 0.2);
+  gl.uniform1f(gl.getUniformLocation(pr, "depth"), 3.0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function renderCover() {
+  gl.viewport(0, 0, W, H);
+  const pr = use("blend");
+  bindTex(0, texs.cover, pr, "from"); bindTex(1, texs.cover, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), 0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function renderCurl(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("curl");
+  bindTex(0, texs.cover, pr, "from"); bindTex(1, texs.plain, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.uniform1f(gl.getUniformLocation(pr, "ratio"), W / H);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function renderSweep(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("sweep");
+  bindTex(0, texs.plain, pr, "from"); bindTex(1, texs.hl, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function renderBlend(p) {
+  gl.viewport(0, 0, W, H);
+  const pr = use("blend");
+  bindTex(0, texs.plain, pr, "from"); bindTex(1, texs.hl, pr, "to");
+  gl.uniform1f(gl.getUniformLocation(pr, "progress"), p);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// ── Timeline (matches capture.mjs) ──
+const tm = {
+  settle: parseFloat(params.get('settle')) || 1.2,
+  cover:  parseFloat(params.get('cover'))  || 2.0,
+  curl:   parseFloat(params.get('curl'))   || 2.5,
+  sweep:  parseFloat(params.get('sweep'))  || 2.0,
+  hold:   parseFloat(params.get('hold'))   || 1.0,
+  final:  parseFloat(params.get('final'))  || 2.0,
+};
+
+function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
+
+// Build segments
+let t = 0;
+const segments = [];
+function add(name, dur) { segments.push({ name, t0: t, dur, end: t + dur }); t += dur; }
+add('settle', tm.settle);
+add('cover', tm.cover);
+add('curl', tm.curl);
+add('sweep', tm.sweep);
+add('blend', tm.hold);   // hold on highlighted content
+add('blend', tm.final);  // final fade
+const TOTAL_SEC = t;
+
+function renderAtTime(sec) {
+  for (const seg of segments) {
+    if (sec < seg.end) {
+      const localP = Math.min(1, Math.max(0, (sec - seg.t0) / seg.dur));
+      switch (seg.name) {
+        case 'settle': renderSettle(Math.max(easeInOut(localP), 0.6)); break;
+        case 'cover': renderCover(); break;
+        case 'curl': renderCurl(easeInOut(localP)); break;
+        case 'sweep': renderSweep(easeInOut(localP)); break;
+        case 'blend': renderBlend(localP); break;
+      }
+      return;
+    }
+  }
+  // Past end: show final state (blend at 1)
+  renderBlend(1);
+}
+
+// ── Controls ──
+const slider = document.getElementById("slider");
+const pct = document.getElementById("pct");
+let currentSec = 0;
+let playing = false;
+let rafId = null;
+let startTime = 0;
+
+function updateUI() {
+  const globalP = TOTAL_SEC > 0 ? currentSec / TOTAL_SEC : 0;
+  slider.value = globalP;
+  pct.textContent = Math.round(globalP * 100) + "%";
+}
+
+slider.oninput = () => {
+  currentSec = parseFloat(slider.value) * TOTAL_SEC;
+  playing = false; if (rafId) cancelAnimationFrame(rafId);
+  renderAtTime(currentSec); updateUI();
+};
+
+function tick(ts) {
+  if (!playing) return;
+  if (!startTime) startTime = ts;
+  currentSec = (ts - startTime) / 1000;
+  if (currentSec >= TOTAL_SEC) { currentSec = TOTAL_SEC; playing = false; }
+  renderAtTime(currentSec); updateUI();
+  if (playing) rafId = requestAnimationFrame(tick);
+}
+
+function play() {
+  playing = false; if (rafId) cancelAnimationFrame(rafId);
+  startTime = 0;
+  currentSec = 0;
+  playing = true;
+  rafId = requestAnimationFrame(tick);
+}
+
+// ── Autoplay on ?autoplay=1 ──
+if (params.get('autoplay')) {
+  window.addEventListener('imagesReady', () => { setTimeout(play, 300); }, { once: true });
+}
+
+// ── Embed mode ──
+if (params.get('embed')) {
+  document.body.classList.add('embed');
+}
+
+// Initial render
+renderAtTime(0);
+</script>
+</body>
+</html>

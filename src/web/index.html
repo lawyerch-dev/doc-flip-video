@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>法务视频工作台</title>
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1><span>法务视频</span>工作台</h1>
+    <div class="header-actions">
+      <span class="ai-badge" id="aiStatus">检查中...</span>
+      <button class="theme-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i></button>
+      <button class="gear-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i></button>
+    </div>
+  </header>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="dot idle" id="statusDot"></span>
+    <span id="statusText">就绪</span>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" data-step="1">
+      <div class="step-circle" onclick="goStep(1)">1</div>
+      <div class="step-label">抓取</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" data-step="2">
+      <div class="step-circle" onclick="goStep(2)">2</div>
+      <div class="step-label">编辑</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" data-step="3">
+      <div class="step-circle" onclick="goStep(3)">3</div>
+      <div class="step-label">预览</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" data-step="4">
+      <div class="step-circle" onclick="goStep(4)">4</div>
+      <div class="step-label">导出</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Scrape -->
+  <div class="step-panel active" id="panel1">
+    <div class="card">
+      <h2><span class="num">1</span> 抓取文章</h2>
+      <div class="url-bar">
+        <input type="text" id="urlInput" placeholder="粘贴法律文章链接..." onkeydown="if(event.key==='Enter')doScrape()" />
+        <button class="btn" id="scrapeBtn" onclick="doScrape()">抓取</button>
+        <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap"><i data-lucide="clipboard-list" class="icon"></i> 示例</button>
+      </div>
+      <div class="scraped-box" id="scrapedBox" style="display:none">
+        <label style="margin-bottom:6px">抓取结果 — <span id="scrapedTitle" style="color:var(--text);font-weight:600"></span></label>
+        <textarea id="scrapedText" readonly></textarea>
+        <div class="btn-group">
+          <button class="btn" onclick="doAiGenerate()"><span id="aiGenSpinner" style="display:none" class="spinner"></span>AI 生成内容</button>
+          <button class="btn secondary" onclick="resetScrape()">重新抓取</button>
+          <button class="btn secondary" onclick="pasteManual()">手动粘贴</button>
+        </div>
+      </div>
+    </div>
+    <!-- History -->
+    <div class="card" style="margin-top:14px" id="historyCard">
+      <h2><i data-lucide="history" class="icon"></i> 历史项目</h2>
+      <div id="historyList" style="max-height:480px;overflow-y:auto"></div>
+    </div>
+  </div>
+  <div class="step-panel" id="panel2">
+    <!-- Meta section -->
+    <div class="card" style="margin-bottom:14px">
+      <h2><i data-lucide="file-text" class="icon"></i> 基本信息</h2>
+      <div class="form-grid">
+        <div>
+          <label>期号</label>
+          <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" style="width:100%" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label>年</label>
+            <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" style="width:100%" />
+          </div>
+          <div style="flex:1">
+            <label>月</label>
+            <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" style="width:100%" />
+          </div>
+          <div style="flex:1">
+            <label>日</label>
+            <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" style="width:100%" />
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>描述文字</label>
+        <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" style="width:100%" />
+      </div>
+    </div>
+
+    <!-- Cover section -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>🔴 封面</h2>
+      <div class="form-grid">
+        <div>
+          <label>标题 <span class="limit">≤20字</span> <span class="hint-inline">吸引观众的第一句话</span></label>
+          <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" />
+          <div class="char-count" id="cc_headline"></div>
+        </div>
+        <div>
+          <label>来源 <span class="limit">≤25字</span> <span class="hint-inline">格式：来源：XX（日期）</span></label>
+          <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" />
+          <div class="char-count" id="cc_coverSource"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content section -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>📄 正文</h2>
+      <div class="form-grid" style="margin-bottom:14px">
+        <div>
+          <label>内容标题 <span class="limit">≤20字</span></label>
+          <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" />
+          <div class="char-count" id="cc_title"></div>
+        </div>
+        <div>
+          <label>副标题 <span class="limit">≤20字</span></label>
+          <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" />
+          <div class="char-count" id="cc_subtitle"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600">模板风格</label>
+        <select id="f_template" style="width:100%" onchange="state.dirty=true">
+          <option value="default">🔴 红头文件（默认）</option>
+        </select>
+      </div>
+      <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:block">段落内容</label>
+      <div id="paragraphs"></div>
+    </div>
+
+    <!-- Source section -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>📎 来源</h2>
+      <label>来源说明 <span class="limit">≤60字</span> <span class="hint-inline">显示在正文底部</span></label>
+      <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" />
+      <div class="char-count" id="cc_source"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-group" style="justify-content:flex-end">
+      <button class="btn secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+      <button class="btn secondary" onclick="doSave()"><i data-lucide="save" class="icon"></i> 保存</button>
+      <button class="btn blue" onclick="goStep(3)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Preview -->
+  <div class="step-panel" id="panel3">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <h2><span class="num">3</span> 预览效果</h2>
+      <div class="preview-grid">
+        <!-- Left: AI Chat -->
+        <div class="preview-col">
+          <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">💬 AI 助手</label>
+          <div class="chat-box">
+            <div class="chat-messages" id="chatMessages">
+              <div class="chat-msg ai">可以让我调整内容，比如：<br>• "标题更吸引人"<br>• "第一段太长了"<br>• "把关键词改成..."</div>
+            </div>
+            <div class="chat-input">
+              <input type="text" id="chatInput" placeholder="输入修改要求..." onkeydown="if(event.key==='Enter')doChat()" />
+              <button class="btn small" onclick="doChat()">发送</button>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Animation Preview -->
+        <div class="preview-col">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><label style="font-size:13px;font-weight:600;color:var(--text)"><i data-lucide="play" class="icon"></i> 动画预览</label><button class="btn small secondary" onclick="loadExamplePreview()" style="font-size:11px">示例</button></div>
+          <div class="anim-wrap">
+            <iframe id="animFrame" src="about:blank"></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="btn-group" style="justify-content:flex-end;margin-top:12px;flex-shrink:0">
+        <button class="btn secondary" onclick="goStep(2)">← 返回编辑</button>
+        <button class="btn green" onclick="doBuild()"><i data-lucide="video" class="icon"></i> 生成视频</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Export -->
+  <div class="step-panel" id="panel4">
+    <div class="card">
+      <h2><span class="num">4</span> 导出视频</h2>
+      <div id="buildStatus" style="padding:20px 0">
+        <div style="text-align:center">
+          <span class="spinner" style="width:24px;height:24px;border-width:3px"></span>
+          <span id="buildTimer" style="margin-left:12px;color:var(--text);font-size:16px;font-weight:600"></span>
+        </div>
+        <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
+        <div style="text-align:right;margin-top:4px"><button class="btn secondary" id="copyBuildLog" onclick="navigator.clipboard.writeText(document.getElementById('buildLog').textContent)" style="font-size:12px;padding:4px 12px">📋 复制日志</button></div>
+        <div id="buildActions" style="text-align:center;margin-top:16px">
+          <button class="btn secondary" id="cancelBuildBtn" onclick="cancelBuild()" style="color:var(--danger);border-color:var(--danger)">取消生成</button>
+        </div>
+      </div>
+      <div id="videoResult" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <!-- Left: Publish info -->
+          <div>
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="share-2" class="icon"></i> 发布信息</h3>
+            <div style="margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <label style="font-size:12px;font-weight:600">视频标题</label>
+                <button class="btn small secondary" onclick="copyText('publishTitle')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+              </div>
+              <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
+            </div>
+            <div style="margin-bottom:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <label style="font-size:12px;font-weight:600">视频介绍</label>
+                <button class="btn small secondary" onclick="copyText('publishDesc')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+              </div>
+              <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
+            </div>
+          </div>
+          <!-- Right: Video preview -->
+          <div>
+            <video id="videoPlayer" controls style="width:100%;border-radius:8px;background:#000;display:block;max-height:420px"></video>
+          </div>
+        </div>
+        <!-- Bottom actions -->
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn green" id="downloadBtn" onclick="doDownload()" style="flex:1"><i data-lucide="download" class="icon"></i> 下载视频</button>
+          <button class="btn green" onclick="doDownloadImages()" style="flex:1"><i data-lucide="image" class="icon"></i> 下载图片</button>
+          <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
+          <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings panel -->
+<div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
+<div class="settings-panel" id="settingsPanel">
+  <button class="close-btn" onclick="toggleSettings()"><i data-lucide="x" class="icon"></i></button>
+  <h2>设置</h2>
+  <div class="settings-group">
+    <label>AI API Key</label>
+    <div style="display:flex;gap:6px">
+      <input type="password" id="s_apiKey" placeholder="sk-..." style="flex:1" oninput="markSettingsDirty()" />
+      <button class="btn secondary small" onclick="toggleKeyVis()" id="keyToggleBtn" style="white-space:nowrap">显示</button>
+    </div>
+    <div class="hint">OpenAI 兼容 API 密钥（如 DeepSeek）</div>
+  </div>
+  <div class="settings-group">
+    <label>API Base URL</label>
+    <input type="text" id="s_baseUrl" placeholder="https://api.deepseek.com/v1" oninput="markSettingsDirty()" />
+  </div>
+  <div class="settings-group">
+    <label>模型</label>
+    <input type="text" id="s_model" placeholder="deepseek-v4-flash" oninput="markSettingsDirty()" />
+  </div>
+  <div class="settings-group">
+    <label>描述文字</label>
+    <input type="text" id="s_description" placeholder="法理明如镜，务知天下事！" oninput="markSettingsDirty()" />
+    <div class="hint">视频中显示的标语</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn" onclick="saveSettings()">保存设置</button>
+    <span id="settingsUnsaved" style="display:none;font-size:12px;color:var(--accent);font-weight:600">● 未保存</span>
+  </div>
+  <div id="settingsStatus" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="this.classList.remove('show')"><img id="modalImg" /></div>
+
+<script type="module">
+import { state, setStatus, goStep, toast, updateCC, showModal, copyText, toggleTheme } from '/js/app.mjs';
+import { api } from '/js/api.mjs';
+import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample } from '/js/step1-scrape.mjs';
+import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
+import { doPreview, switchTab, doChat, addMsg, loadExamplePreview } from '/js/step3-preview.mjs';
+import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild } from '/js/step4-export.mjs';
+import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis, markSettingsDirty } from '/js/history.mjs';
+
+// Expose to HTML onclick handlers
+Object.assign(window, {
+  state,  doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample,
+  doPreview, switchTab, doChat,
+  doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
+  loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,
+  toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis, markSettingsDirty, toggleTheme,
+  goStep, toast, showModal, copyText, updateCC,
+  doSave: async () => {
+    state.config = readForm();
+    if (!state.config) return toast('请先完成内容生成', 'error');
+    try {
+      const r = await api('/api/save', state.config);
+      state.config.meta.issueNumber = r.issueNum;
+      toast(`已保存为第 ${r.issueNum} 期`, 'success');
+      setStatus(`已保存为第 ${r.issueNum} 期`, 'done');
+      loadHistory();
+    } catch(e) { toast('保存失败: '+e.message, 'error'); setStatus('保存失败', 'error'); }
+  },
+  doChatKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doChat(); } },
+});
+
+// Init
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+loadTemplates();
+loadSettingsUI();
+loadHistory();
+if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

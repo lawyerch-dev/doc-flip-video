@@ -11,8 +11,8 @@ import { execFileSync } from "child_process";
 import { randomUUID } from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUTPUT_DIR = path.join(__dirname, "..", "output");
-const TEMPLATE_PATH = path.join(__dirname, "..", "template.json");
+const OUTPUT_DIR = path.join(__dirname, "..", "data", "output");
+const TEMPLATE_PATH = path.join(__dirname, "..", "src", "templates", "default.json");
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
@@ -31,7 +31,7 @@ function generateVideo(content) {
 
   try {
     execFileSync("node", [
-      path.join(__dirname, "build.mjs"),
+      path.join(__dirname, "pipeline", "build.mjs"),
       articlePath,
     ], {
       cwd: path.join(__dirname, ".."),
@@ -39,7 +39,7 @@ function generateVideo(content) {
       timeout: 120000,
     });
 
-    const generatedPath = path.join(__dirname, "..", "output", "output.mp4");
+    const generatedPath = path.join(__dirname, "..", "data", "output", "output.mp4");
     const outputPath = path.join(jobDir, "output.mp4");
     
     if (fs.existsSync(generatedPath)) {

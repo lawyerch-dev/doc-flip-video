@@ -22,7 +22,7 @@ import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
-  execFileSync("node", [path.join(ROOT, "pipeline", "gen-pages.mjs"), configPath], {
+  execFileSync("node", [path.join(ROOT, "src", "pipeline", "gen-pages.mjs"), configPath], {
     cwd: ROOT,
     stdio: "pipe",
     timeout: 15000,
@@ -34,7 +34,7 @@ function generateVideoAsync(configPath, issueNum) {
   return new Promise((resolve, reject) => {
     execFile(
       "node",
-      [path.join(ROOT, "pipeline", "build.mjs"), configPath],
+      [path.join(ROOT, "src", "pipeline", "build.mjs"), configPath],
       { cwd: ROOT, timeout: 120000 },
       (err, stdout, stderr) => {
         if (err) reject(new Error(stderr || err.message));
@@ -61,7 +61,7 @@ function generateVideo(content) {
   try {
     execFileSync(
       "node",
-      [path.join(ROOT, "pipeline", "build.mjs"), articlePath],
+      [path.join(ROOT, "src", "pipeline", "build.mjs"), articlePath],
       { cwd: ROOT, stdio: "pipe", timeout: 120000 }
     );
 

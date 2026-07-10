@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import JsBarcode from "jsbarcode";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ASSETS = path.join(__dirname, "..", "assets");
+const ASSETS = path.join(__dirname, "../..", "assets");
 const FONTS_DIR = path.join(ASSETS, "fonts");
 fs.mkdirSync(ASSETS, { recursive: true });
 
@@ -546,7 +546,7 @@ function generateContent(withHighlights) {
 async function loadQrImage() {
   const qrImg = T.bottom?.qrImage;
   if (qrImg && qrImg.enabled && qrImg.src) {
-    const imgPath = path.join(__dirname, "..", qrImg.src);
+    const imgPath = path.join(__dirname, "../..", qrImg.src);
     if (fs.existsSync(imgPath)) {
       qrImg._img = await loadImage(imgPath);
       console.log(`✅ Loaded QR image: ${imgPath}`);
@@ -572,7 +572,7 @@ const { canvas: plainCanvas } = generateContent(false);
 const { canvas: hlCanvas, hlPositions } = generateContent(true);
 
 const issueNum = String(A.meta.issueNumber).padStart(3, "0");
-const tempDir = path.join(__dirname, "..", "temp", `issue-${issueNum}`);
+const tempDir = path.join(__dirname, "../..", "data", "temp", `issue-${issueNum}`);
 fs.mkdirSync(tempDir, { recursive: true });
 
 const coverPath = path.join(tempDir, "cover.png");

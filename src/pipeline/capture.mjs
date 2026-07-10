@@ -55,7 +55,7 @@ function startServer(dir, port) {
     const srv = http.createServer((req, res) => {
       const urlPath = req.url.split('?')[0];
       if (urlPath === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      const fp = path.join(dir, urlPath === "/" ? "pipeline/renderer.html" : urlPath);
+      const fp = path.join(dir, urlPath === "/" ? "src/pipeline/renderer.html" : urlPath);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(fp)] || "application/octet-stream" });
       fs.createReadStream(fp).pipe(res);
@@ -66,7 +66,7 @@ function startServer(dir, port) {
 
 async function main() {
   const port = 18765;
-  const srv = await startServer(path.join(__dirname, ".."), port);
+  const srv = await startServer(path.join(__dirname, "../.."), port);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -94,14 +94,14 @@ async function main() {
   await page.waitForFunction(() => window.__ready === true, { timeout: 15000 });
   console.log(`${TOTAL_FRAMES} frames (${TOTAL_SEC}s)...`);
 
-  fs.mkdirSync(path.join(__dirname, "..", "output"), { recursive: true });
+  fs.mkdirSync(path.join(__dirname, "../..", "data", "output"), { recursive: true });
   const issueNum = String(cfg.meta.issueNumber).padStart(3, "0");
-  const outFile = path.join(__dirname, "..", "output", `法务视频-${issueNum}期.mp4`);
-  const progressPath = path.join(__dirname, "..", "temp", `issue-${issueNum}`, "progress.json");
+  const outFile = path.join(__dirname, "../..", "data", "output", `法务视频-${issueNum}期.mp4`);
+  const progressPath = path.join(__dirname, "../..", "data", "temp", `issue-${issueNum}`, "progress.json");
   fs.mkdirSync(path.dirname(progressPath), { recursive: true });
 
   // Pick random background music
-  const musicDir = path.join(__dirname, '..', 'assets', 'music');
+  const musicDir = path.join(__dirname, '../..', 'assets', 'music');
   const musicFiles = fs.readdirSync(musicDir).filter(f => f.match(/\.(mp3|wav|ogg|m4a)$/i));
   const musicFile = musicFiles.length > 0 ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]) : null;
   if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
@@ -169,7 +169,7 @@ async function main() {
 
   // Embed cover image as video poster
   const issueNum2 = String(cfg.meta.issueNumber).padStart(3, "0");
-  const coverPng = path.join(__dirname, '..', 'temp', `issue-${issueNum2}`, 'cover.png');
+  const coverPng = path.join(__dirname, '../..', 'data', 'temp', `issue-${issueNum2}`, 'cover.png');
   if (fs.existsSync(coverPng)) {
     const tmpOut = outFile + '.tmp.mp4';
     const posterArgs = ['-y', '-i', outFile, '-i', coverPng,

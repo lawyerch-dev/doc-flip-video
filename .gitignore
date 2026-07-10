@@ -1,7 +1,7 @@
 node_modules/
-output/
-temp/
-configs/settings.json
+data/output/
+data/temp/
+config/settings.json
 
 
 gl-transitions/

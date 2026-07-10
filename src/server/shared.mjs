@@ -7,11 +7,11 @@ import { randomUUID } from "crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "../..");
-const WEB_DIR = path.join(ROOT, "web");
-const CONFIGS_DIR = path.join(ROOT, "configs");
-const TEMP_DIR = path.join(ROOT, "temp");
-const OUTPUT_DIR = path.join(ROOT, "output");
-const TEMPLATES_DIR = path.join(ROOT, "templates");
+const WEB_DIR = path.join(ROOT, "src", "web");
+const CONFIGS_DIR = path.join(ROOT, "config");
+const TEMP_DIR = path.join(ROOT, "data", "temp");
+const OUTPUT_DIR = path.join(ROOT, "data", "output");
+const TEMPLATES_DIR = path.join(ROOT, "src", "templates");
 const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
 
 const SETTINGS_PATH = path.join(CONFIGS_DIR, "settings.json");

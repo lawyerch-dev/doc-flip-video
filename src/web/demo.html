@@ -68,6 +68,9 @@ vec2 project(vec2 p){return p*vec2(1.0,-1.2)+vec2(0.0,-0.02);}
 vec4 bgColor(vec2 p,vec2 pfr,vec2 pto){vec4 c=black;pfr=project(pfr);if(inBounds(pfr))c+=mix(black,texture2D(from,pfr),reflection*mix(1.0,0.0,pfr.y));pto=project(pto);if(inBounds(pto))c+=mix(black,texture2D(to,pto),reflection*mix(1.0,0.0,pto.y));return c;}
 void main(){vec2 pfr,pto=vec2(-1.0);float size=mix(1.0,depth,progress);float persp=perspective*progress;pfr=(uv+vec2(0.0,-0.5))*vec2(size/(1.0-perspective*progress),size/(1.0-size*persp*uv.x))+vec2(0.0,0.5);size=mix(1.0,depth,1.0-progress);persp=perspective*(1.0-progress);pto=(uv+vec2(-1.0,-0.5))*vec2(size/(1.0-perspective*(1.0-progress)),size/(1.0-size*persp*(0.5-uv.x)))+vec2(1.0,0.5);if(progress<0.5){if(inBounds(pfr))gl_FragColor=texture2D(from,pfr);else if(inBounds(pto))gl_FragColor=texture2D(to,pto);else gl_FragColor=bgColor(uv,pfr,pto);}else{if(inBounds(pto))gl_FragColor=texture2D(to,pto);else if(inBounds(pfr))gl_FragColor=texture2D(from,pfr);else gl_FragColor=bgColor(uv,pfr,pto);}}`;
 
+// ── Params ──
+const params = new URLSearchParams(location.search);
+
 // ── WebGL ──
 const canvas = document.getElementById("c");
 const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
@@ -133,7 +136,6 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new
 const texs = { white: whiteTex };
 let loaded = 0, loadErrors = 0;
 const status = document.getElementById("status");
-const params = new URLSearchParams(location.search);
 const imgPrefix = params.get('img') || 'assets';
 const sources = { cover: `${imgPrefix}/cover.png`, plain: `${imgPrefix}/content-plain.png`, hl: `${imgPrefix}/content-hl.png` };
 const placeholders = {

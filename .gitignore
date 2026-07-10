@@ -11,6 +11,8 @@ dev_docs/articles/internal/
 dev_docs/.drafts/
 gl-transitions/
 
+# 学习资料（大型外部仓库，不纳入版本控制）
+flowgram.ai/
 
 dev_docs
 

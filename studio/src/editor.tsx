@@ -33,6 +33,7 @@ import { IconDownload } from './assets/icons';
 import { NodeToolbox } from './components/node-toolbox';
 import { DemoTools } from './components/tools';
 import { ToolboxContext, useToolbox } from './context';
+import { useProblemPanel } from './plugins/panel-manager-plugin/hooks';
 
 interface EditorProps {
   workflowId: string;
@@ -46,6 +47,7 @@ function TopBar({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false);
   const [workflowName, setWorkflowName] = useState('未命名工作流');
   const toolbox = useToolbox();
+  const { open: openProblemPanel } = useProblemPanel();
 
   const handleSave = useCallback(() => {
     setSaving(true);
@@ -205,12 +207,13 @@ function TopBar({ onBack }: { onBack: () => void }) {
           运行
         </Button>
       </Tooltip>
-      <Tooltip content="设置">
+      <Tooltip content="问题检查">
         <Button
           size="small"
           theme="borderless"
           type="tertiary"
           icon={<IconSetting size="small" />}
+          onClick={openProblemPanel}
           style={{ fontSize: 12, color: 'var(--g-fg-secondary, #666)' }}
         />
       </Tooltip>

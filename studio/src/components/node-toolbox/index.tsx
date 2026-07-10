@@ -171,16 +171,15 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = ({ visible, onClose }) =>
   }, [search]);
 
   const handleAddNode = useCallback(
-    (registry: FlowNodeRegistry, e: React.MouseEvent) => {
-      const json = registry.onAdd?.(context);
+    (registry: FlowNodeRegistry, _e: React.MouseEvent) => {
       const pos = { x: 300 + Math.random() * 200, y: 100 + Math.random() * 200 };
-      const nodeData: any = {
-        type: registry.type as string,
-        ...(json ? { data: json.data ?? json } : {}),
-      };
-      const nodePos = (json as any)?.position ?? pos;
-      nodeData.position = nodePos;
-      doc.addNode(nodeData);
+      const json = registry.onAdd?.(context);
+      const nodeData = (json as any) ?? {};
+      doc.createWorkflowNodeByType(
+        registry.type as string,
+        pos,
+        { data: nodeData.data ?? nodeData } as any,
+      );
     },
     [context, doc],
   );

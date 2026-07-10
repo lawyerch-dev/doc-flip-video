@@ -139,7 +139,37 @@ function buildRegistry(manifest: PluginManifest): FlowNodeRegistry {
   };
 }
 
-export const nodeRegistries: FlowNodeRegistry[] = BUILTIN_PLUGINS.map(buildRegistry);
+/** Start 节点（虚拟，不可删除、不可由用户添加） */
+const startRegistry: FlowNodeRegistry = {
+  type: 'system:start',
+  info: { description: '工作流起点' },
+  meta: {
+    defaultPorts: [{ type: 'output' }],
+    size: { width: 120, height: 48 },
+    deleteDisable: true,
+    copyDisable: true,
+  },
+  formMeta: { render: () => <div style={{ padding: 12, fontSize: 13 }}>🎬 开始</div> },
+};
+
+/** End 节点（虚拟，不可删除、不可由用户添加） */
+const endRegistry: FlowNodeRegistry = {
+  type: 'system:end',
+  info: { description: '工作流终点' },
+  meta: {
+    defaultPorts: [{ type: 'input' }],
+    size: { width: 120, height: 48 },
+    deleteDisable: true,
+    copyDisable: true,
+  },
+  formMeta: { render: () => <div style={{ padding: 12, fontSize: 13 }}>🏁 结束</div> },
+};
+
+export const nodeRegistries: FlowNodeRegistry[] = [
+  startRegistry,
+  endRegistry,
+  ...BUILTIN_PLUGINS.map(buildRegistry),
+];
 
 // ─── Workflow JSON converter ───
 
@@ -158,87 +188,175 @@ export interface EngineNodeJSON {
   position?: [number, number];
 }
 
-/** BFS 自动布局：按输入链从左到右分层 */
-function autoLayout(nodes: EngineNodeJSON[]): Record<string, { x: number; y: number }> {
-  const positions: Record<string, { x: number; y: number }> = {};
+/** 判断节点是否属于视频主链路 */
+function isMainChain(type: string): boolean {
+  const main = [
+    'source:page-renderer', 'effect:fade-in', 'effect:fade-out',
+    'effect:hold', 'effect:sweep-glow', 'transition:page-curl',
+    'transition:crossfade', 'output:mp4',
+  ];
+  return main.includes(type);
+}
 
-  // 拓扑关系
-  const adj: Record<string, string[]> = {};
-  const depth: Record<string, number> = {};
-  for (const n of nodes) adj[n.id] = [];
-
+/** 拓扑排序：按输入依赖排序 */
+function topoSort(nodes: EngineNodeJSON[]): string[] {
+  const map = new Map<string, EngineNodeJSON>();
+  const inDeg = new Map<string, number>();
+  const adj = new Map<string, string[]>();
+  
+  for (const n of nodes) {
+    map.set(n.id, n);
+    inDeg.set(n.id, 0);
+    adj.set(n.id, []);
+  }
   for (const n of nodes) {
     for (const srcId of Object.values(n.inputs ?? {})) {
-      if (adj[srcId]) adj[srcId].push(n.id);
+      adj.get(srcId)?.push(n.id);
+      inDeg.set(n.id, (inDeg.get(n.id) ?? 0) + 1);
     }
   }
-
-  // BFS 算深度
-  const queue: string[] = [];
-  for (const n of nodes) {
-    if (Object.keys(n.inputs ?? {}).length === 0) {
-      depth[n.id] = 0;
-      queue.push(n.id);
-    }
+  
+  const q: string[] = [];
+  for (const [id, deg] of inDeg) {
+    if (deg === 0) q.push(id);
   }
-
+  
+  const result: string[] = [];
   let head = 0;
-  while (head < queue.length) {
-    const id = queue[head++];
-    const d = (depth[id] ?? 0) + 1;
-    for (const next of adj[id] ?? []) {
-      if (!(next in depth) || depth[next] < d) depth[next] = d;
-      if (!queue.includes(next)) queue.push(next);
+  while (head < q.length) {
+    const id = q[head++];
+    result.push(id);
+    for (const next of adj.get(id) ?? []) {
+      inDeg.set(next, (inDeg.get(next) ?? 1) - 1);
+      if (inDeg.get(next) === 0) q.push(next);
     }
   }
+  return result;
+}
 
-  // 按深度分组
-  const layers: Record<number, string[]> = {};
-  for (const n of nodes) {
-    const d = depth[n.id] ?? 0;
-    if (!layers[d]) layers[d] = [];
-    layers[d].push(n.id);
-  }
-
-  // 分配坐标
+/** 自动布局：Start → 主链路 → End 从左到右 */
+function autoLayout(
+  nodes: EngineNodeJSON[],
+  ordered: string[],
+): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {};
+  
+  // Start 在最左
+  positions['__start__'] = { x: 20, y: 300 };
+  
+  // 主链路节点从左到右
+  const chainOrder = ordered.filter(id => {
+    const n = nodes.find(x => x.id === id);
+    return n && isMainChain(n.type);
+  });
+  
   const X_STEP = 280;
-  const Y_STEP = 160;
-  const Y_START = 80;
-
-  for (const [dStr, ids] of Object.entries(layers)) {
-    const d = Number(dStr);
-    const x = 50 + d * X_STEP;
-    const totalH = ids.length * Y_STEP;
-    const yStart = Y_START - totalH / 2 + Y_STEP / 2;
-    ids.forEach((id, i) => {
-      positions[id] = { x, y: yStart + i * Y_STEP };
-    });
-  }
-
+  chainOrder.forEach((id, i) => {
+    positions[id] = { x: 120 + i * X_STEP, y: 300 };
+  });
+  
+  // 辅助节点（音频、光晕条）在下方
+  const sideNodes = ordered.filter(id => {
+    const n = nodes.find(x => x.id === id);
+    return n && !isMainChain(n.type);
+  });
+  sideNodes.forEach((id, i) => {
+    positions[id] = { x: 120, y: 520 + i * 160 };
+  });
+  
+  // End 在最右
+  const lastX = chainOrder.length > 0 ? 120 + chainOrder.length * X_STEP : 120;
+  positions['__end__'] = { x: lastX, y: 300 };
+  
   return positions;
 }
 
 /** Engine format → Flowgram format */
 export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
   const engineNodes = engine.nodes ?? [];
-  const layout = autoLayout(engineNodes);
-
-  return {
-    nodes: engineNodes.map((n) => {
+  const ordered = topoSort(engineNodes);
+  const layout = autoLayout(engineNodes, ordered);
+  
+  // 注入 Start/End 虚拟节点
+  const startNode = {
+    id: '__start__',
+    type: 'system:start',
+    meta: { position: { x: layout['__start__'].x, y: layout['__start__'].y } },
+    data: { title: '开始', params: {} },
+  };
+  const endNode = {
+    id: '__end__',
+    type: 'system:end',
+    meta: { position: { x: layout['__end__'].x, y: layout['__end__'].y } },
+    data: { title: '结束', params: {} },
+  };
+  
+  // 主链路节点
+  const mainNodes = engineNodes.filter(n => isMainChain(n.type));
+  const sideNodes = engineNodes.filter(n => !isMainChain(n.type));
+  
+  // 构建时间轴连线
+  const edges: WorkflowEdgeJSON[] = [];
+  
+  // Start → 第一个主节点
+  if (mainNodes.length > 0) {
+    edges.push({ id: 'start_to_0', source: '__start__', target: mainNodes[0].id, sourcePort: '0', targetPort: '0' });
+  }
+  
+  // 主节点之间依次连线
+  for (let i = 0; i < mainNodes.length - 1; i++) {
+    edges.push({
+      id: `${mainNodes[i].id}->${mainNodes[i+1].id}`,
+      source: mainNodes[i].id,
+      target: mainNodes[i+1].id,
+      sourcePort: '0',
+      targetPort: '0',
+    });
+  }
+  
+  // 最后一个主节点 → End
+  if (mainNodes.length > 0) {
+    edges.push({ id: 'last_to_end', source: mainNodes[mainNodes.length - 1].id, target: '__end__', sourcePort: '0', targetPort: '0' });
+  }
+  
+  // 辅助节点连线（音频、光晕条等连接到主链路）
+  for (const node of engineNodes) {
+    for (const [_portName, srcId] of Object.entries(node.inputs ?? {})) {
+      if (!srcId) continue;
+      // 检查是否已经被主链路过
+      const alreadyInMain = mainNodes.some((m, i) => 
+        (i < mainNodes.length - 1 && m.id === srcId && mainNodes[i + 1].id === node.id) ||
+        (i > 0 && m.id === node.id && mainNodes[i - 1].id === srcId)
+      );
+      if (!alreadyInMain) {
+        edges.push({
+          id: `${srcId}->${node.id}-side`,
+          source: srcId,
+          target: node.id,
+          sourcePort: '0',
+          targetPort: '0',
+        });
+      }
+    }
+  }
+  
+  // 构建节点列表（包含 Start/End）
+  const nodes = [
+    startNode,
+    ...engineNodes.map((n) => {
       const manifest = getPlugin(n.type);
       const pos = layout[n.id] ?? { x: 100, y: 100 };
       return {
         id: n.id,
         type: n.type,
         meta: { position: { x: pos.x, y: pos.y } },
-        data: {
-          title: manifest?.name ?? n.type,
-          params: n.params,
-        },
+        data: { title: manifest?.name ?? n.type, params: n.params },
       };
     }),
-    edges: buildEdges(engineNodes),
-  };
+    endNode,
+  ];
+  
+  return { nodes, edges };
 }
 
 function buildEdges(nodes: EngineNodeJSON[]): WorkflowEdgeJSON[] {

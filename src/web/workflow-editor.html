@@ -362,7 +362,8 @@ function graphToWorkflow() {
       if (input.link != null) {
         const link = graph.links[input.link];
         if (link) {
-          inputs[input.name] = graph._nodes[link.origin_id].id;
+          const src = graph.getNodeById(link.origin_id);
+      if (src) inputs[input.name] = src.id;
         }
       }
     }

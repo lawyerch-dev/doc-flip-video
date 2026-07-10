@@ -405,7 +405,7 @@ function workflowToGraph(wf) {
       }
     }
   }
-  _nodeSeq = Math.max(...Object.keys(idMap).map(Number), 0) + 1;
+  _nodeSeq = graph._nodes.length + 100;
   graphCanvas.setDirty(true);
   updateStatus();
 }

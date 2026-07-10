@@ -136,43 +136,162 @@ function buildRegistry(manifest: PluginManifest): FlowNodeRegistry {
   };
 }
 
-/** Start 节点（虚拟，不可删除） */
+/** Start 节点（唯一，不可删除，定义工作流输入参数） */
 const startRegistry: FlowNodeRegistry = {
   type: 'system:start',
-  info: { description: '工作流起点' },
+  info: { description: '工作流起点 — 定义输入参数（视频、音频等）' },
   meta: {
     defaultPorts: [{ type: 'output' }],
-    size: { width: 120, height: 52 },
+    size: { width: 200, height: 52 },
     deleteDisable: true,
     copyDisable: true,
   },
   formMeta: {
-    render: () => (
-      <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 16 }}>🎬</span>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>开始</span>
-      </div>
-    ),
+    render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
+      const isSidebar = useIsSidebar();
+      const data = form.nodeData?.data;
+      const params = (data?.params ?? {}) as Record<string, unknown>;
+
+      if (isSidebar) {
+        return (
+          <div style={{ padding: '8px 16px' }}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>工作流名称</label>
+              <Field
+                name="data.params.workflowName"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="text"
+                    value={value as string ?? '未命名工作流'}
+                    onChange={e => onChange(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                  />
+                }
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>视频宽度</label>
+              <Field
+                name="data.params.width"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="number"
+                    value={value as number ?? 1080}
+                    onChange={e => onChange(Number(e.target.value))}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                  />
+                }
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>视频高度</label>
+              <Field
+                name="data.params.height"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="number"
+                    value={value as number ?? 1840}
+                    onChange={e => onChange(Number(e.target.value))}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                  />
+                }
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>帧率 (fps)</label>
+              <Field
+                name="data.params.fps"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="number"
+                    value={value as number ?? 30}
+                    onChange={e => onChange(Number(e.target.value))}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                  />
+                }
+              />
+            </div>
+          </div>
+        );
+      }
+
+      // Canvas face
+      return (
+        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🎬</span>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>开始</div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>{(params.workflowName as string) || '工作流'}</div>
+          </div>
+        </div>
+      );
+    },
   },
 };
 
-/** End 节点（虚拟，不可删除） */
+/** End 节点（唯一，不可删除，定义输出参数） */
 const endRegistry: FlowNodeRegistry = {
   type: 'system:end',
-  info: { description: '工作流终点' },
+  info: { description: '工作流终点 — 定义输出视频参数' },
   meta: {
     defaultPorts: [{ type: 'input' }],
-    size: { width: 120, height: 52 },
+    size: { width: 200, height: 52 },
     deleteDisable: true,
     copyDisable: true,
   },
   formMeta: {
-    render: () => (
-      <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 16 }}>🏁</span>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>结束</span>
-      </div>
-    ),
+    render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
+      const isSidebar = useIsSidebar();
+      const params = (form.nodeData?.data?.params ?? {}) as Record<string, unknown>;
+
+      if (isSidebar) {
+        return (
+          <div style={{ padding: '8px 16px' }}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输出文件名</label>
+              <Field
+                name="data.params.outputName"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="text"
+                    value={value as string ?? ''}
+                    onChange={e => onChange(e.target.value)}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                    placeholder="法务视频-NNN期"
+                  />
+                }
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>编码质量 (CRF)</label>
+              <Field
+                name="data.params.crf"
+                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
+                  <input
+                    type="number"
+                    value={value as number ?? 14}
+                    min={0} max={51}
+                    onChange={e => onChange(Number(e.target.value))}
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
+                  />
+                }
+              />
+            </div>
+          </div>
+        );
+      }
+
+      // Canvas face
+      return (
+        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🏁</span>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>结束</div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>{(params.outputName as string) || '输出视频'}</div>
+          </div>
+        </div>
+      );
+    },
   },
 };
 
@@ -288,14 +407,17 @@ export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
   const ordered = topoSort(engineNodes);
   const layout = autoLayout(engineNodes, ordered);
   
-  // 注入 Start/End 虚拟节点
-  const startNode = {
+  // 注入 Start/End（如果不存在）
+  const hasStart = engineNodes.some(n => n.id === '__start__');
+  const hasEnd = engineNodes.some(n => n.id === '__end__');
+  
+  const startNode = hasStart ? null : {
     id: '__start__',
     type: 'system:start',
     meta: { position: { x: layout['__start__'].x, y: layout['__start__'].y } },
     data: { title: '开始', params: {} },
   };
-  const endNode = {
+  const endNode = hasEnd ? null : {
     id: '__end__',
     type: 'system:end',
     meta: { position: { x: layout['__end__'].x, y: layout['__end__'].y } },
@@ -352,20 +474,20 @@ export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
   }
   
   // 构建节点列表（包含 Start/End）
-  const nodes = [
-    startNode,
-    ...engineNodes.map((n) => {
-      const manifest = getPlugin(n.type);
-      const pos = layout[n.id] ?? { x: 100, y: 100 };
-      return {
-        id: n.id,
-        type: n.type,
-        meta: { position: { x: pos.x, y: pos.y } },
-        data: { title: manifest?.name ?? n.type, params: n.params },
-      };
-    }),
-    endNode,
-  ];
+  const injected: FlowNodeJSON[] = [];
+  if (startNode) injected.push(startNode);
+  for (const n of engineNodes) {
+    if (n.id === '__start__' || n.id === '__end__') continue;
+    const manifest = getPlugin(n.type);
+    const pos = layout[n.id] ?? { x: 100, y: 100 };
+    injected.push({
+      id: n.id,
+      type: n.type,
+      meta: { position: { x: pos.x, y: pos.y } },
+      data: { title: manifest?.name ?? n.type, params: n.params },
+    });
+  }
+  if (endNode) injected.push(endNode);
   
   return { nodes, edges };
 }

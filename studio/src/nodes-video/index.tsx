@@ -112,12 +112,14 @@ function buildFormMeta(manifest: PluginManifest) {
 }
 
 function buildPorts(manifest: PluginManifest) {
-  const ports: { type: 'input' | 'output'; name: string }[] = [];
-  for (const input of manifest.inputs) {
-    ports.push({ type: 'input', name: input.name });
+  const ports: { type: 'input' | 'output' }[] = [];
+  // All input types use a generic 'input' port
+  // Flowgram's port system uses slot index, not port name
+  for (let i = 0; i < manifest.inputs.length; i++) {
+    ports.push({ type: 'input' });
   }
   if (manifest.category !== 'output') {
-    ports.push({ type: 'output', name: 'out' });
+    ports.push({ type: 'output' });
   }
   return ports;
 }
@@ -241,16 +243,20 @@ export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
 
 function buildEdges(nodes: EngineNodeJSON[]): WorkflowEdgeJSON[] {
   const edges: WorkflowEdgeJSON[] = [];
+  // Track how many inputs each target has consumed (for port index)
+  const inputCount: Record<string, number> = {};
   for (const n of nodes) {
-    for (const [portName, sourceId] of Object.entries(n.inputs ?? {})) {
+    let inputIdx = 0;
+    for (const [_portName, sourceId] of Object.entries(n.inputs ?? {})) {
       if (sourceId) {
         edges.push({
-          id: `${sourceId}->${n.id}-${portName}`,
+          id: `${sourceId}->${n.id}-${inputIdx}`,
           source: sourceId,
           target: n.id,
-          sourcePort: 'out',
-          targetPort: portName,
+          sourcePort: '0',  // output port index
+          targetPort: String(inputIdx),  // input port index
         });
+        inputIdx++;
       }
     }
   }
@@ -264,11 +270,13 @@ export function toEngineJSON(doc: FlowDocumentJSON): EngineWorkflowJSON {
     name: '未命名工作流',
     variables: { width: 1080, height: 1840, fps: 30 },
     nodes: (doc.nodes ?? []).map((n) => {
-      const edgeInputs: Record<string, string> = {};
+      const nodeInputs: Record<string, string> = {};
+      const portNames = (BUILTIN_PLUGINS.find(p => p.id === n.type)?.inputs ?? []).map(p => p.name);
       for (const edge of doc.edges ?? []) {
         if (edge.target === n.id && edge.targetPort) {
-          if (!edge.sourcePort || edge.sourcePort === 'out') {
-            edgeInputs[edge.targetPort] = edge.source;
+          const idx = parseInt(edge.targetPort, 10);
+          if (!isNaN(idx) && idx < portNames.length) {
+            nodeInputs[portNames[idx]] = edge.source;
           }
         }
       }
@@ -276,7 +284,7 @@ export function toEngineJSON(doc: FlowDocumentJSON): EngineWorkflowJSON {
         id: n.id,
         type: n.type,
         params: (n.data?.params as Record<string, unknown>) ?? {},
-        inputs: edgeInputs,
+        inputs: nodeInputs,
         position: n.meta?.position ? [n.meta.position.x, n.meta.position.y] : [100, 100],
       };
     }),

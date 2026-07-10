@@ -5,11 +5,11 @@
     "build": "node src/pipeline/build.mjs",
     "workflow": "node src/workflow/run.mjs",
     "build:wf": "node src/pipeline/build.mjs --workflow",
-    "studio": "cd studio && npm run dev",
+    "studio:flow": "cd studio && npm run dev",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server/index.mjs",
     "studio": "node src/server/index.mjs",
-    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; nodemon --watch src/server --watch src/web -e mjs,html,js,css --delay 1 src/server/index.mjs",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; concurrently -n backend,flowgram 'nodemon --watch src/server --watch src/web -e mjs,html,js,css --delay 1 src/server/index.mjs' 'cd studio && npm run dev'",
     "mcp": "node src/mcp-server.mjs",
     "fonts": "bash scripts/download-fonts.sh"
   },
@@ -19,9 +19,13 @@
     "puppeteer": "^25.3.0"
   },
   "devDependencies": {
+    "concurrently": "^10.0.3",
     "nodemon": "^3.1.14"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["canvas", "puppeteer"]
+    "onlyBuiltDependencies": [
+      "canvas",
+      "puppeteer"
+    ]
   }
 }

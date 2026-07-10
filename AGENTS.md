@@ -4,6 +4,10 @@ Generate flip-page animation videos from JSON configurations for legal documents
 
 **GitHub**: https://github.com/BluerAngala/doc-flip-video
 
+## 语言偏好
+
+默认用中文回复用户；代码、命令、技术术语保持原文不翻译。
+
 ## What This Project Does
 
 Creates red-header style (红头文件) videos with:

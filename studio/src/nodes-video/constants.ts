@@ -3,6 +3,7 @@ export const VideoNodeType = {
   /** 虚拟节点 */
   Start: 'system:start',
   End: 'system:end',
+  Comment: 'comment',
   /** Source */
   PageRenderer: 'source:page-renderer',
   AudioPicker: 'source:audio-picker',

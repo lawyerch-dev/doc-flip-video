@@ -8,7 +8,7 @@ import { FC, useState, useEffect } from 'react';
 import classnames from 'classnames';
 import { WorkflowInputs, WorkflowOutputs } from '@flowgram.ai/runtime-interface';
 import { useService } from '@flowgram.ai/free-layout-editor';
-import { Button, Switch } from '@douyinfe/semi-ui';
+import { Button, Switch, Toast } from '@douyinfe/semi-ui';
 import { IconClose, IconPlay, IconSpin } from '@douyinfe/semi-icons';
 
 import { TestRunJsonInput } from '../testrun-json-input';
@@ -54,15 +54,23 @@ export const TestRunSidePanel: FC<TestRunSidePanelProps> = () => {
     }
     setResult(undefined);
     setErrors(undefined);
+
+    // Save test inputs to localStorage for external execution
+    localStorage.setItem('wf-test-inputs', JSON.stringify(values));
+
+    // Try running via runtime service (works for flowgram-native nodes)
     const taskID = await runtimeService.taskRun(values);
     if (taskID) {
       setRunning(true);
+      Toast.info({ content: '工作流已开始运行，结果将显示在下方', top: 80, duration: 3 });
+    } else {
+      // Fallback: save config for CLI execution
+      Toast.success({ content: '测试参数已保存，可使用 npm run workflow 执行', top: 80, duration: 4 });
     }
   };
 
   const onClose = async () => {
     await runtimeService.taskCancel();
-    setValues({});
     setRunning(false);
     closePanel();
   };
@@ -70,15 +78,15 @@ export const TestRunSidePanel: FC<TestRunSidePanelProps> = () => {
   const renderRunning = (
     <div className={styles['testrun-panel-running']}>
       <IconSpin spin size="large" />
-      <div className={styles.text}>Running...</div>
+      <div className={styles.text}>运行中...</div>
     </div>
   );
 
   const renderForm = (
     <div className={styles['testrun-panel-form']}>
       <div className={styles['testrun-panel-input']}>
-        <div className={styles.title}>Input Form</div>
-        <div>JSON Mode</div>
+        <div className={styles.title}>输入表单</div>
+        <div>JSON 模式</div>
         <Switch
           checked={inputJSONMode}
           onChange={(checked: boolean) => setInputJSONMode(checked)}
@@ -95,8 +103,8 @@ export const TestRunSidePanel: FC<TestRunSidePanelProps> = () => {
           {e}
         </div>
       ))}
-      <NodeStatusGroup title="Inputs Result" data={result?.inputs} optional disableCollapse />
-      <NodeStatusGroup title="Outputs Result" data={result?.outputs} optional disableCollapse />
+      <NodeStatusGroup title="输入结果" data={result?.inputs} optional disableCollapse />
+      <NodeStatusGroup title="输出结果" data={result?.outputs} optional disableCollapse />
     </div>
   );
 
@@ -109,7 +117,7 @@ export const TestRunSidePanel: FC<TestRunSidePanelProps> = () => {
         [styles.default]: !isRunning,
       })}
     >
-      {isRunning ? 'Cancel' : 'Test Run'}
+      {isRunning ? '取消' : '测试运行'}
     </Button>
   );
 
@@ -136,7 +144,7 @@ export const TestRunSidePanel: FC<TestRunSidePanelProps> = () => {
   return (
     <div className={styles['testrun-panel-container']}>
       <div className={styles['testrun-panel-header']}>
-        <div className={styles['testrun-panel-title']}>Test Run</div>
+        <div className={styles['testrun-panel-title']}>测试运行</div>
         <Button
           className={styles['testrun-panel-title']}
           type="tertiary"

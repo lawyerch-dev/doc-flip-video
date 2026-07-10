@@ -74,90 +74,122 @@
     </div>
   </div>
   <div class="step-panel" id="panel2">
-    <!-- Meta section -->
-    <div class="card" style="margin-bottom:14px">
-      <h2><i data-lucide="file-text" class="icon"></i> 基本信息</h2>
-      <div class="form-grid">
-        <div>
-          <label>期号</label>
-          <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" style="width:100%" />
+    <!-- Coze-style config panel -->
+    <div class="coze-panel">
+      <!-- Meta section -->
+      <div class="coze-section">
+        <div class="coze-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>基本信息</span>
         </div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1">
-            <label>年</label>
-            <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" style="width:100%" />
+        <div class="coze-section-body">
+          <div class="coze-field">
+            <div class="coze-field-row">
+              <div class="coze-field-group" style="flex:0 0 140px">
+                <label class="coze-field-label">期号</label>
+                <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" class="coze-input" />
+              </div>
+              <div class="coze-field-group" style="flex:1">
+                <label class="coze-field-label">日期</label>
+                <div class="coze-date-row">
+                  <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" placeholder="年" class="coze-input" />
+                  <span class="coze-date-sep">/</span>
+                  <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" placeholder="月" class="coze-input" />
+                  <span class="coze-date-sep">/</span>
+                  <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" placeholder="日" class="coze-input" />
+                </div>
+              </div>
+            </div>
           </div>
-          <div style="flex:1">
-            <label>月</label>
-            <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" style="width:100%" />
-          </div>
-          <div style="flex:1">
-            <label>日</label>
-            <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" style="width:100%" />
+          <div class="coze-field">
+            <label class="coze-field-label">描述文字</label>
+            <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" class="coze-input" />
           </div>
         </div>
       </div>
-      <div style="margin-top:10px">
-        <label>描述文字</label>
-        <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" style="width:100%" />
-      </div>
-    </div>
 
-    <!-- Cover section -->
-    <div class="card" style="margin-bottom:14px">
-      <h2>🔴 封面</h2>
-      <div class="form-grid">
-        <div>
-          <label>标题 <span class="limit">≤20字</span> <span class="hint-inline">吸引观众的第一句话</span></label>
-          <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" />
-          <div class="char-count" id="cc_headline"></div>
+      <!-- Cover section -->
+      <div class="coze-section">
+        <div class="coze-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>封面设置</span>
         </div>
-        <div>
-          <label>来源 <span class="limit">≤25字</span> <span class="hint-inline">格式：来源：XX（日期）</span></label>
-          <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" />
-          <div class="char-count" id="cc_coverSource"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Content section -->
-    <div class="card" style="margin-bottom:14px">
-      <h2>📄 正文</h2>
-      <div class="form-grid" style="margin-bottom:14px">
-        <div>
-          <label>内容标题 <span class="limit">≤20字</span></label>
-          <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" />
-          <div class="char-count" id="cc_title"></div>
-        </div>
-        <div>
-          <label>副标题 <span class="limit">≤20字</span></label>
-          <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" />
-          <div class="char-count" id="cc_subtitle"></div>
+        <div class="coze-section-body">
+          <div class="coze-field">
+            <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
+            <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" placeholder="吸引观众的第一句话" class="coze-input" />
+            <div class="char-count" id="cc_headline"></div>
+          </div>
+          <div class="coze-field">
+            <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>
+            <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" placeholder="来源：XX（日期）" class="coze-input" />
+            <div class="char-count" id="cc_coverSource"></div>
+          </div>
         </div>
       </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:13px;font-weight:600">模板风格</label>
-        <select id="f_template" style="width:100%" onchange="state.dirty=true">
-          <option value="default">🔴 红头文件（默认）</option>
-        </select>
+
+      <!-- Content section -->
+      <div class="coze-section">
+        <div class="coze-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>正文编辑</span>
+        </div>
+        <div class="coze-section-body">
+          <div class="coze-field-row">
+            <div class="coze-field" style="flex:1">
+              <label class="coze-field-label">内容标题 <span class="coze-limit">≤20字</span></label>
+              <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" placeholder="主标题" class="coze-input" />
+              <div class="char-count" id="cc_title"></div>
+            </div>
+            <div class="coze-field" style="flex:1">
+              <label class="coze-field-label">副标题 <span class="coze-limit">≤20字</span></label>
+              <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" placeholder="副标题" class="coze-input" />
+              <div class="char-count" id="cc_subtitle"></div>
+            </div>
+          </div>
+          <div class="coze-field">
+            <label class="coze-field-label">模板风格</label>
+            <select id="f_template" class="coze-input" onchange="state.dirty=true">
+              <option value="default">🔴 红头文件（默认）</option>
+            </select>
+          </div>
+          <div class="coze-field">
+            <label class="coze-field-label">段落内容</label>
+            <div id="paragraphs"></div>
+          </div>
+        </div>
       </div>
-      <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:block">段落内容</label>
-      <div id="paragraphs"></div>
-    </div>
 
-    <!-- Source section -->
-    <div class="card" style="margin-bottom:14px">
-      <h2>📎 来源</h2>
-      <label>来源说明 <span class="limit">≤60字</span> <span class="hint-inline">显示在正文底部</span></label>
-      <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" />
-      <div class="char-count" id="cc_source"></div>
-    </div>
+      <!-- Source section -->
+      <div class="coze-section">
+        <div class="coze-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>来源信息</span>
+        </div>
+        <div class="coze-section-body">
+          <div class="coze-field">
+            <label class="coze-field-label">来源说明 <span class="coze-limit">≤60字</span></label>
+            <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" placeholder="显示在正文底部" class="coze-input" />
+            <div class="char-count" id="cc_source"></div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Actions -->
-    <div class="btn-group" style="justify-content:flex-end">
-      <button class="btn secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
-      <button class="btn secondary" onclick="doSave()"><i data-lucide="save" class="icon"></i> 保存</button>
-      <button class="btn blue" onclick="goStep(3)">下一步 →</button>
+      <!-- Actions -->
+      <div class="coze-actions">
+        <button class="coze-btn coze-btn-secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          重新生成
+        </button>
+        <button class="coze-btn coze-btn-secondary" onclick="doSave()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          保存
+        </button>
+        <button class="coze-btn coze-btn-primary" onclick="goStep(3)">
+          下一步
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 

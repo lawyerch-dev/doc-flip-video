@@ -8,7 +8,6 @@ import {
   PanelFactory,
 } from '@flowgram.ai/panel-manager-plugin';
 
-import { DemoTools } from '../../components/tools';
 import {
   TestRunSidePanel,
   TestRunSidePanelProps,
@@ -40,7 +39,5 @@ const problemPanelFactory: PanelFactory<void> = {
 export const createPanelManagerPlugin = () =>
   create({
     factories: [nodeFormPanelFactory, testRunPanelFactory, problemPanelFactory],
-    layerProps: {
-      children: <DemoTools />,
-    },
+    layerProps: {},
   });

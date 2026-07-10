@@ -8,10 +8,11 @@ import { useState, useEffect } from 'react';
 import { useRefresh } from '@flowgram.ai/free-layout-editor';
 import { useClientContext } from '@flowgram.ai/free-layout-editor';
 import { Tooltip, IconButton, Divider } from '@douyinfe/semi-ui';
-import { IconUndo, IconRedo } from '@douyinfe/semi-icons';
+import { IconUndo, IconRedo, IconPlus } from '@douyinfe/semi-icons';
 
-import { TestRunButton } from '../testrun/testrun-button';
 import { AddNode } from '../add-node';
+import { useToolbox } from '../../context';
+import { TestRunButton } from '../testrun/testrun-button';
 import { ZoomSelect } from './zoom-select';
 import { SwitchLine } from './switch-line';
 import { ToolContainer, ToolSection } from './styles';
@@ -44,8 +45,11 @@ export const DemoTools = () => {
     return () => disposable.dispose();
   }, [playground]);
 
+  const toolbox = useToolbox();
+
   return (
     <ToolContainer className="demo-free-layout-tools">
+      <Minimap visible={minimapVisible} />
       <ToolSection>
         <Interactive />
         <AutoLayout />
@@ -53,10 +57,9 @@ export const DemoTools = () => {
         <ZoomSelect />
         <FitView />
         <MinimapSwitch minimapVisible={minimapVisible} setMinimapVisible={setMinimapVisible} />
-        <Minimap visible={minimapVisible} />
         <Readonly />
         <Comment />
-        <Tooltip content="Undo">
+        <Tooltip content="撤销">
           <IconButton
             type="tertiary"
             theme="borderless"
@@ -65,7 +68,7 @@ export const DemoTools = () => {
             onClick={() => history.undo()}
           />
         </Tooltip>
-        <Tooltip content="Redo">
+        <Tooltip content="重做">
           <IconButton
             type="tertiary"
             theme="borderless"
@@ -77,7 +80,17 @@ export const DemoTools = () => {
         <ProblemButton />
         <DownloadTool />
         <Divider layout="vertical" style={{ height: '16px' }} margin={3} />
-        <AddNode disabled={playground.config.readonly} />
+        <Tooltip content={toolbox.visible ? '收起节点列表' : '展开节点列表'}>
+          <IconButton
+            type="tertiary"
+            theme={toolbox.visible ? 'light' : 'borderless'}
+            icon={<IconPlus />}
+            onClick={toolbox.toggle}
+            style={{ fontSize: 12, fontWeight: 600 }}
+          >
+            添加节点
+          </IconButton>
+        </Tooltip>
         <Divider layout="vertical" style={{ height: '16px' }} margin={3} />
         <TestRunButton disabled={playground.config.readonly} />
       </ToolSection>

@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 /** 参数定义 */
 export interface ParamDef {
   type: 'string' | 'number' | 'boolean' | 'select';

@@ -8,13 +8,22 @@ import {
   WorkflowNodeRegistry as FlowNodeRegistryDefault,
   FreeLayoutPluginContext,
   FlowNodeEntity,
-  type WorkflowEdgeJSON,
   WorkflowNodeMeta,
 } from '@flowgram.ai/free-layout-editor';
 import { IFlowValue } from '@flowgram.ai/form-materials';
 
 import { type JsonSchema } from './json-schema';
 import { WorkflowNodeType } from '../nodes';
+
+/** Local edge type (not exported by installed flowgram version) */
+export interface WorkflowEdgeJSON {
+  id?: string;
+  source: string;
+  target: string;
+  sourcePort?: string;
+  targetPort?: string;
+  [key: string]: unknown;
+}
 
 /**
  * You can customize the data of the node, and here you can use JsonSchema to define the input and output of the node
@@ -63,7 +72,8 @@ export interface FlowNodeMeta extends WorkflowNodeMeta {
 export interface FlowNodeRegistry extends FlowNodeRegistryDefault {
   meta: FlowNodeMeta;
   info?: {
-    icon: string;
+    icon?: string;              // URL/emoji icon (legacy)
+    iconComponent?: React.ComponentType<{ size?: number; color?: string }>;  // SVG icon
     description: string;
   };
   canAdd?: (ctx: FreeLayoutPluginContext) => boolean;
@@ -73,7 +83,7 @@ export interface FlowNodeRegistry extends FlowNodeRegistryDefault {
 
 export interface FlowDocumentJSON {
   nodes: FlowNodeJSON[];
-  edges: WorkflowEdgeJSON[];
+  edges: any[];
   /**
    * Global Variable Schema Definition
    * 全局变量的 Schema 定义

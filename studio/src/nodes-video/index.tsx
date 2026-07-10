@@ -1,24 +1,28 @@
 import type { FormRenderProps, FieldRenderProps } from '@flowgram.ai/free-layout-editor';
-import { Field } from '@flowgram.ai/free-layout-editor';
-import { Input, InputNumber, Select } from '@douyinfe/semi-ui';
-import type { FlowNodeRegistry, FlowNodeJSON, FlowDocumentJSON, WorkflowEdgeJSON } from '../typings';
+import { Field, ValidateTrigger } from '@flowgram.ai/free-layout-editor';
+import { Input, InputNumber, Select, Switch } from '@douyinfe/semi-ui';
+import type { FlowNodeRegistry, FlowNodeJSON, FlowDocumentJSON } from '../typings';
 import { useIsSidebar } from '../hooks';
-import { BUILTIN_PLUGINS, getPlugin, getIcon, type PluginManifest, type ParamDef } from './plugin-manifest';
+import { CozeFieldLayout } from '../form-components/field-layout';
+import { CozeSection } from '../form-components/section';
+import { BUILTIN_PLUGINS, getPlugin, type PluginManifest, type ParamDef } from './plugin-manifest';
+import { getPluginIcon } from './icons';
 
 // ─── Build form meta from param schema ───
 
 function renderParamField(def: ParamDef, value: unknown, onChange: (v: unknown) => void) {
   if (def.type === 'boolean') {
     return (
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-        <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
-        <span>启用</span>
-      </label>
+      <Switch
+        checked={value === true}
+        onChange={(v: boolean) => onChange(v)}
+        size="small"
+      />
     );
   }
   if (def.type === 'select') {
     return (
-      <Select value={value as string} onChange={(v: string) => onChange(v)} style={{ width: '100%' }}>
+      <Select value={value as string} onChange={(v: any) => onChange(v)} style={{ width: '100%' }}>
         {(def.options ?? []).map((o: string) => (
           <Select.Option key={o} value={o}>{o}</Select.Option>
         ))}
@@ -29,7 +33,7 @@ function renderParamField(def: ParamDef, value: unknown, onChange: (v: unknown) 
     return (
       <InputNumber
         value={value as number}
-        onChange={(v: number) => onChange(v)}
+        onChange={(v: string | number) => onChange(v)}
         min={def.min}
         max={def.max}
         step={def.step ?? 0.1}
@@ -40,28 +44,94 @@ function renderParamField(def: ParamDef, value: unknown, onChange: (v: unknown) 
   return <Input value={value as string} onChange={(v: string) => onChange(v)} />;
 }
 
-/** Node face: icon + name + param summary */
-function renderNodeFace(manifest: PluginManifest, values: Record<string, unknown>) {
-  const icon = getIcon(manifest);
-  const paramLines = Object.entries(manifest.params).slice(0, 3);
+/** Color-coded header for node face */
+
+
+/** Coze-style compact header for node faces (start/end/video nodes) */
+function NodeHeader({ icon, name, color }: { icon: React.ReactNode; name: string; color: string }) {
   return (
-    <div style={{ padding: '8px 12px', minWidth: 160, fontSize: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <span style={{ fontSize: 18 }}>{icon}</span>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>{manifest.name}</span>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      padding: '6px 10px',
+      borderBottom: '1px solid rgba(6,7,9,0.06)',
+    }}>
+      <div style={{
+        position: 'relative',
+        width: 20, height: 20, flexShrink: 0,
+      }}>
+        <div style={{
+          width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 4, background: color + '20',
+        }}>
+          {icon}
+        </div>
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 4,
+          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)',
+          pointerEvents: 'none',
+        }} />
+      </div>
+      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--g-fg-primary)' }}>{name}</span>
+    </div>
+  );
+}
+
+/** Coze-style node face: compact icon+name header + param chips */
+function renderNodeFace(manifest: PluginManifest, values: Record<string, unknown>) {
+  const IconComponent = getPluginIcon(manifest.id);
+  const paramLines = Object.entries(manifest.params).slice(0, 4);
+  return (
+    <div style={{ fontSize: 12, width: '100%' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '8px 10px',
+        borderBottom: '1px solid rgba(6,7,9,0.06)',
+      }}>
+        <div style={{
+          position: 'relative',
+          width: 20, height: 20, flexShrink: 0,
+        }}>
+          <div style={{
+            width: 20, height: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 4, background: manifest.color + '20',
+          }}>
+            {IconComponent ? <IconComponent size={13} color={manifest.color} /> : <span style={{ fontSize: 11 }}>●</span>}
+          </div>
+          <div style={{
+            position: 'absolute', inset: 0,
+            borderRadius: 4,
+            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)',
+            pointerEvents: 'none',
+          }} />
+        </div>
+        <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--g-fg-primary)' }}>{manifest.name}</span>
       </div>
       {paramLines.length > 0 && (
-        <div>
+        <div style={{ padding: '6px 10px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {paramLines.map(([key, def]) => {
             const val = values[key] ?? def.default;
-            const display = String(val).length > 20 ? String(val).slice(0, 18) + '…' : String(val);
+            const display = String(val).length > 15 ? String(val).slice(0, 13) + '…' : String(val);
             return (
-              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: '20px', opacity: 0.7 }}>
-                <span>{def.label}:</span>
+              <span key={key} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                padding: '1px 6px',
+                background: manifest.color + '0d',
+                borderRadius: 4,
+                fontSize: 10,
+                color: manifest.color,
+                lineHeight: '18px',
+              }}>
+                <span style={{ opacity: 0.7 }}>{def.label}</span>
                 <span style={{ fontWeight: 500 }}>{display}</span>
-              </div>
+              </span>
             );
           })}
+        </div>
+      )}
+      {paramLines.length === 0 && (
+        <div style={{ padding: '6px 10px', fontSize: 10, color: 'var(--g-fg-dim)' }}>
+          无参数
         </div>
       )}
     </div>
@@ -71,40 +141,98 @@ function renderNodeFace(manifest: PluginManifest, values: Record<string, unknown
 function renderSidebarForm(manifest: PluginManifest) {
   const paramEntries = Object.entries(manifest.params);
   if (paramEntries.length === 0) {
-    return <div style={{ padding: 16, color: '#666', fontSize: 13 }}>此节点无参数</div>;
+    return <div style={{ padding: 16, color: 'var(--g-fg-dim, #8c8f99)', fontSize: 13 }}>此节点无参数</div>;
   }
+
+  // Group params into sections
+  const sections: { title: string; keys: string[] }[] = [];
+  const numericKeys: string[] = [];
+  const stringKeys: string[] = [];
+  const booleanKeys: string[] = [];
+  const selectKeys: string[] = [];
+
+  for (const [key, def] of paramEntries) {
+    switch (def.type) {
+      case 'number':
+        numericKeys.push(key);
+        break;
+      case 'boolean':
+        booleanKeys.push(key);
+        break;
+      case 'select':
+        selectKeys.push(key);
+        break;
+      default:
+        stringKeys.push(key);
+        break;
+    }
+  }
+
+  if (numericKeys.length > 0) sections.push({ title: '数值参数', keys: numericKeys });
+  if (stringKeys.length > 0) sections.push({ title: '文本参数', keys: stringKeys });
+  if (selectKeys.length > 0) sections.push({ title: '选项', keys: selectKeys });
+  if (booleanKeys.length > 0) sections.push({ title: '开关', keys: booleanKeys });
+
   return (
-    <div style={{ padding: '8px 16px' }}>
-      {paramEntries.map(([key, def]) => (
-        <div key={key} style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
-            {def.label}
-          </label>
-          <Field
-            name={`data.params.${key}`}
-            render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-              renderParamField(def, value, onChange)
-            }
-          />
-          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 2 }}>
-            {def.type}{def.default !== undefined ? `, 默认: ${def.default}` : ''}
-          </div>
-        </div>
+    <div style={{ padding: '10px 12px' }}>
+      {sections.map((section) => (
+        <CozeSection key={section.title} title={section.title}>
+          {section.keys.map((key) => {
+            const def = manifest.params[key];
+            return (
+              <CozeFieldLayout
+                key={key}
+                label={def.label}
+                tooltip={`${def.type}${def.default !== undefined ? '，默认: ' + def.default : ''}`}
+              >
+                <Field
+                  name={`data.params.${key}`}
+                  render={({ field: { value, onChange }, fieldState }: FieldRenderProps<unknown>) =>
+                    renderParamField(def, value, onChange)
+                  }
+                />
+              </CozeFieldLayout>
+            );
+          })}
+        </CozeSection>
       ))}
     </div>
   );
 }
 
+/** Build validators for video node params */
+function buildVideoValidators(manifest: PluginManifest): Record<string, (value: unknown) => string | undefined> {
+  const validators: Record<string, (value: unknown) => string | undefined> = {};
+  for (const [key, def] of Object.entries(manifest.params)) {
+    validators[`data.params.${key}`] = (value: unknown): string | undefined => {
+      if (value === undefined || value === null || value === '') {
+        return `${def.label} 不能为空`;
+      }
+      if (def.type === 'number') {
+        const num = Number(value);
+        if (isNaN(num)) return `${def.label} 必须是数字`;
+        if (def.min !== undefined && num < def.min) return `${def.label} 不能小于 ${def.min}`;
+        if (def.max !== undefined && num > def.max) return `${def.label} 不能大于 ${def.max}`;
+      }
+      return undefined;
+    };
+  }
+  return validators;
+}
+
 function buildFormMeta(manifest: PluginManifest) {
+  const validators = buildVideoValidators(manifest);
   return {
     render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
       const isSidebar = useIsSidebar();
-      const values = (form.nodeData?.data?.params ?? {}) as Record<string, unknown>;
+      const values = (form.values?.data?.params ?? {}) as Record<string, unknown>;
       if (isSidebar) {
         return renderSidebarForm(manifest);
       }
       return renderNodeFace(manifest, values);
     },
+    validate: validators,
+    validateTrigger: ValidateTrigger.onChange,
   };
 }
 
@@ -125,9 +253,13 @@ function buildPorts(manifest: PluginManifest) {
 
 function buildRegistry(manifest: PluginManifest): FlowNodeRegistry {
   const ports = buildPorts(manifest);
+  const IconComponent = getPluginIcon(manifest.id);
   return {
     type: manifest.id,
-    info: { description: manifest.description },
+    info: {
+      description: manifest.description,
+      ...(IconComponent ? { iconComponent: IconComponent } : {}),
+    },
     meta: {
       defaultPorts: ports,
       size: { width: 200, height: 60 + ports.length * 24 },
@@ -136,14 +268,24 @@ function buildRegistry(manifest: PluginManifest): FlowNodeRegistry {
   };
 }
 
-/** 参数定义：{ name, type, defaultValue } */
+/** 参数定义（扩展类型） */
+type ParamItemType = 'string' | 'number' | 'integer' | 'boolean' | 'select' | 'textarea' | 'json' | 'object' | 'array' | 'image' | 'file';
+
 interface ParamItem {
   name: string;
-  type: 'string' | 'number' | 'boolean';
+  type: ParamItemType;
   default: string;
+  required?: boolean;
+  description?: string;
+  /** For select type */
+  options?: string[];
+  /** For number/integer */
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
-/** 参数编辑器：增删 + JSON 导入 */
+/** Coze-style 参数编辑器 */
 function ParamEditor({
   value, onChange,
 }: {
@@ -153,7 +295,7 @@ function ParamEditor({
   const items = Array.isArray(value) ? value : [];
 
   const addItem = () => {
-    onChange([...items, { name: '', type: 'string', default: '' }]);
+    onChange([...items, { name: '', type: 'string', default: '', required: false }]);
   };
 
   const updateItem = (i: number, patch: Partial<ParamItem>) => {
@@ -166,89 +308,194 @@ function ParamEditor({
   };
 
   const importJSON = () => {
-    const raw = prompt('粘贴 JSON Schema（或 JSON 对象）:');
+    const raw = prompt('粘贴 JSON 或 JSON Schema:');
     if (!raw) return;
-    let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(raw) as Record<string, unknown>;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (parsed.properties && typeof parsed.properties === 'object') {
+        const props = parsed.properties as Record<string, any>;
+        const imported: ParamItem[] = Object.entries(props).map(([name, schema]) => ({
+          name,
+          type: mapSchemaType(schema.type),
+          default: schema.default !== undefined ? String(schema.default) : '',
+          required: (parsed.required as string[])?.includes(name) ?? false,
+          description: schema.description ?? '',
+        }));
+        onChange(imported);
+      } else {
+        const imported: ParamItem[] = Object.entries(parsed).map(([k, v]) => ({
+          name: k,
+          type: v === null || v === undefined ? 'string'
+            : typeof v === 'number' ? 'number'
+            : typeof v === 'boolean' ? 'boolean'
+            : typeof v === 'object' ? 'json' : 'string',
+          default: v !== null && v !== undefined ? String(v) : '',
+        }));
+        onChange(imported);
+      }
     } catch {
       alert('JSON 格式错误');
-      return;
-    }
-    // Try to parse as JSON Schema properties first
-    if (parsed.properties && typeof parsed.properties === 'object') {
-      const props = parsed.properties as Record<string, { type?: string; default?: unknown }>;
-      const imported: ParamItem[] = Object.entries(props).map(([name, schema]) => ({
-        name,
-        type: (['string', 'number', 'boolean'].includes(schema.type ?? '') ? schema.type! : 'string') as ParamItem['type'],
-        default: schema.default !== undefined ? String(schema.default) : '',
-      }));
-      onChange(imported);
-    } else {
-      // Plain object: each key becomes a param
-      const imported: ParamItem[] = Object.entries(parsed).map(([k, v]) => ({
-        name: k,
-        type: v === null || v === undefined ? 'string'
-          : typeof v === 'number' ? 'number'
-          : typeof v === 'boolean' ? 'boolean'
-          : 'string',
-        default: v !== null && v !== undefined ? String(v) : '',
-      }));
-      onChange(imported);
     }
   };
 
+  function mapSchemaType(jsType?: string): ParamItemType {
+    switch (jsType) {
+      case 'integer': return 'integer';
+      case 'number': return 'number';
+      case 'boolean': return 'boolean';
+      case 'array': return 'array';
+      case 'object': return 'object';
+      default: return 'string';
+    }
+  }
+
   return (
     <div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        <button onClick={addItem} style={btnStyle}>+ 添加参数</button>
-        <button onClick={importJSON} style={btnStyle}>📥 导入 JSON</button>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <button onClick={addItem} style={{ ...paramBtnStyle }}>+ 添加参数</button>
+        <button onClick={importJSON} style={{ ...paramBtnStyle }}>📥 导入 JSON</button>
       </div>
+
       {items.length === 0 && (
-        <div style={{ fontSize: 12, color: '#999', padding: 8 }}>暂无参数，点击「添加参数」或「导入 JSON」</div>
-      )}
-      {items.map((item, i) => (
-        <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
-          <input
-            value={item.name}
-            onChange={e => updateItem(i, { name: e.target.value })}
-            placeholder="参数名"
-            style={{ ...inputStyle, width: 110 }}
-          />
-          <select
-            value={item.type}
-            onChange={e => updateItem(i, { type: e.target.value as ParamItem['type'] })}
-            style={{ ...inputStyle, width: 80 }}
-          >
-            <option value="string">文本</option>
-            <option value="number">数字</option>
-            <option value="boolean">布尔</option>
-          </select>
-          <input
-            value={item.default}
-            onChange={e => updateItem(i, { default: e.target.value })}
-            placeholder="默认值"
-            style={{ ...inputStyle, width: 100 }}
-          />
-          <button onClick={() => removeItem(i)} style={{ ...btnStyle, color: '#e00', padding: '2px 6px' }}>✕</button>
+        <div style={{ fontSize: 12, color: '#999', padding: '12px 0', textAlign: 'center' }}>
+          暂无参数，点击「添加参数」或「导入 JSON」
         </div>
-      ))}
+      )}
+
+      {/* Parameter list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map((item, i) => {
+          const nameError = item.name ? undefined : '参数名不能为空';
+          return (
+            <div key={i} style={{
+              border: '1px solid var(--g-stroke-default)', borderRadius: 6,
+              padding: 8, background: 'var(--g-bg-plus)',
+            }}>
+              {/* Row 1: 参数名 + 类型 + 必填 + 删除 */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    value={item.name}
+                    onChange={e => updateItem(i, { name: e.target.value })}
+                    placeholder="参数名 *"
+                    style={{
+                      ...paramInputStyle, width: '100%',
+                      borderColor: nameError && item.name === '' ? '#e94560' : undefined,
+                    }}
+                  />
+                  {nameError && item.name === '' && (
+                    <div style={{ fontSize: 10, color: '#e94560', marginTop: 1 }}>{nameError}</div>
+                  )}
+                </div>
+                <select
+                  value={item.type}
+                  onChange={e => updateItem(i, { type: e.target.value as ParamItemType })}
+                  style={{ ...paramInputStyle, width: 90, fontSize: 11 }}
+                >
+                  <option value="string">文本</option>
+                  <option value="number">数字</option>
+                  <option value="integer">整数</option>
+                  <option value="boolean">布尔</option>
+                  <option value="select">枚举</option>
+                  <option value="textarea">多行文本</option>
+                  <option value="json">JSON</option>
+                  <option value="object">对象</option>
+                  <option value="array">数组</option>
+                  <option value="image">图片</option>
+                  <option value="file">文件</option>
+                </select>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input
+                    type="checkbox"
+                    checked={item.required ?? false}
+                    onChange={e => updateItem(i, { required: e.target.checked })}
+                  />
+                  必填
+                </label>
+                <button onClick={() => removeItem(i)} style={{ ...paramBtnStyle, color: '#e94560', padding: '2px 6px', border: 'none', background: 'none', fontSize: 14 }}>✕</button>
+              </div>
+
+              {/* Row 2: 默认值 + 特定类型配置 */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {item.type === 'select' ? (
+                  <input
+                    value={item.options?.join(', ') ?? ''}
+                    onChange={e => updateItem(i, { options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                    placeholder="选项值，逗号分隔"
+                    style={{ ...paramInputStyle, flex: 1 }}
+                  />
+                ) : item.type === 'number' || item.type === 'integer' ? (
+                  <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+                    <input
+                      type="number"
+                      value={item.default}
+                      onChange={e => updateItem(i, { default: e.target.value })}
+                      placeholder="默认值"
+                      style={{ ...paramInputStyle, width: '40%' }}
+                    />
+                    <input
+                      type="number"
+                      value={item.min ?? ''}
+                      onChange={e => updateItem(i, { min: e.target.value ? Number(e.target.value) : undefined })}
+                      placeholder="最小值"
+                      style={{ ...paramInputStyle, width: '28%' }}
+                    />
+                    <input
+                      type="number"
+                      value={item.max ?? ''}
+                      onChange={e => updateItem(i, { max: e.target.value ? Number(e.target.value) : undefined })}
+                      placeholder="最大值"
+                      style={{ ...paramInputStyle, width: '28%' }}
+                    />
+                  </div>
+                ) : item.type === 'textarea' || item.type === 'json' || item.type === 'object' || item.type === 'array' ? (
+                  <input
+                    value={item.default}
+                    onChange={e => updateItem(i, { default: e.target.value })}
+                    placeholder={item.type === 'json' || item.type === 'object' ? '{"key": "value"}' : item.type === 'array' ? '["item1", "item2"]' : '默认值...'}
+                    style={{ ...paramInputStyle, flex: 1 }}
+                  />
+                ) : (
+                  <input
+                    value={item.default}
+                    onChange={e => updateItem(i, { default: e.target.value })}
+                    placeholder="默认值"
+                    style={{ ...paramInputStyle, flex: 1 }}
+                  />
+                )}
+              </div>
+
+              {/* Row 3: 描述 */}
+              <input
+                value={item.description ?? ''}
+                onChange={e => updateItem(i, { description: e.target.value })}
+                placeholder="参数描述（可选）"
+                style={{ ...paramInputStyle, width: '100%', marginTop: 4, fontSize: 11, opacity: 0.7 }}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  padding: '4px 8px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 12,
+const paramInputStyle: React.CSSProperties = {
+  padding: '5px 8px', border: '1px solid var(--g-stroke-default)', borderRadius: 4,
+  fontSize: 12, color: 'var(--g-fg-primary)', background: 'var(--g-bg-plus)',
+  outline: 'none', boxSizing: 'border-box',
 };
-const btnStyle: React.CSSProperties = {
-  padding: '4px 10px', border: '1px solid #d0d0d0', borderRadius: 4,
-  background: '#f5f5f5', cursor: 'pointer', fontSize: 12,
+const paramBtnStyle: React.CSSProperties = {
+  padding: '4px 10px', border: '1px solid var(--g-stroke-default)', borderRadius: 4,
+  background: 'var(--g-bg-secondary)', cursor: 'pointer', fontSize: 12,
+  color: 'var(--g-fg-primary)',
 };
 
 /** Start 节点：定义工作流输入参数 */
 const startRegistry: FlowNodeRegistry = {
   type: 'system:start',
-  info: { description: '定义工作流的输入参数' },
+  info: { description: '定义工作流的输入参数', iconComponent: getPluginIcon('system:start') ?? undefined },
   meta: {
     defaultPorts: [{ type: 'output' }],
     size: { width: 200, height: 52 },
@@ -258,26 +505,24 @@ const startRegistry: FlowNodeRegistry = {
   formMeta: {
     render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
       const isSidebar = useIsSidebar();
-      const data = form.nodeData?.data;
+      const data = form.values?.data;
       const params = (data?.params ?? {}) as Record<string, unknown>;
       const inputs = params.inputs as ParamItem[] | undefined;
 
       if (isSidebar) {
         return (
-          <div style={{ padding: '8px 16px' }}>
+          <div style={{ padding: 'var(--g-space-sm) var(--g-space-lg)' }}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>工作流名称</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--g-fg-primary)' }}>工作流名称</label>
               <Field
                 name="data.params.workflowName"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input type="text" value={value as string ?? '新工作流'}
-                    onChange={e => onChange(e.target.value)}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }} />
+                  <Input size="small" value={value as string ?? '新工作流'} onChange={(v: string) => onChange(v)} />
                 }
               />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输入参数</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--g-fg-primary)' }}>输入参数</label>
               <Field
                 name="data.params.inputs"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
@@ -291,14 +536,16 @@ const startRegistry: FlowNodeRegistry = {
 
       // Canvas face
       const paramCount = Array.isArray(inputs) ? inputs.length : 0;
+      const StartIcon = getPluginIcon('system:start');
       return (
-        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>🎬</span>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>开始</div>
-            <div style={{ fontSize: 11, opacity: 0.6 }}>
-              {(params.workflowName as string) || '工作流'}{paramCount > 0 ? ` · ${paramCount}个参数` : ''}
-            </div>
+        <div>
+          <NodeHeader
+            icon={StartIcon ? <StartIcon size={16} color="#4e40e5" /> : null}
+            name="开始"
+            color="#4e40e5"
+          />
+          <div style={{ padding: '6px 12px', fontSize: 11, color: 'var(--g-fg-secondary)' }}>
+            {(params.workflowName as string) || '工作流'}{paramCount > 0 ? ` · ${paramCount}个参数` : ''}
           </div>
         </div>
       );
@@ -309,7 +556,7 @@ const startRegistry: FlowNodeRegistry = {
 /** End 节点：定义工作流输出参数 */
 const endRegistry: FlowNodeRegistry = {
   type: 'system:end',
-  info: { description: '定义工作流的输出参数' },
+  info: { description: '定义工作流的输出参数', iconComponent: getPluginIcon('system:end') ?? undefined },
   meta: {
     defaultPorts: [{ type: 'input' }],
     size: { width: 200, height: 52 },
@@ -319,14 +566,14 @@ const endRegistry: FlowNodeRegistry = {
   formMeta: {
     render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
       const isSidebar = useIsSidebar();
-      const params = (form.nodeData?.data?.params ?? {}) as Record<string, unknown>;
+      const params = (form.values?.data?.params ?? {}) as Record<string, unknown>;
       const outputs = params.outputs as ParamItem[] | undefined;
 
       if (isSidebar) {
         return (
-          <div style={{ padding: '8px 16px' }}>
+          <div style={{ padding: 'var(--g-space-sm) var(--g-space-lg)' }}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输出参数</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--g-fg-primary)' }}>输出参数</label>
               <Field
                 name="data.params.outputs"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
@@ -339,14 +586,16 @@ const endRegistry: FlowNodeRegistry = {
       }
 
       const paramCount = Array.isArray(outputs) ? outputs.length : 0;
+      const EndIcon = getPluginIcon('system:end');
       return (
-        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>🏁</span>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>结束</div>
-            <div style={{ fontSize: 11, opacity: 0.6 }}>
-              {paramCount > 0 ? `${paramCount}个输出参数` : '点击配置输出'}
-            </div>
+        <div>
+          <NodeHeader
+            icon={EndIcon ? <EndIcon size={16} color="#e94560" /> : null}
+            name="结束"
+            color="#e94560"
+          />
+          <div style={{ padding: '6px 12px', fontSize: 11, color: 'var(--g-fg-secondary)' }}>
+            {paramCount > 0 ? `${paramCount}个输出参数` : '点击配置输出'}
           </div>
         </div>
       );
@@ -445,11 +694,11 @@ function autoLayout(
   });
   
   // 辅助节点（音频、光晕条）在下方
-  const sideNodes = ordered.filter(id => {
+  const side = ordered.filter(id => {
     const n = nodes.find(x => x.id === id);
     return n && !isMainChain(n.type);
   });
-  sideNodes.forEach((id, i) => {
+  side.forEach((id, i) => {
     positions[id] = { x: 120, y: 520 + i * 160 };
   });
   
@@ -485,10 +734,9 @@ export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
   
   // 主链路节点
   const mainNodes = engineNodes.filter(n => isMainChain(n.type));
-  const sideNodes = engineNodes.filter(n => !isMainChain(n.type));
   
   // 构建时间轴连线
-  const edges: WorkflowEdgeJSON[] = [];
+  const edges: any[] = [];
   
   // Start → 第一个主节点
   if (mainNodes.length > 0) {
@@ -548,29 +796,7 @@ export function fromEngineJSON(engine: EngineWorkflowJSON): FlowDocumentJSON {
   }
   if (endNode) injected.push(endNode);
   
-  return { nodes, edges };
-}
-
-function buildEdges(nodes: EngineNodeJSON[]): WorkflowEdgeJSON[] {
-  const edges: WorkflowEdgeJSON[] = [];
-  // Track how many inputs each target has consumed (for port index)
-  const inputCount: Record<string, number> = {};
-  for (const n of nodes) {
-    let inputIdx = 0;
-    for (const [_portName, sourceId] of Object.entries(n.inputs ?? {})) {
-      if (sourceId) {
-        edges.push({
-          id: `${sourceId}->${n.id}-${inputIdx}`,
-          source: sourceId,
-          target: n.id,
-          sourcePort: '0',  // output port index
-          targetPort: String(inputIdx),  // input port index
-        });
-        inputIdx++;
-      }
-    }
-  }
-  return edges;
+  return { nodes: injected, edges };
 }
 
 /** Flowgram format → Engine format */
@@ -592,7 +818,7 @@ export function toEngineJSON(doc: FlowDocumentJSON): EngineWorkflowJSON {
       }
       return {
         id: n.id,
-        type: n.type,
+        type: String(n.type),
         params: (n.data?.params as Record<string, unknown>) ?? {},
         inputs: nodeInputs,
         position: n.meta?.position ? [n.meta.position.x, n.meta.position.y] : [100, 100],

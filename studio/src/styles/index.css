@@ -17,6 +17,25 @@
   --g-workflow-line-color-hover: #37d0ff;
   --g-workflow-line-color-selected: #37d0ff;
   --g-workflow-line-color-error: red;
+  --g-workflow-line-color-flowing: #4d53e8;
+
+  /* Coze-style design tokens */
+  --g-bg-canvas: #f5f5f7;
+  --g-bg-max: #ffffff;
+  --g-bg-plus: #ffffff;
+  --g-bg-secondary: #f5f5f7;
+  --g-bg-hover: rgba(78, 64, 229, 0.06);
+  --g-fg-primary: #0f1529d1;
+  --g-fg-secondary: #515666;
+  --g-fg-dim: #8c8f99;
+  --g-stroke-default: #e5e6eb;
+  --g-stroke-divider: #e9eaed;
+  --g-stroke-hglt: #4e40e5;
+  --g-radius-md: 8px;
+  --g-radius-pill: 9999px;
+  --g-shadow-toolbar: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --g-space-sm: 4px;
+  --g-space-lg: 16px;
 }
 
 .gedit-selector-bounds-foreground {
@@ -77,4 +96,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Override panel-main-area overflow so our absolutely-positioned
+   bottom toolbar (DemoTools) is not clipped, and the left toolbox
+   scroll area can compute its height correctly. */
+.gedit-flow-panel-main-area {
+  overflow: visible !important;
 }

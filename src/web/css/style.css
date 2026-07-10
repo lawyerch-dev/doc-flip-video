@@ -534,11 +534,14 @@ select {
 @media (max-width: 768px) {
   .app { padding: var(--space-4); }
   .form-grid { grid-template-columns: 1fr; }
+  .coze-field-row { flex-direction: column; }
   #panel3 .preview-grid { grid-template-columns: 1fr; }
   .stepper { padding: 0; }
   .step-label { display: none; }
   .btn-group { flex-direction: column; }
   .btn-group .btn { width: 100%; }
+  .coze-actions { flex-direction: column; }
+  .coze-actions .coze-btn { width: 100%; }
   .settings-panel { width: 100%; right: -100%; }
   header { flex-wrap: wrap; gap: var(--space-2); }
 }
@@ -548,6 +551,312 @@ select {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-full); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── Coze-style Paragraph Editor ─── */
+.coze-para-editor {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: border-color var(--transition-fast);
+}
+.coze-para-editor:focus-within {
+  border-color: var(--accent);
+}
+
+.coze-para-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.coze-para-num {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coze-para-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.coze-para-limit {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.coze-para-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 56px;
+  line-height: var(--leading-relaxed);
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+.coze-para-input:focus {
+  border-color: var(--accent);
+}
+.coze-para-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.coze-para-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.coze-para-hl-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.coze-para-hl-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.coze-para-hl-input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+.coze-para-hl-input:focus {
+  border-color: var(--accent);
+}
+.coze-para-hl-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.coze-para-bold {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  user-select: none;
+  transition: all var(--transition-fast);
+}
+.coze-para-bold:hover {
+  border-color: var(--text-muted);
+  background: var(--card-hover);
+}
+.coze-para-bold input[type="checkbox"] {
+  display: none;
+}
+.coze-para-bold:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── Coze-style Panel ─── */
+.coze-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coze-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: box-shadow var(--transition-base);
+}
+.coze-section:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.coze-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+}
+.coze-section-header svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.coze-section-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.coze-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coze-field-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.coze-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coze-field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.coze-limit {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.coze-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.coze-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.coze-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+select.coze-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.coze-date-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.coze-date-row .coze-input {
+  text-align: center;
+}
+.coze-date-sep {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+/* Coze-style Buttons */
+.coze-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.coze-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.coze-btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+.coze-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.coze-btn-primary:active {
+  transform: translateY(0);
+}
+
+.coze-btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.coze-btn-secondary:hover {
+  background: var(--card-hover);
+  border-color: var(--text-muted);
+}
 
 /* ─── Selection ─── */
 ::selection { background: var(--accent-soft); color: var(--accent); }

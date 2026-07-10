@@ -94,7 +94,7 @@ export const DownloadTool: FC = () => {
         button
       ) : (
         <div>
-          <Tooltip content="Download">{button}</Tooltip>
+          <Tooltip content="下载">{button}</Tooltip>
         </div>
       )}
     </Dropdown>

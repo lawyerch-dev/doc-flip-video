@@ -10,22 +10,26 @@ import { IconMinimap } from '../../assets/icon-minimap';
 export const ToolContainer = styled.div`
   position: absolute;
   bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: left;
-  min-width: 360px;
-  pointer-events: none;
+  align-items: flex-end;
   gap: 8px;
-
+  pointer-events: none;
   z-index: 20;
+  /* Ensure toolbar is always visible */
+  min-width: 360px;
+  visibility: visible !important;
+  opacity: 1 !important;
 `;
 
 export const ToolSection = styled.div`
   display: flex;
   align-items: center;
-  background-color: #fff;
-  border: 1px solid rgba(68, 83, 130, 0.25);
-  border-radius: 10px;
-  box-shadow: rgba(0, 0, 0, 0.04) 0px 2px 6px 0px, rgba(0, 0, 0, 0.02) 0px 4px 12px 0px;
+  background-color: var(--g-bg-max);
+  border: 1px solid var(--g-stroke-default);
+  border-radius: var(--g-radius-pill);
+  box-shadow: var(--g-shadow-toolbar);
   column-gap: 2px;
   height: 40px;
   padding: 0 4px;
@@ -42,9 +46,13 @@ export const SelectZoom = styled.span`
 `;
 
 export const MinimapContainer = styled.div`
-  position: absolute;
-  bottom: 60px;
-  width: 198px;
+  width: 180px;
+  border: 1px solid var(--g-stroke-default);
+  border-radius: var(--g-radius-md);
+  box-shadow: var(--g-shadow-toolbar);
+  overflow: hidden;
+  background: var(--g-bg-plus);
+  pointer-events: auto;
 `;
 
 export const UIIconMinimap = styled(IconMinimap)<{ visible: boolean }>`

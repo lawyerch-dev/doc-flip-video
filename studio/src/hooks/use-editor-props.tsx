@@ -36,7 +36,7 @@ import {
 import { defaultFormMeta } from '../nodes/default-form-meta';
 import { WorkflowNodeType } from '../nodes';
 import { SelectorBoxPopover } from '../components/selector-box-popover';
-import { BaseNode, CommentRender, GroupNodeRender, LineAddButton, NodePanel } from '../components';
+import { BaseNode, CommentRender, GroupNodeRender, LineAddButton } from '../components';
 
 export function useEditorProps(
   initialData: FlowDocumentJSON,
@@ -347,12 +347,10 @@ export function useEditorProps(
           alignLineWidth: 1,
           alignCrossWidth: 8,
         }),
-        /**
-         * NodeAddPanel render plugin
-         * 节点添加面板渲染插件
-         */
+
+        /** Null renderer: node addition goes through the left toolbox panel */
         createFreeNodePanelPlugin({
-          renderer: NodePanel,
+          renderer: () => null,
         }),
         /**
          * This is used for the rendering of the loop node sub-canvas

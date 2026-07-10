@@ -9,6 +9,7 @@ import {
   PlaygroundEntityContext,
   useRefresh,
   useClientContext,
+  FlowNodeFormData,
 } from '@flowgram.ai/free-layout-editor';
 
 import { FlowNodeMeta } from '../../typings';
@@ -80,6 +81,16 @@ export const NodeFormPanel: React.FC<NodeFormPanelProps> = ({ nodeId }) => {
     }
   }, [node, sidebarDisabled, playground.config.readonly]);
 
+  // Force validation when panel opens
+  useEffect(() => {
+    if (node) {
+      try {
+        const formModel = node.getData(FlowNodeFormData)?.getFormModel() as any;
+        if (formModel?.validate) formModel.validate();
+      } catch {}
+    }
+  }, [nodeId, node]);
+
   if (!node || sidebarDisabled || playground.config.readonly) {
     return null;
   }
@@ -87,7 +98,9 @@ export const NodeFormPanel: React.FC<NodeFormPanelProps> = ({ nodeId }) => {
   return (
     <IsSidebarContext.Provider value={true}>
       <PlaygroundEntityContext.Provider key={node.id} value={node}>
-        <SidebarNodeRenderer node={node} />
+        <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <SidebarNodeRenderer node={node} />
+        </div>
       </PlaygroundEntityContext.Provider>
     </IsSidebarContext.Provider>
   );

@@ -1,64 +1,95 @@
 /**
- * Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
- * SPDX-License-Identifier: MIT
+ * Coze-style add-node panel
+ * Fixed position relative to viewport — always visible regardless of canvas scroll
  */
-
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 import { NodePanelRenderProps as NodePanelRenderPropsDefault } from '@flowgram.ai/free-node-panel-plugin';
-import { WorkflowPortEntity } from '@flowgram.ai/free-layout-editor';
-import { Popover } from '@douyinfe/semi-ui';
+import { WorkflowPortEntity, useClientContext } from '@flowgram.ai/free-layout-editor';
 
 import { NodePlaceholder } from './node-placeholder';
 import { NodeList } from './node-list';
-import './index.less';
 
 interface NodePanelRenderProps extends NodePanelRenderPropsDefault {
   panelProps?: {
-    fromPort?: WorkflowPortEntity; // 从哪个端口添加 From which port to add
+    fromPort?: WorkflowPortEntity;
     enableNodePlaceholder?: boolean;
   };
 }
+
 export const NodePanel: React.FC<NodePanelRenderProps> = (props) => {
   const { onSelect, position, onClose, containerNode, panelProps = {} } = props;
-  const { enableNodePlaceholder, fromPort } = panelProps;
+  const { enableNodePlaceholder } = panelProps;
   const ref = useRef<HTMLDivElement>(null);
+  const { playground } = useClientContext();
+
+  // Convert canvas position to viewport-fixed position
+  const [screenPos, setScreenPos] = useState({ left: 300, top: 100 });
+
+  useEffect(() => {
+    if (position) {
+      // Try to convert canvas coords → screen coords via the playground container
+      const container = playground?.node;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        // position is relative to the canvas; add container offset for fixed positioning
+        setScreenPos({
+          left: rect.left + position.x + 16,
+          top: rect.top + position.y - 10,
+        });
+      } else {
+        setScreenPos({ left: position.x + 16, top: position.y - 10 });
+      }
+    }
+  }, [position, playground]);
+
+  // Close on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  // Clamp to viewport
+  const clampedLeft = Math.max(10, Math.min(screenPos.left, window.innerWidth - 360));
+  const clampedTop = Math.max(10, Math.min(screenPos.top, window.innerHeight - 400));
+
+  if (enableNodePlaceholder) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          top: position.y - 61.5,
+          left: position.x,
+          width: 360,
+          height: 100,
+        }}
+      >
+        <NodePlaceholder />
+      </div>
+    );
+  }
 
   return (
-    <Popover
-      trigger="click"
-      visible={true}
-      onVisibleChange={(v) => (v ? null : onClose())}
-      content={<NodeList onSelect={onSelect} containerNode={containerNode} fromPort={fromPort} />}
-      getPopupContainer={containerNode ? () => ref.current || document.body : undefined}
-      placement="right"
-      popupAlign={{ offset: [30, 0] }}
-      overlayStyle={{
-        padding: 0,
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        left: clampedLeft,
+        top: clampedTop,
+        zIndex: 10000,
       }}
     >
-      <div
-        ref={ref}
-        style={
-          enableNodePlaceholder
-            ? {
-                position: 'absolute',
-                top: position.y - 61.5,
-                left: position.x,
-                width: 360,
-                height: 100,
-              }
-            : {
-                position: 'absolute',
-                top: position.y,
-                left: position.x,
-                width: 0,
-                height: 0,
-              }
-        }
-      >
-        {enableNodePlaceholder && <NodePlaceholder />}
-      </div>
-    </Popover>
+      <NodeList onSelect={onSelect} containerNode={containerNode} />
+    </div>
   );
 };

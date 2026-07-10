@@ -6,6 +6,8 @@ tags: [video, animation, legal, document, flip-page]
 
 # Doc Flip Video Generator
 
+> **语言偏好**: 默认用中文回复用户；代码、命令、技术术语保持原文不翻译。
+
 **GitHub**: https://github.com/BluerAngala/doc-flip-video
 
 Generates flip-page animation videos from JSON configurations. Produces red-header style (红头文件) videos with page curl transitions and highlight sweep effects, suitable for legal documents, official announcements, and policy content.

@@ -38,7 +38,7 @@ export const ProblemPanel = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', columnGap: '4px', height: '100%' }}>
-          <Typography.Text strong>Problem</Typography.Text>
+          <Typography.Text strong>问题列表</Typography.Text>
           {loading && <Spin size="small" style={{ lineHeight: '0' }} />}
         </div>
         <IconButton
@@ -87,14 +87,31 @@ export const ProblemPanel = () => {
 
 export const ProblemButton = () => {
   const { open } = useProblemPanel();
+  const { results } = useWatchValidate();
+  const errorCount = results.length;
+
   return (
-    <Tooltip content="Problem">
-      <IconButton
-        type="tertiary"
-        theme="borderless"
-        icon={<IconUploadError />}
-        onClick={() => open()}
-      />
+    <Tooltip content={errorCount > 0 ? `发现 ${errorCount} 个问题` : '问题检查'}>
+      <div style={{ position: 'relative', display: 'flex' }}>
+        <IconButton
+          type="tertiary"
+          theme="borderless"
+          icon={<IconUploadError />}
+          onClick={() => open()}
+        />
+        {errorCount > 0 && (
+          <span style={{
+            position: 'absolute', top: -2, right: -2,
+            background: '#e94560', color: '#fff',
+            fontSize: 10, fontWeight: 600,
+            width: 16, height: 16, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            lineHeight: 1,
+          }}>
+            {errorCount > 9 ? '9+' : errorCount}
+          </span>
+        )}
+      </div>
     </Tooltip>
   );
 };

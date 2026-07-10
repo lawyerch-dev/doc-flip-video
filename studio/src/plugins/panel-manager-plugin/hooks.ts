@@ -8,10 +8,14 @@ import { usePanelManager } from '@flowgram.ai/panel-manager-plugin';
 import type { NodeFormPanelProps } from '../../components/sidebar/node-form-panel';
 import { PanelType } from './constants';
 
+/** Open node form panel, close all other panels first */
 export const useNodeFormPanel = () => {
   const panelManager = usePanelManager();
 
   const open = (props: NodeFormPanelProps) => {
+    // Close other panels first
+    panelManager.close(PanelType.TestRunFormPanel);
+    panelManager.close(PanelType.ProblemPanel);
     panelManager.open(PanelType.NodeFormPanel, 'right', {
       props: props,
     });
@@ -21,10 +25,13 @@ export const useNodeFormPanel = () => {
   return { open, close };
 };
 
+/** Open test run panel, close all other panels first */
 export const useTestRunFormPanel = () => {
   const panelManager = usePanelManager();
 
   const open = () => {
+    panelManager.close(PanelType.NodeFormPanel);
+    panelManager.close(PanelType.ProblemPanel);
     panelManager.open(PanelType.TestRunFormPanel, 'docked-right');
   };
   const close = () => panelManager.close(PanelType.TestRunFormPanel);

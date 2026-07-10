@@ -98,6 +98,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-sy
   </div>
 </div>
 <div id="toast" class="toast"></div>
+<div id="dbg" style="position:fixed;bottom:0;left:220px;right:280px;background:rgba(233,69,96,0.9);color:#fff;padding:8px 12px;font-size:12px;z-index:9999;display:none;font-family:monospace;white-space:pre-wrap;word-break:break-all"></div>
 
 <script src="/assets/vendor/litegraph.js"></script>
 <script>
@@ -152,80 +153,79 @@ function toast(msg, type) {
 }
 
 // ============================================================
+//  Debug helper
+// ============================================================
+function dbg(msg) {
+  const el = document.getElementById('dbg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = (el.textContent ? el.textContent + '\n' : '') + msg;
+}
+
+// ============================================================
 //  LiteGraph Setup
 // ============================================================
-const canvas = document.getElementById('graph-canvas');
-const graph = new LGraph();
+let graph, graphCanvas;
 
-// Register custom node for each plugin
-for (const p of PLUGINS) {
-  const catMap = { source: 'source', effect: 'effect', transition: 'transition', output: 'output' };
-  LiteGraph.registerNodeType('workflow/' + p.id, {
-    title: p.name,
-    category: catMap[p.cat],
-    pluginId: p.id,
-    defaults: { ...p.defaults },
+try {
+  // ── Check LiteGraph ──
+  if (typeof LiteGraph === 'undefined') throw new Error('LiteGraph not loaded');
+  dbg('LiteGraph OK');
 
-    constructor() {
+  // ── Get canvas ──
+  const canvas = document.getElementById('graph-canvas');
+  if (!canvas) throw new Error('canvas element not found');
+  
+  // ── Create graph + canvas ──
+  graph = new LGraph();
+  dbg('Graph created');
+  graphCanvas = new LGraphCanvas(canvas, graph);
+  graphCanvas.allow_dragnodes = true;
+  graphCanvas.allow_interaction = true;
+  graphCanvas.align_to_grid = false;
+  
+  // Resize handler
+  function resizeCanvas() {
+    const wrap = canvas.parentElement;
+    if (!wrap) return;
+    canvas.width = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+    if (graphCanvas) graphCanvas.resize(canvas.width, canvas.height);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  setTimeout(resizeCanvas, 100);
+  dbg('Canvas ready');
+
+  // ── Register nodes for each plugin ──
+  for (const p of PLUGINS) {
+    const catColor = CAT_COLORS[p.cat] || '#666';
+    const inputNames = Object.keys(p.inputs);
+    const h = Math.max(50, inputNames.length * 22 + 30 + (Object.keys(p.defaults).length > 0 ? 10 : 0));
+
+    const NodeCtor = function() {
+      this.properties = {};
+      for (const [k, v] of Object.entries(p.defaults)) this.properties[k] = v;
       this.addOutput('out', LiteGraph.EVENT);
-      this.properties = { ...p.defaults };
-      // Add inputs
-      const entries = Object.entries(p.inputs);
-      if (entries.length > 0) {
-        for (const [name] of entries) {
-          this.addInput(name, LiteGraph.EVENT);
-        }
-      }
-      // Output: only non-output nodes have output
-      if (p.cat === 'output') {
-        this.outputs = [];
-      }
-      // Params
+      for (const name of inputNames) this.addInput(name, LiteGraph.EVENT);
+      if (p.cat === 'output') this.outputs = [];
       this._plugin = p;
-      this.color = CAT_COLORS[p.cat] || '#666';
+      this.color = catColor;
       this.bgcolor = '#16213e';
-      this.boxcolor = CAT_COLORS[p.cat] || '#666';
-      this.size = [160, Math.max(50, entries.length * 22 + 30 + (Object.keys(p.defaults).length > 0 ? 10 : 0))];
-    },
-
-    onDrawBackground(ctx) {
-      if (this.flags.collapsed) return;
+      this.boxcolor = catColor;
+      this.size = [160, h];
+    };
+    NodeCtor.title = p.name;
+    NodeCtor.desc = p.id;
+    NodeCtor.prototype.onDrawBackground = function(ctx) {
+      if (this.flags && this.flags.collapsed) return;
       ctx.fillStyle = 'rgba(255,255,255,0.05)';
       ctx.fillRect(0, 0, this.size[0], this.size[1]);
-    },
+    };
+    NodeCtor.prototype.onMouseDown = function() { selectNode(this); };
 
-    onMouseDown(e, pos, graphCanvas) {
-      // Select this node → show params
-      selectNode(this);
-    },
-  });
-}
-
-// Register nodes for LiteGraph's menu
-const registered = {};
-for (const p of PLUGINS) {
-  const cat = { source: 'source', effect: 'effect', transition: 'transition', output: 'output' }[p.cat];
-  if (!registered[cat]) registered[cat] = [];
-  registered[cat].push(p);
-}
-
-// ============================================================
-//  Canvas setup
-// ============================================================
-const graphCanvas = new LGraphCanvas(canvas, graph);
-graphCanvas.allow_dragnodes = true;
-graphCanvas.allow_interaction = true;
-graphCanvas.align_to_grid = false;
-
-// Resize
-function resizeCanvas() {
-  const wrap = canvas.parentElement;
-  canvas.width = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-  graphCanvas.resize(canvas.width, canvas.height);
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+    LiteGraph.registerNodeType('workflow/' + p.id, NodeCtor);
+  }
+  dbg(PLUGINS.length + ' node types registered');
 
 // ============================================================
 //  Plugin palette (left sidebar)
@@ -481,7 +481,14 @@ graphCanvas.onNodeDeselected = function() {
 // ============================================================
 loadDefault();
 updateStatus();
+dbg('✓ 编辑器初始化完成');
 toast('从左侧拖入插件开始编排', '');
+
+} catch(e) {
+  dbg('FATAL: ' + (e.message || e));
+  console.error('Editor init failed:', e);
+  document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#e94560"><h2>初始化失败</h2><pre style="margin-top:16px;color:#ccc;font-size:13px">' + (e.message || e) + '</pre></div>';
+}
 </script>
 </body>
 </html>

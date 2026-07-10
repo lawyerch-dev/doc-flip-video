@@ -2,20 +2,16 @@
 /**
  * build.mjs — 视频构建入口
  *
- * 向后兼容模式（默认）：
+ * 默认（向后兼容）：
  *   node src/pipeline/build.mjs data/articles/article-001.json
- *   → gen-pages.mjs + capture-xfade.mjs（旧流水线）
+ *   → gen-pages.mjs + capture-xfade.mjs
  *
- * 工作流模式（--workflow）：
+ * 工作流模式（--workflow 显式指定）：
  *   node src/pipeline/build.mjs --workflow workflows/article-default.json --config data/articles/article-001.json
  *   → gen-pages.mjs + workflow engine
- *
- * 便捷模式（自动检测）：
- *   如果第一个参数是 article config，且存在 workflows/article-default.json，则使用工作流模式
  */
 
 import { execFileSync } from "child_process";
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -37,13 +33,6 @@ function main() {
     } else if (!args[i].startsWith("--")) {
       configPath = args[i];
     }
-  }
-
-  // 自动检测：如果存在默认工作流文件，使用工作流模式
-  const defaultWf = path.join(ROOT, "workflows", "article-default.json");
-  if (!useWorkflow && fs.existsSync(defaultWf)) {
-    useWorkflow = true;
-    workflowPath = defaultWf;
   }
 
   // 解析 config 路径

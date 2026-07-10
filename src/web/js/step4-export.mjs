@@ -78,6 +78,8 @@ export async function doBuild() {
         videoResult.style.display = '';
         const videoPlayer = document.getElementById('videoPlayer');
         videoPlayer.src = status.videoUrl;
+        const buildPadded = String(status.issueNum || issueNum).padStart(3, '0');
+        videoPlayer.poster = `/data/output/法务视频-${buildPadded}期-poster.png`;
         currentVideoUrl = status.videoUrl;
         setStatus(`视频已完成 (${elapsed}s)`, 'done');
         if (buildActions) buildActions.style.display = 'none';
@@ -136,6 +138,7 @@ export async function viewVideo(issueNum) {
   document.getElementById('buildTimer').textContent = '';
   document.getElementById('videoResult').style.display = '';
   document.getElementById('videoPlayer').src = currentVideoUrl;
+  document.getElementById('videoPlayer').poster = `/data/output/法务视频-${padded}期-poster.png`;
   setStatus(`第 ${padded} 期视频`, 'done');
   populatePublishInfo();
 }

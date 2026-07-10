@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作流编辑器 · 法务视频</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙</text></svg>">
+<link rel="stylesheet" href="/assets/vendor/litegraph.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a1a2e; color: #ccc; }
+.editor-layout { display: flex; width: 100%; height: 100%; }
+
+/* --- Sidebar --- */
+.palette { width: 220px; min-width: 220px; background: #16213e; border-right: 1px solid #0f3460; display: flex; flex-direction: column; }
+.palette-hd { padding: 14px 16px; font-size: 13px; font-weight: 600; color: #e94560; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
+.palette-hd button { background: #0f3460; color: #eee; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.palette-hd button:hover { background: #e94560; }
+.palette-body { flex: 1; overflow-y: auto; padding: 8px; }
+.palette-cat { margin-bottom: 12px; }
+.palette-cat-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8899aa; padding: 4px 8px; margin-bottom: 4px; letter-spacing: 0.5px; }
+.palette-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: grab; font-size: 13px; color: #ccc; transition: 0.15s; user-select: none; }
+.palette-item:hover { background: #0f3460; color: #fff; }
+.palette-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.palette-dot.source { background: #4ecdc4; }
+.palette-dot.effect { background: #f9ca24; }
+.palette-dot.transition { background: #6c5ce7; }
+.palette-dot.output { background: #e94560; }
+.status-bar { padding: 6px 12px; font-size: 11px; color: #556; border-top: 1px solid #0f3460; display: flex; gap: 16px; }
+.status-bar .sdot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.status-bar .sdot.ok { background: #4ecdc4; }
+
+/* --- Canvas --- */
+.canvas-wrap { flex: 1; position: relative; }
+#graph-canvas { width: 100%; height: 100%; display: block; }
+.graph-title-input { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(15,52,96,0.8); border: 1px solid #0f3460; border-radius: 6px; padding: 6px 14px; color: #e94560; font-size: 13px; font-weight: 600; text-align: center; outline: none; width: 200px; z-index: 10; }
+
+/* --- Right panel --- */
+.params { width: 280px; min-width: 280px; background: #16213e; border-left: 1px solid #0f3460; display: flex; flex-direction: column; }
+.params-hd { padding: 14px 16px; font-size: 13px; font-weight: 600; color: #e94560; border-bottom: 1px solid #0f3460; }
+.params-body { flex: 1; overflow-y: auto; padding: 12px; }
+.param-g { margin-bottom: 14px; }
+.param-l { font-size: 11px; font-weight: 600; color: #8899aa; text-transform: uppercase; margin-bottom: 4px; }
+.param-i { width: 100%; padding: 6px 10px; background: #0f3460; border: 1px solid #1a3a6a; border-radius: 4px; color: #eee; font-size: 13px; outline: none; }
+.param-i:focus { border-color: #e94560; }
+.param-i[type=number] { -moz-appearance: textfield; }
+.param-cb { display: flex; align-items: center; gap: 8px; color: #ccc; font-size: 13px; }
+.param-cb input { accent-color: #e94560; }
+.param-info { font-size: 11px; color: #667; margin-top: 2px; }
+.no-sel { color: #556; font-size: 13px; text-align: center; padding: 24px; }
+
+/* Actions */
+.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+.actions button { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-primary { background: #e94560; color: #fff; }
+.btn-default { background: #0f3460; color: #eee; }
+.btn-primary:hover { background: #d63851; }
+.btn-default:hover { background: #1a4070; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f3460; color: #eee; padding: 10px 20px; border-radius: 8px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.toast.err { background: #e94560; }
+.toast.ok { background: #4ecdc4; }
+
+/* Scrollbar */
+.palette-body::-webkit-scrollbar, .params-body::-webkit-scrollbar { width: 4px; }
+.palette-body::-webkit-scrollbar-thumb, .params-body::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 2px; }
+
+@media (max-width:900px) { .params { width:200px; min-width:200px; } .palette { width:160px; min-width:160px; } }
+</style>
+</head>
+<body>
+<div class="editor-layout">
+  <!-- Sidebar -->
+  <div class="palette">
+    <div class="palette-hd">
+      <span>📦 插件</span>
+      <div><button onclick="clearGraph()">🗑</button><button onclick="loadDefault()">↻</button></div>
+    </div>
+    <div class="palette-body" id="paletteBody"></div>
+    <div class="status-bar">
+      <span><span class="sdot ok"></span><span id="nodeCount">0</span> 节点</span>
+      <span id="edgeCount">0 连接</span>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <canvas id="graph-canvas"></canvas>
+    <input class="graph-title-input" id="wfTitle" value="默认工作流" onchange="updateTitle()" />
+  </div>
+
+  <!-- Params panel -->
+  <div class="params">
+    <div class="params-hd">参数</div>
+    <div class="params-body" id="paramsBody"><div class="no-sel">点击节点编辑参数</div></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="/assets/vendor/litegraph.js"></script>
+<script>
+// ============================================================
+//  Plugin Manifest
+// ============================================================
+const CATEGORIES = {
+  source:     { label: '来源 (Source)', color: '#4ecdc4' },
+  effect:     { label: '效果 (Effect)', color: '#f9ca24' },
+  transition: { label: '转场 (Transition)', color: '#6c5ce7' },
+  output:     { label: '输出 (Output)', color: '#e94560' },
+};
+
+const PLUGINS = [
+  { id: 'source:page-renderer', name: '页面渲染', cat: 'source', defaults: { page: 'cover', highlight: false }, inputs: {} },
+  { id: 'source:audio-picker',   name: '背景音乐', cat: 'source', defaults: { dir: 'assets/music' }, inputs: {} },
+  { id: 'source:glow-strip',     name: '光晕条',   cat: 'source', defaults: { stripWidthRatio: 0.06 }, inputs: {} },
+  { id: 'effect:fade-in',        name: '淡入',     cat: 'effect', defaults: { duration: 1.2, color: 'white' }, inputs: { source: 'video' } },
+  { id: 'effect:fade-out',       name: '淡出',     cat: 'effect', defaults: { duration: 2.0, color: 'black' }, inputs: { source: 'video' } },
+  { id: 'effect:hold',           name: '停留',     cat: 'effect', defaults: { duration: 1.0 }, inputs: { source: 'video' } },
+  { id: 'effect:sweep-glow',     name: '高亮扫描', cat: 'effect', defaults: { duration: 2.0, glowStripWidthRatio: 0.06 }, inputs: { source: 'video', target: 'video', glowStrip: 'image' } },
+  { id: 'transition:page-curl',  name: '翻页',     cat: 'transition', defaults: { duration: 2.5 }, inputs: { from: 'video', to: 'video' } },
+  { id: 'transition:crossfade',  name: '交叉溶解', cat: 'transition', defaults: { duration: 1.0, easing: 'cubic-in-out' }, inputs: { from: 'video', to: 'video' } },
+  { id: 'output:mp4',            name: 'MP4 输出', cat: 'output', defaults: {}, inputs: { video: 'video', audio: 'audio' } },
+];
+
+const PARAM_SCHEMAS = {
+  'source:page-renderer':    { page: { type: 'select', default: 'cover', options: ['cover','content'], label: '页面' }, highlight: { type: 'boolean', default: false, label: '高亮' } },
+  'source:audio-picker':     { dir: { type: 'string', default: 'assets/music', label: '目录' } },
+  'source:glow-strip':       { stripWidthRatio: { type: 'number', default: 0.06, label: '宽度比', min: 0.01, max: 0.5, step: 0.01 } },
+  'effect:fade-in':          { duration: { type: 'number', default: 1.2, label: '时长', min: 0.1, max: 10, step: 0.1 }, color: { type: 'string', default: 'white', label: '颜色' } },
+  'effect:fade-out':         { duration: { type: 'number', default: 2.0, label: '时长', min: 0.1, max: 10, step: 0.1 }, color: { type: 'string', default: 'black', label: '颜色' } },
+  'effect:hold':             { duration: { type: 'number', default: 1.0, label: '时长', min: 0.1, max: 30, step: 0.1 } },
+  'effect:sweep-glow':       { duration: { type: 'number', default: 2.0, label: '时长', min: 0.1, max: 10, step: 0.1 }, glowStripWidthRatio: { type: 'number', default: 0.06, label: '光晕宽度比', min: 0.01, max: 0.5, step: 0.01 } },
+  'transition:page-curl':    { duration: { type: 'number', default: 2.5, label: '时长', min: 0.1, max: 10, step: 0.1 } },
+  'transition:crossfade':    { duration: { type: 'number', default: 1.0, label: '时长', min: 0.1, max: 10, step: 0.1 }, easing: { type: 'select', default: 'cubic-in-out', options: ['cubic-in-out','linear','quad-in','quad-out'], label: '缓动' } },
+  'output:mp4':              {},
+};
+
+const CAT_COLORS = { source: '#4ecdc4', effect: '#f9ca24', transition: '#6c5ce7', output: '#e94560' };
+
+// ============================================================
+//  Toast
+// ============================================================
+let _t2;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  clearTimeout(_t2);
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  _t2 = setTimeout(() => el.className = 'toast', 2500);
+}
+
+// ============================================================
+//  LiteGraph Setup
+// ============================================================
+const canvas = document.getElementById('graph-canvas');
+const graph = new LGraph();
+
+// Register custom node for each plugin
+for (const p of PLUGINS) {
+  const catMap = { source: 'source', effect: 'effect', transition: 'transition', output: 'output' };
+  LiteGraph.registerNodeType('workflow/' + p.id, {
+    title: p.name,
+    category: catMap[p.cat],
+    pluginId: p.id,
+    defaults: { ...p.defaults },
+
+    constructor() {
+      this.addOutput('out', LiteGraph.EVENT);
+      this.properties = { ...p.defaults };
+      // Add inputs
+      const entries = Object.entries(p.inputs);
+      if (entries.length > 0) {
+        for (const [name] of entries) {
+          this.addInput(name, LiteGraph.EVENT);
+        }
+      }
+      // Output: only non-output nodes have output
+      if (p.cat === 'output') {
+        this.outputs = [];
+      }
+      // Params
+      this._plugin = p;
+      this.color = CAT_COLORS[p.cat] || '#666';
+      this.bgcolor = '#16213e';
+      this.boxcolor = CAT_COLORS[p.cat] || '#666';
+      this.size = [160, Math.max(50, entries.length * 22 + 30 + (Object.keys(p.defaults).length > 0 ? 10 : 0))];
+    },
+
+    onDrawBackground(ctx) {
+      if (this.flags.collapsed) return;
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(0, 0, this.size[0], this.size[1]);
+    },
+
+    onMouseDown(e, pos, graphCanvas) {
+      // Select this node → show params
+      selectNode(this);
+    },
+  });
+}
+
+// Register nodes for LiteGraph's menu
+const registered = {};
+for (const p of PLUGINS) {
+  const cat = { source: 'source', effect: 'effect', transition: 'transition', output: 'output' }[p.cat];
+  if (!registered[cat]) registered[cat] = [];
+  registered[cat].push(p);
+}
+
+// ============================================================
+//  Canvas setup
+// ============================================================
+const graphCanvas = new LGraphCanvas(canvas, graph);
+graphCanvas.allow_dragnodes = true;
+graphCanvas.allow_interaction = true;
+graphCanvas.align_to_grid = false;
+
+// Resize
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  graphCanvas.resize(canvas.width, canvas.height);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ============================================================
+//  Plugin palette (left sidebar)
+// ============================================================
+function buildPalette() {
+  const body = document.getElementById('paletteBody');
+  body.innerHTML = '';
+  for (const [key, cat] of Object.entries(CATEGORIES)) {
+    const items = PLUGINS.filter(p => p.cat === key);
+    if (!items.length) continue;
+    const section = document.createElement('div');
+    section.className = 'palette-cat';
+    section.innerHTML = `<div class="palette-cat-title">${cat.label}</div>`;
+    for (const p of items) {
+      const el = document.createElement('div');
+      el.className = 'palette-item';
+      el.draggable = true;
+      el.innerHTML = `<span class="palette-dot ${p.cat}"></span>${p.name}`;
+      el.ondragstart = e => {
+        e.dataTransfer.setData('text/plain', p.id);
+        e.dataTransfer.effectAllowed = 'copy';
+      };
+      el.onclick = () => addNode(p);
+      section.appendChild(el);
+    }
+    body.appendChild(section);
+  }
+}
+buildPalette();
+
+// ============================================================
+//  Add node to graph
+// ============================================================
+let _nodeSeq = 0;
+
+function addNode(plugin, pos) {
+  const node = LiteGraph.createNode('workflow/' + plugin.id);
+  node.pos = pos || [40 + Math.random() * 200, 60 + _nodeSeq * 130];
+  node._plugin = plugin;
+  graph.add(node);
+  _nodeSeq++;
+  updateStatus();
+  return node;
+}
+
+// ============================================================
+//  Drag from palette → canvas
+// ============================================================
+canvas.ondragover = e => e.preventDefault();
+canvas.ondrop = e => {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain');
+  const plugin = PLUGINS.find(p => p.id === id);
+  if (!plugin) return;
+  const rect = canvas.getBoundingClientRect();
+  const scale = graphCanvas.ds_scale;
+  const offset = graphCanvas.ds_offset;
+  const x = (e.clientX - rect.left) / scale - offset[0];
+  const y = (e.clientY - rect.top) / scale - offset[1];
+  addNode(plugin, [x - 80, y - 20]);
+};
+
+// ============================================================
+//  Select node → param panel
+// ============================================================
+let selectedNode = null;
+
+function selectNode(node) {
+  selectedNode = node;
+  renderParams(node);
+}
+
+function renderParams(node) {
+  const body = document.getElementById('paramsBody');
+  if (!node) {
+    body.innerHTML = '<div class="no-sel">点击节点编辑参数</div>';
+    return;
+  }
+  const plugin = node._plugin;
+  const schema = PARAM_SCHEMAS[plugin.id];
+  if (!schema || !Object.keys(schema).length) {
+    body.innerHTML = '<div class="no-sel">此节点无参数</div>';
+    return;
+  }
+  let html = `<div class="param-g"><div class="param-l">类型</div><div style="color:#8899aa;font-size:12px">${plugin.id}</div></div>`;
+  for (const [key, def] of Object.entries(schema)) {
+    const val = node.properties[key] ?? def.default ?? '';
+    html += `<div class="param-g"><div class="param-l">${def.label || key}</div>`;
+    if (def.type === 'boolean') {
+      const checked = val ? 'checked' : '';
+      html += `<label class="param-cb"><input type="checkbox" ${checked} data-key="${key}" onchange="updateParam(this, '${key}')" />${def.label || key}</label>`;
+    } else if (def.type === 'select') {
+      html += `<select class="param-i" data-key="${key}" onchange="updateParam(this, '${key}')">`;
+      for (const o of (def.options || [])) {
+        html += `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`;
+      }
+      html += `</select>`;
+    } else if (def.type === 'number') {
+      html += `<input class="param-i" type="number" value="${val}" min="${def.min ?? ''}" max="${def.max ?? ''}" step="${def.step ?? 0.1}" data-key="${key}" onchange="updateParam(this, '${key}')" />`;
+    } else {
+      html += `<input class="param-i" type="text" value="${val}" data-key="${key}" onchange="updateParam(this, '${key}')" />`;
+    }
+    html += `<div class="param-info">${def.type}${def.default !== undefined ? ', 默认: ' + def.default : ''}</div>`;
+    html += `</div>`;
+  }
+  html += `<div class="actions">
+    <button class="btn-primary" onclick="runWorkflow()">▶ 运行</button>
+    <button class="btn-default" onclick="saveWorkflow()">💾 保存</button>
+    <button class="btn-default" onclick="exportWorkflow()">📥 导出</button>
+  </div>`;
+  body.innerHTML = html;
+}
+
+function updateParam(el, key) {
+  if (!selectedNode) return;
+  const type = el.type;
+  let val;
+  if (type === 'checkbox') val = el.checked;
+  else if (type === 'number') val = parseFloat(el.value) || 0;
+  else val = el.value;
+  selectedNode.properties[key] = val;
+}
+
+// ============================================================
+//  Workflow serialization
+// ============================================================
+function graphToWorkflow() {
+  const nodes = [];
+  for (const n of graph._nodes) {
+    const p = n._plugin;
+    if (!p) continue;
+    const inputs = {};
+    for (const input of n.inputs) {
+      if (input.link != null) {
+        const link = graph.links[input.link];
+        if (link) {
+          inputs[input.name] = graph._nodes[link.origin_id].id;
+        }
+      }
+    }
+    nodes.push({
+      id: n.id,
+      type: p.id,
+      params: { ...n.properties },
+      inputs,
+      position: [Math.round(n.pos[0]), Math.round(n.pos[1])],
+    });
+  }
+  return { version: 1, name: document.getElementById('wfTitle').value || '未命名', variables: { width: 1080, height: 1840, fps: 30 }, nodes };
+}
+
+function workflowToGraph(wf) {
+  graph.clear();
+  const idMap = {};
+  for (const n of (wf.nodes || [])) {
+    const plugin = PLUGINS.find(p => p.id === n.type);
+    if (!plugin) continue;
+    const node = LiteGraph.createNode('workflow/' + plugin.id);
+    node.id = n.id;
+    node.pos = n.position || [100, 100];
+    node.properties = { ...plugin.defaults, ...(n.params || {}) };
+    node._plugin = plugin;
+    idMap[n.id] = node;
+    graph.add(node);
+  }
+  // Reconnect
+  for (const n of (wf.nodes || [])) {
+    const node = idMap[n.id];
+    if (!node) continue;
+    for (const [portName, srcId] of Object.entries(n.inputs || {})) {
+      const srcNode = idMap[srcId];
+      if (!srcNode) continue;
+      const inputIdx = node.findInputSlot(portName);
+      const outputIdx = srcNode.findOutputSlot('out');
+      if (inputIdx >= 0 && outputIdx >= 0) {
+        node.connect(inputIdx, srcNode, outputIdx);
+      }
+    }
+  }
+  _nodeSeq = Math.max(...Object.keys(idMap).map(Number), 0) + 1;
+  graphCanvas.setDirty(true);
+  updateStatus();
+}
+
+async function loadDefault() {
+  try {
+    const r = await fetch('/workflows/article-default.json');
+    if (r.ok) {
+      const wf = await r.json();
+      workflowToGraph(wf);
+      document.getElementById('wfTitle').value = wf.name || '默认工作流';
+      return;
+    }
+  } catch {}
+  graph.clear();
+}
+
+// ============================================================
+//  Actions
+// ============================================================
+function updateTitle() { /* auto-saved via title input */ }
+
+function updateStatus() {
+  document.getElementById('nodeCount').textContent = graph._nodes.length;
+  document.getElementById('edgeCount').textContent = graph._links.length + ' 连接';
+}
+
+function saveWorkflow() {
+  const wf = graphToWorkflow();
+  localStorage.setItem('wf-draft', JSON.stringify(wf));
+  toast('已保存到缓存', 'ok');
+}
+
+function exportWorkflow() {
+  const wf = graphToWorkflow();
+  const blob = new Blob([JSON.stringify(wf, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'workflow-' + Date.now() + '.json';
+  a.click();
+  toast('已导出', 'ok');
+}
+
+function runWorkflow() {
+  const wf = graphToWorkflow();
+  if (!wf.nodes.length) { toast('画布为空', 'err'); return; }
+  if (!wf.nodes.some(n => n.type === 'output:mp4')) { toast('请添加 MP4 输出节点', 'err'); return; }
+  localStorage.setItem('wf-to-run', JSON.stringify(wf));
+  toast('已保存，终端运行: npm run workflow', 'ok');
+}
+
+function clearGraph() {
+  if (!confirm('清空画布？')) return;
+  graph.clear();
+  selectedNode = null;
+  renderParams(null);
+  updateStatus();
+}
+
+// ============================================================
+//  Watch for node selection changes
+// ============================================================
+graphCanvas.onNodeSelected = function(node) {
+  if (node && node._plugin) selectNode(node);
+};
+graphCanvas.onNodeDeselected = function() {
+  selectedNode = null;
+  renderParams(null);
+};
+
+// ============================================================
+//  Init
+// ============================================================
+loadDefault();
+updateStatus();
+toast('从左侧拖入插件开始编排', '');
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@ import { BUILTIN_PLUGINS, getPlugin, getIcon, type PluginManifest, type ParamDef
 function renderParamField(def: ParamDef, value: unknown, onChange: (v: unknown) => void) {
   if (def.type === 'boolean') {
     return (
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#ccc' }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
         <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
         <span>启用</span>
       </label>
@@ -40,48 +40,25 @@ function renderParamField(def: ParamDef, value: unknown, onChange: (v: unknown) 
   return <Input value={value as string} onChange={(v: string) => onChange(v)} />;
 }
 
-/** Coze-style node card: dark background + color top bar + icon + summary */
+/** Node face: icon + name + param summary */
 function renderNodeFace(manifest: PluginManifest, values: Record<string, unknown>) {
   const icon = getIcon(manifest);
-  const color = manifest.color;
   const paramLines = Object.entries(manifest.params).slice(0, 3);
-  
   return (
-    <div style={{
-      width: 200,
-      background: '#1e1e3c',
-      borderRadius: 10,
-      overflow: 'hidden',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      border: '1px solid rgba(255,255,255,0.06)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-    }}>
-      {/* Color top bar */}
-      <div style={{ height: 4, background: color }} />
-      
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px 6px' }}>
-        <span style={{ fontSize: 20, width: 28, textAlign: 'center' }}>{icon}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, color: '#e0e0e0', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {manifest.name}
-          </div>
-          <div style={{ fontSize: 10, color: '#666', marginTop: 1 }}>
-            {manifest.id}
-          </div>
-        </div>
+    <div style={{ padding: '8px 12px', minWidth: 160, fontSize: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <span style={{ fontWeight: 600, fontSize: 13 }}>{manifest.name}</span>
       </div>
-      
-      {/* Params summary */}
       {paramLines.length > 0 && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '6px 12px 8px', marginTop: 2 }}>
+        <div>
           {paramLines.map(([key, def]) => {
             const val = values[key] ?? def.default;
-            const display = String(val).length > 16 ? String(val).slice(0, 14) + '…' : String(val);
+            const display = String(val).length > 20 ? String(val).slice(0, 18) + '…' : String(val);
             return (
-              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: '20px' }}>
-                <span style={{ color: '#888' }}>{def.label}</span>
-                <span style={{ color: '#ccc', fontWeight: 500, marginLeft: 8 }}>{display}</span>
+              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: '20px', opacity: 0.7 }}>
+                <span>{def.label}:</span>
+                <span style={{ fontWeight: 500 }}>{display}</span>
               </div>
             );
           })}
@@ -100,7 +77,7 @@ function renderSidebarForm(manifest: PluginManifest) {
     <div style={{ padding: '8px 16px' }}>
       {paramEntries.map(([key, def]) => (
         <div key={key} style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#aaa', marginBottom: 4 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
             {def.label}
           </label>
           <Field
@@ -109,7 +86,7 @@ function renderSidebarForm(manifest: PluginManifest) {
               renderParamField(def, value, onChange)
             }
           />
-          <div style={{ fontSize: 11, color: '#555', marginTop: 2 }}>
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 2 }}>
             {def.type}{def.default !== undefined ? `, 默认: ${def.default}` : ''}
           </div>
         </div>
@@ -171,15 +148,9 @@ const startRegistry: FlowNodeRegistry = {
   },
   formMeta: {
     render: () => (
-      <div style={{
-        width: 120, background: '#1e1e3c', borderRadius: 10, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-      }}>
-        <div style={{ height: 4, background: '#4ecdc4' }} />
-        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 16 }}>🎬</span>
-          <span style={{ fontWeight: 600, color: '#e0e0e0', fontSize: 13 }}>开始</span>
-        </div>
+      <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 16 }}>🎬</span>
+        <span style={{ fontWeight: 600, fontSize: 13 }}>开始</span>
       </div>
     ),
   },
@@ -197,15 +168,9 @@ const endRegistry: FlowNodeRegistry = {
   },
   formMeta: {
     render: () => (
-      <div style={{
-        width: 120, background: '#1e1e3c', borderRadius: 10, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-      }}>
-        <div style={{ height: 4, background: '#e94560' }} />
-        <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 16 }}>🏁</span>
-          <span style={{ fontWeight: 600, color: '#e0e0e0', fontSize: 13 }}>结束</span>
-        </div>
+      <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 16 }}>🏁</span>
+        <span style={{ fontWeight: 600, fontSize: 13 }}>结束</span>
       </div>
     ),
   },

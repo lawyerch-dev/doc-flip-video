@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "node src/pipeline/build.mjs",
+    "workflow": "node src/workflow/run.mjs",
+    "build:wf": "node src/pipeline/build.mjs --workflow",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node src/server/index.mjs",
     "studio": "node src/server/index.mjs",

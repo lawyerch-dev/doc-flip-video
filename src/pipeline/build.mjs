@@ -1,19 +1,94 @@
+#!/usr/bin/env node
+/**
+ * build.mjs — 视频构建入口
+ *
+ * 向后兼容模式（默认）：
+ *   node src/pipeline/build.mjs data/articles/article-001.json
+ *   → gen-pages.mjs + capture-xfade.mjs（旧流水线）
+ *
+ * 工作流模式（--workflow）：
+ *   node src/pipeline/build.mjs --workflow workflows/article-default.json --config data/articles/article-001.json
+ *   → gen-pages.mjs + workflow engine
+ *
+ * 便捷模式（自动检测）：
+ *   如果第一个参数是 article config，且存在 workflows/article-default.json，则使用工作流模式
+ */
+
 import { execFileSync } from "child_process";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rawArg = process.argv[2] || "data/articles/article-001.json";
-// Auto-prefix configs/ if the file exists there and wasn't already prefixed
-const config = rawArg.includes("/")
-  ? rawArg
-  : path.join("data", "articles", rawArg);
+const ROOT = path.join(__dirname, "../..");
 
-console.log(`📄 Config: ${config}`);
-console.log("─── Generating images ───");
-execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), config], { stdio: "inherit" });
-console.log("─── Rendering video ───");
-// Use xfade capture (pure FFmpeg, no Puppeteer)
-// Set CAPTURE=puppeteer env to use legacy WebGL capture
-const captureScript = process.env.CAPTURE === "puppeteer" ? "capture.mjs" : "capture-xfade.mjs";
-execFileSync("node", [path.join(__dirname, captureScript), config], { stdio: "inherit" });
+function main() {
+  const args = process.argv.slice(2);
+  let useWorkflow = args.includes("--workflow");
+  let workflowPath = null;
+  let configPath = null;
+
+  // 解析参数
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--workflow" && args[i + 1]) {
+      workflowPath = args[++i];
+    } else if (args[i] === "--config" && args[i + 1]) {
+      configPath = args[++i];
+    } else if (!args[i].startsWith("--")) {
+      configPath = args[i];
+    }
+  }
+
+  // 自动检测：如果存在默认工作流文件，使用工作流模式
+  const defaultWf = path.join(ROOT, "workflows", "article-default.json");
+  if (!useWorkflow && fs.existsSync(defaultWf)) {
+    useWorkflow = true;
+    workflowPath = defaultWf;
+  }
+
+  // 解析 config 路径
+  if (configPath && !configPath.startsWith("/")) {
+    configPath = path.join(ROOT, configPath);
+  }
+  // 默认 config
+  if (!configPath) {
+    configPath = path.join(ROOT, "data", "articles", "article-001.json");
+  }
+
+  if (useWorkflow && workflowPath) {
+    // 工作流模式
+    if (workflowPath && !workflowPath.startsWith("/")) {
+      workflowPath = path.join(ROOT, workflowPath);
+    }
+
+    console.log(`📄 Config: ${configPath}`);
+    console.log(`📋 Workflow: ${workflowPath}`);
+
+    // 渲染页面
+    console.log("─── Generating images ───");
+    execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), configPath], {
+      stdio: "inherit",
+    });
+
+    // 运行工作流引擎
+    console.log("─── Rendering video (workflow) ───");
+    execFileSync("node", [path.join(ROOT, "src", "workflow", "run.mjs"), workflowPath, "--config", configPath], {
+      stdio: "inherit",
+    });
+  } else {
+    // 旧流水线模式（向后兼容）
+    console.log(`📄 Config: ${configPath}`);
+    console.log("─── Generating images ───");
+    execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), configPath], {
+      stdio: "inherit",
+    });
+    console.log("─── Rendering video ───");
+    const captureScript =
+      process.env.CAPTURE === "puppeteer" ? "capture.mjs" : "capture-xfade.mjs";
+    execFileSync("node", [path.join(__dirname, captureScript), configPath], {
+      stdio: "inherit",
+    });
+  }
+}
+
+main();

@@ -19,7 +19,10 @@ export default defineConfig({
   },
   tools: {
     rspack: {
-      ignoreWarnings: [/Critical dependency: the request of a dependency is an expression/],
+      ignoreWarnings: [
+        /Critical dependency: the request of a dependency is an expression/,
+        /__filename/, /__dirname/,
+      ],
     },
   },
 });

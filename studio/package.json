@@ -1,6 +1,7 @@
 {
   "name": "@flowgram.ai/demo-free-layout",
   "version": "1.0.4",
+  "type": "module",
   "description": "",
   "keywords": [],
   "license": "MIT",

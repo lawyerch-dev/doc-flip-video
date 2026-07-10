@@ -4,6 +4,7 @@ import {
   EditorRenderer,
   FreeLayoutEditorProvider,
   useService,
+  usePlaygroundTools,
   WorkflowDocument,
 } from '@flowgram.ai/free-layout-editor';
 import { Button, Toast } from '@douyinfe/semi-ui';
@@ -18,15 +19,18 @@ function Toolbar() {
   const workflowDoc = useService(WorkflowDocument);
   const [saving, setSaving] = useState(false);
 
+  const tools = usePlaygroundTools();
+
   const handleLoad = useCallback(async () => {
     try {
       const doc = await fetchDefaultWorkflow();
       workflowDoc.fromJSON(doc);
+      tools.fitView(false);
       Toast.success('已加载默认工作流');
     } catch {
       Toast.error('加载失败');
     }
-  }, [workflowDoc]);
+  }, [workflowDoc, tools]);
 
   const handleSave = useCallback(() => {
     setSaving(true);

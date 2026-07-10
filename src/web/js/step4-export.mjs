@@ -118,10 +118,10 @@ export async function cancelBuild() {
 
 export async function viewVideo(issueNum) {
   const padded = String(issueNum).padStart(3, '0');
-  currentVideoUrl = `/output/法务视频-${padded}期.mp4`;
+  currentVideoUrl = `/data/output/法务视频-${padded}期.mp4`;
   // Load config so form and publish info work across steps
   try {
-    const resp = await fetch(`/configs/article-${padded}.json`);
+    const resp = await fetch(`/data/articles/article-${padded}.json`);
     if (resp.ok && (resp.headers.get('content-type')||'').includes('json')) {
       state.config = await resp.json();
     }

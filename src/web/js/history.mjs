@@ -140,7 +140,7 @@ export async function loadHistory() {
 export async function editConfig(issueNum) {
   try {
     const padded = String(issueNum).padStart(3,'0');
-    const resp = await fetch(`/configs/article-${padded}.json`);
+    const resp = await fetch(`/data/articles/article-${padded}.json`);
     if (!resp.ok) throw new Error(`配置文件不存在 (HTTP ${resp.status})`);
     const contentType = resp.headers.get('content-type') || '';
     if (!contentType.includes('json')) throw new Error('配置文件不存在，返回了非 JSON 内容');

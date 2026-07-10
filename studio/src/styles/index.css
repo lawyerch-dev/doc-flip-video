@@ -1,52 +1,27 @@
-/**
- * Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
- * SPDX-License-Identifier: MIT
- */
+/* ─── Coze-inspired Dark Theme ─── */
 
 :root {
   /* Port colors */
   --g-workflow-port-color-primary: #4d53e8;
   --g-workflow-port-color-secondary: #9197f1;
-  --g-workflow-port-color-error: #ff0000;
-  --g-workflow-port-color-background: #ffffff;
+  --g-workflow-port-color-error: #ff4d4f;
+  --g-workflow-port-color-background: #2a2a4a;
 
   /* Line colors */
   --g-workflow-line-color-hidden: transparent;
   --g-workflow-line-color-default: #4d53e8;
-  --g-workflow-line-color-drawing: #5dd6e3;
-  --g-workflow-line-color-hover: #37d0ff;
+  --g-workflow-line-color-drawing: #6c73ff;
+  --g-workflow-line-color-hover: #6c73ff;
   --g-workflow-line-color-selected: #37d0ff;
-  --g-workflow-line-color-error: red;
+  --g-workflow-line-color-error: #ff4d4f;
 }
 
-.gedit-selector-bounds-foreground {
-  cursor: move;
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 0;
-  height: 0;
-  outline: 1px solid var(--g-playground-selectBox-outline);
-  z-index: 33;
-  background-color: var(--g-playground-selectBox-background);
+/* ─── Canvas ─── */
+html, body, #root {
+  background: #0f0f23;
+  color: #e0e0e0;
 }
 
-@keyframes blink {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.node-running {
-  border: 1px dashed rgb(78, 64, 229) !important;
-  border-radius: 8px;
-}
 .demo-editor {
   flex-grow: 1;
   position: relative;
@@ -63,18 +38,83 @@
   flex-direction: column;
 }
 
-.demo-tools {
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
+/* ─── Flowgram canvas overrides ─── */
+.flowgram-engine-canvas {
+  background: #0f0f23 !important;
 }
 
-.demo-tools-group > * {
-  margin-right: 8px;
+.flowgram-canvas-layer {
+  background: #0f0f23 !important;
 }
 
-.mouse-pad-option-icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Node form on canvas */
+.g-edit-form-node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
+
+/* Selected node */
+.g-edit-form-node.g-edit-node-selected {
+  outline: 2px solid #4d53e8 !important;
+  border-radius: 12px;
+}
+
+/* Port handles */
+.g-edit-form-port {
+  background: #4d53e8 !important;
+  border: 2px solid #2a2a4a !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+}
+
+.g-edit-form-port:hover {
+  background: #6c73ff !important;
+  transform: scale(1.3);
+}
+
+/* Minimap */
+.g-edit-minimap {
+  background: #1a1a3e !important;
+  border: 1px solid #2a2a4a !important;
+  border-radius: 8px !important;
+}
+
+/* Selection box */
+.gedit-selector-bounds-foreground {
+  cursor: move;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  outline: 1px solid #4d53e8;
+  z-index: 33;
+  background-color: rgba(77, 83, 232, 0.08);
+}
+
+/* Context menu */
+.g-edit-context-menu {
+  background: #1e1e3c !important;
+  border: 1px solid #2a2a4a !important;
+  border-radius: 8px !important;
+  color: #e0e0e0 !important;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.node-running {
+  border: 1px dashed #4d53e8 !important;
+  border-radius: 12px;
+}
+
+/* Sidebar scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a5a; }

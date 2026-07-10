@@ -224,7 +224,7 @@ function checkReady() {
 }
 
 // Fetch template for canvas dimensions (1x — ffmpeg upscales with lanczos)
-fetch('templates/default.json').then(r => r.json()).then(tmpl => {
+fetch('src/templates/default.json').then(r => r.json()).then(tmpl => {
   W = tmpl.style.width;
   H = tmpl.style.height;
   canvas.width = W;

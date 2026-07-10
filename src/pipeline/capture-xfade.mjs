@@ -52,7 +52,7 @@ if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
 // ── Find FFmpeg ──
 const { custom: customFFmpeg, system: systemFFmpeg, hasCustom } = findFFmpeg();
 if (hasCustom) {
-  console.log(`🔧 自定义 FFmpeg: gl_doorway + gl_InvertedPageCurl + wipeleft`);
+  console.log(`🔧 自定义 FFmpeg: gl_swap + gl_InvertedPageCurl + wipeleft`);
 } else {
   console.log(`🔧 系统 FFmpeg: fadeblack + dissolve + wipeleft`);
   console.log(`   💡 运行 bash scripts/build-ffmpeg-xfade.sh 可获得 curl 翻页效果`);
@@ -81,7 +81,7 @@ const videoFilters = [
 
 if (hasCustom) {
   videoFilters.push(
-    `[v0][v1]xfade=${easing}transition='gl_doorway(reflection=0.4,perspective=0.2,depth=3)':duration=${settleDur}:offset=0[s1]`,
+    `[v0][v1]xfade=${easing}transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${settleDur}:offset=0[s1]`,
     `[s1][v2]xfade=${easing}transition=gl_InvertedPageCurl:duration=${curlDur}:offset=${curlOffset}[s2]`,
     `[s2][v3]xfade=${easing}transition=wipeleft:duration=${sweepDur}:offset=${sweepOffset}[s3]`,
     `[s3]fade=t=out:st=${fadeOutStart}:d=${finalDur}[vout]`,
@@ -107,7 +107,7 @@ if (hasCustom) {
   // Custom FFmpeg → pipe (yuv4mpegpipe) → system FFmpeg (encode + audio)
   const customArgs = [
     "-y",
-    "-f", "lavfi", "-i", `color=white:s=${outW}x${outH}:r=${fps}:d=0.033`,
+    "-f", "lavfi", "-i", `color=black:s=${outW}x${outH}:r=${fps}:d=0.033`,
     "-loop", "1", "-t", String(coverDur), "-i", coverImg,
     "-loop", "1", "-t", String(curlDur + sweepDur + 1), "-i", plainImg,
     "-loop", "1", "-t", String(holdDur + finalDur + 1), "-i", hlImg,
@@ -152,7 +152,7 @@ if (hasCustom) {
   // Standard FFmpeg: all-in-one
   const args = [
     "-y",
-    "-f", "lavfi", "-i", `color=white:s=${outW}x${outH}:r=${fps}:d=0.033`,
+    "-f", "lavfi", "-i", `color=black:s=${outW}x${outH}:r=${fps}:d=0.033`,
     "-loop", "1", "-t", String(coverDur), "-i", coverImg,
     "-loop", "1", "-t", String(curlDur + sweepDur + 1), "-i", plainImg,
     "-loop", "1", "-t", String(holdDur + finalDur + 1), "-i", hlImg,
@@ -174,4 +174,17 @@ if (hasCustom) {
     console.error(`\n❌ 失败: ${e.message}`);
     process.exit(1);
   }
+}
+
+// ── Embed poster: extract 0.6s frame as video poster ──
+try {
+  const posterFrame = outFile + '.poster.png';
+  const posterOut = outFile + '.poster.mp4';
+  execFileSync(systemFFmpeg, ['-y', '-ss', '0.6', '-i', outFile, '-frames:v', '1', posterFrame], { stdio: 'pipe', timeout: 10000 });
+  execFileSync(systemFFmpeg, ['-y', '-i', outFile, '-i', posterFrame, '-map', '0', '-map', '1', '-c', 'copy', '-disposition:v:1', 'attached_pic', '-movflags', '+faststart', posterOut], { stdio: 'pipe', timeout: 10000 });
+  fs.renameSync(posterOut, outFile);
+  fs.unlinkSync(posterFrame);
+  console.log('🖼️  海报已嵌入 (0.6s 帧)');
+} catch (e) {
+  console.warn('⚠️  海报嵌入失败:', e.message);
 }

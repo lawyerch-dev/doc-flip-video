@@ -14,7 +14,7 @@ const OUTPUT_DIR = path.join(ROOT, "data", "output");
 const TEMPLATES_DIR = path.join(ROOT, "src", "templates");
 const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
 
-const SETTINGS_PATH = path.join(CONFIGS_DIR, "settings.json");
+const SETTINGS_PATH = path.join(ROOT, "config", "settings.json");
 
 // ── Settings: load from file, fallback to env vars ──
 function loadSettings() {

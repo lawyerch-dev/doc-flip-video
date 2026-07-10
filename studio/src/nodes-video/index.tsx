@@ -136,10 +136,119 @@ function buildRegistry(manifest: PluginManifest): FlowNodeRegistry {
   };
 }
 
-/** Start 节点（唯一，不可删除，定义工作流输入参数） */
+/** 参数定义：{ name, type, defaultValue } */
+interface ParamItem {
+  name: string;
+  type: 'string' | 'number' | 'boolean';
+  default: string;
+}
+
+/** 参数编辑器：增删 + JSON 导入 */
+function ParamEditor({
+  value, onChange,
+}: {
+  value: ParamItem[];
+  onChange: (v: ParamItem[]) => void;
+}) {
+  const items = Array.isArray(value) ? value : [];
+
+  const addItem = () => {
+    onChange([...items, { name: '', type: 'string', default: '' }]);
+  };
+
+  const updateItem = (i: number, patch: Partial<ParamItem>) => {
+    const next = items.map((item, idx) => idx === i ? { ...item, ...patch } : item);
+    onChange(next);
+  };
+
+  const removeItem = (i: number) => {
+    onChange(items.filter((_, idx) => idx !== i));
+  };
+
+  const importJSON = () => {
+    const raw = prompt('粘贴 JSON Schema（或 JSON 对象）:');
+    if (!raw) return;
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      alert('JSON 格式错误');
+      return;
+    }
+    // Try to parse as JSON Schema properties first
+    if (parsed.properties && typeof parsed.properties === 'object') {
+      const props = parsed.properties as Record<string, { type?: string; default?: unknown }>;
+      const imported: ParamItem[] = Object.entries(props).map(([name, schema]) => ({
+        name,
+        type: (['string', 'number', 'boolean'].includes(schema.type ?? '') ? schema.type! : 'string') as ParamItem['type'],
+        default: schema.default !== undefined ? String(schema.default) : '',
+      }));
+      onChange(imported);
+    } else {
+      // Plain object: each key becomes a param
+      const imported: ParamItem[] = Object.entries(parsed).map(([k, v]) => ({
+        name: k,
+        type: v === null || v === undefined ? 'string'
+          : typeof v === 'number' ? 'number'
+          : typeof v === 'boolean' ? 'boolean'
+          : 'string',
+        default: v !== null && v !== undefined ? String(v) : '',
+      }));
+      onChange(imported);
+    }
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        <button onClick={addItem} style={btnStyle}>+ 添加参数</button>
+        <button onClick={importJSON} style={btnStyle}>📥 导入 JSON</button>
+      </div>
+      {items.length === 0 && (
+        <div style={{ fontSize: 12, color: '#999', padding: 8 }}>暂无参数，点击「添加参数」或「导入 JSON」</div>
+      )}
+      {items.map((item, i) => (
+        <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+          <input
+            value={item.name}
+            onChange={e => updateItem(i, { name: e.target.value })}
+            placeholder="参数名"
+            style={{ ...inputStyle, width: 110 }}
+          />
+          <select
+            value={item.type}
+            onChange={e => updateItem(i, { type: e.target.value as ParamItem['type'] })}
+            style={{ ...inputStyle, width: 80 }}
+          >
+            <option value="string">文本</option>
+            <option value="number">数字</option>
+            <option value="boolean">布尔</option>
+          </select>
+          <input
+            value={item.default}
+            onChange={e => updateItem(i, { default: e.target.value })}
+            placeholder="默认值"
+            style={{ ...inputStyle, width: 100 }}
+          />
+          <button onClick={() => removeItem(i)} style={{ ...btnStyle, color: '#e00', padding: '2px 6px' }}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  padding: '4px 8px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 12,
+};
+const btnStyle: React.CSSProperties = {
+  padding: '4px 10px', border: '1px solid #d0d0d0', borderRadius: 4,
+  background: '#f5f5f5', cursor: 'pointer', fontSize: 12,
+};
+
+/** Start 节点：定义工作流输入参数 */
 const startRegistry: FlowNodeRegistry = {
   type: 'system:start',
-  info: { description: '工作流起点 — 定义输入参数（视频、音频等）' },
+  info: { description: '定义工作流的输入参数' },
   meta: {
     defaultPorts: [{ type: 'output' }],
     size: { width: 200, height: 52 },
@@ -151,6 +260,7 @@ const startRegistry: FlowNodeRegistry = {
       const isSidebar = useIsSidebar();
       const data = form.nodeData?.data;
       const params = (data?.params ?? {}) as Record<string, unknown>;
+      const inputs = params.inputs as ParamItem[] | undefined;
 
       if (isSidebar) {
         return (
@@ -160,54 +270,18 @@ const startRegistry: FlowNodeRegistry = {
               <Field
                 name="data.params.workflowName"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="text"
-                    value={value as string ?? '未命名工作流'}
+                  <input type="text" value={value as string ?? '新工作流'}
                     onChange={e => onChange(e.target.value)}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                  />
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }} />
                 }
               />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>视频宽度</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输入参数</label>
               <Field
-                name="data.params.width"
+                name="data.params.inputs"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="number"
-                    value={value as number ?? 1080}
-                    onChange={e => onChange(Number(e.target.value))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                  />
-                }
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>视频高度</label>
-              <Field
-                name="data.params.height"
-                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="number"
-                    value={value as number ?? 1840}
-                    onChange={e => onChange(Number(e.target.value))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                  />
-                }
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>帧率 (fps)</label>
-              <Field
-                name="data.params.fps"
-                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="number"
-                    value={value as number ?? 30}
-                    onChange={e => onChange(Number(e.target.value))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                  />
+                  <ParamEditor value={value as ParamItem[]} onChange={onChange} />
                 }
               />
             </div>
@@ -216,12 +290,15 @@ const startRegistry: FlowNodeRegistry = {
       }
 
       // Canvas face
+      const paramCount = Array.isArray(inputs) ? inputs.length : 0;
       return (
         <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 18 }}>🎬</span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13 }}>开始</div>
-            <div style={{ fontSize: 11, opacity: 0.6 }}>{(params.workflowName as string) || '工作流'}</div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>
+              {(params.workflowName as string) || '工作流'}{paramCount > 0 ? ` · ${paramCount}个参数` : ''}
+            </div>
           </div>
         </div>
       );
@@ -229,10 +306,10 @@ const startRegistry: FlowNodeRegistry = {
   },
 };
 
-/** End 节点（唯一，不可删除，定义输出参数） */
+/** End 节点：定义工作流输出参数 */
 const endRegistry: FlowNodeRegistry = {
   type: 'system:end',
-  info: { description: '工作流终点 — 定义输出视频参数' },
+  info: { description: '定义工作流的输出参数' },
   meta: {
     defaultPorts: [{ type: 'input' }],
     size: { width: 200, height: 52 },
@@ -243,37 +320,17 @@ const endRegistry: FlowNodeRegistry = {
     render: ({ form }: FormRenderProps<FlowNodeJSON>) => {
       const isSidebar = useIsSidebar();
       const params = (form.nodeData?.data?.params ?? {}) as Record<string, unknown>;
+      const outputs = params.outputs as ParamItem[] | undefined;
 
       if (isSidebar) {
         return (
           <div style={{ padding: '8px 16px' }}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输出文件名</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>输出参数</label>
               <Field
-                name="data.params.outputName"
+                name="data.params.outputs"
                 render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="text"
-                    value={value as string ?? ''}
-                    onChange={e => onChange(e.target.value)}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                    placeholder="法务视频-NNN期"
-                  />
-                }
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>编码质量 (CRF)</label>
-              <Field
-                name="data.params.crf"
-                render={({ field: { value, onChange } }: FieldRenderProps<unknown>) =>
-                  <input
-                    type="number"
-                    value={value as number ?? 14}
-                    min={0} max={51}
-                    onChange={e => onChange(Number(e.target.value))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #d0d0d0', borderRadius: 4, fontSize: 13 }}
-                  />
+                  <ParamEditor value={value as ParamItem[]} onChange={onChange} />
                 }
               />
             </div>
@@ -281,13 +338,15 @@ const endRegistry: FlowNodeRegistry = {
         );
       }
 
-      // Canvas face
+      const paramCount = Array.isArray(outputs) ? outputs.length : 0;
       return (
         <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 18 }}>🏁</span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13 }}>结束</div>
-            <div style={{ fontSize: 11, opacity: 0.6 }}>{(params.outputName as string) || '输出视频'}</div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>
+              {paramCount > 0 ? `${paramCount}个输出参数` : '点击配置输出'}
+            </div>
           </div>
         </div>
       );

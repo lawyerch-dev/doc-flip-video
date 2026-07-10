@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "../..");
 const WEB_DIR = path.join(ROOT, "src", "web");
-const CONFIGS_DIR = path.join(ROOT, "config");
+const CONFIGS_DIR = path.join(ROOT, "data", "articles");
 const TEMP_DIR = path.join(ROOT, "data", "temp");
 const OUTPUT_DIR = path.join(ROOT, "data", "output");
 const TEMPLATES_DIR = path.join(ROOT, "src", "templates");

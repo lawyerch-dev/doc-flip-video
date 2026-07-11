@@ -137,7 +137,8 @@ const texs = { white: whiteTex };
 let loaded = 0, loadErrors = 0;
 const status = document.getElementById("status");
 const imgPrefix = params.get('img') || 'assets';
-const sources = { cover: `${imgPrefix}/cover.png`, plain: `${imgPrefix}/content-plain.png`, hl: `${imgPrefix}/content-hl.png` };
+const cacheKey = params.get('t') || '';
+const sources = { cover: `${imgPrefix}/cover.png?v=${cacheKey}`, plain: `${imgPrefix}/content-plain.png?v=${cacheKey}`, hl: `${imgPrefix}/content-hl.png?v=${cacheKey}` };
 const placeholders = {
   cover: () => makePlaceholder("封面", "#c0392b", "#fff"),
   plain: () => makePlaceholder("正文", "#fdf6ec", "#1a1a1a"),

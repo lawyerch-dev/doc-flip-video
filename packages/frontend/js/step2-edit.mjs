@@ -38,8 +38,7 @@ export function populateForm() {
   document.getElementById("f_coverSource").value = cover.source || "";
   document.getElementById("f_title").value = cover.headline || "";
   document.getElementById("f_subtitle").value = content.subtitle || "";
-  document.getElementById("f_source").value = content.source || "";
-  ["f_headline|20", "f_coverSource|25", "f_title|20", "f_subtitle|20", "f_source|60"].forEach((s) => {
+  ["f_headline|20", "f_coverSource|25", "f_title|20", "f_subtitle|20"].forEach((s) => {
     const [id, lim] = s.split("|");
     updateCC(document.getElementById(id), parseInt(lim));
   });
@@ -80,7 +79,6 @@ export function readForm() {
   c.cover.source = document.getElementById("f_coverSource").value;
   c.content.title = c.cover.headline;
   c.content.subtitle = document.getElementById("f_subtitle").value;
-  c.content.source = document.getElementById("f_source").value;
   c.content.paragraphs = (c.content.paragraphs || []).map((_, i) => ({
     text: document.getElementById(`f_para_${i}`)?.value || "",
     highlight: document.getElementById(`f_hl_${i}`)?.value || undefined,

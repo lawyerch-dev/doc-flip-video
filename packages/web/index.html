@@ -8,276 +8,302 @@
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1><span>法务视频</span>工作台</h1>
-    <div class="header-actions">
-      <span class="ai-badge" id="aiStatus">检查中...</span>
-      <button class="theme-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i></button>
-      <a href="/workflow/" class="nav-link" target="_blank" title="Flowgram 工作流编辑器" style="color:var(--accent);text-decoration:none;font-size:13px;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px"><i data-lucide="git-branch" style="width:14px;height:14px"></i> 工作流</a>
-      <button class="gear-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i></button>
+<div class="layout">
+  <!-- Sidebar: History -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title"><i data-lucide="history" class="icon"></i> 历史项目</span>
+      <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起侧栏"><i data-lucide="panel-left-close" class="icon"></i></button>
     </div>
-  </header>
+    <div class="sidebar-body" id="historyList"></div>
+  </aside>
 
-  <!-- Status bar -->
-  <div class="status-bar">
-    <span class="dot idle" id="statusDot"></span>
-    <span id="statusText">就绪</span>
-  </div>
+  <!-- Main content -->
+  <main class="main-area">
+    <div class="app">
+      <header>
+        <div class="header-left">
+          <h1><span>法务视频</span>工作台</h1>
+        </div>
+        <div class="header-actions">
+          <span class="ai-badge" id="aiStatus">检查中...</span>
+          <button class="theme-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i></button>
+          <a href="/workflow/" class="nav-link" target="_blank" title="Flowgram 工作流编辑器" style="color:var(--accent);text-decoration:none;font-size:13px;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px"><i data-lucide="git-branch" style="width:14px;height:14px"></i> 工作流</a>
+          <button class="gear-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i></button>
+        </div>
+      </header>
 
-  <!-- Stepper -->
-  <div class="stepper" id="stepper">
-    <div class="step-item active" data-step="1">
-      <div class="step-circle" onclick="goStep(1)">1</div>
-      <div class="step-label">抓取</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" data-step="2">
-      <div class="step-circle" onclick="goStep(2)">2</div>
-      <div class="step-label">编辑</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" data-step="3">
-      <div class="step-circle" onclick="goStep(3)">3</div>
-      <div class="step-label">预览</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" data-step="4">
-      <div class="step-circle" onclick="goStep(4)">4</div>
-      <div class="step-label">导出</div>
-    </div>
-  </div>
-
-  <!-- Step 1: Scrape -->
-  <div class="step-panel active" id="panel1">
-    <div class="card">
-      <h2><span class="num">1</span> 抓取文章</h2>
-      <div class="url-bar">
-        <input type="text" id="urlInput" placeholder="粘贴法律文章链接..." onkeydown="if(event.key==='Enter')doScrape()" />
-        <button class="btn" id="scrapeBtn" onclick="doScrape()">抓取</button>
-        <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap"><i data-lucide="clipboard-list" class="icon"></i> 示例</button>
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span class="dot idle" id="statusDot"></span>
+        <span id="statusText">就绪</span>
       </div>
-      <div class="scraped-box" id="scrapedBox" style="display:none">
-        <label style="margin-bottom:6px">抓取结果 — <span id="scrapedTitle" style="color:var(--text);font-weight:600"></span></label>
-        <textarea id="scrapedText" readonly></textarea>
-        <div class="btn-group">
-          <button class="btn" onclick="doAiGenerate()"><span id="aiGenSpinner" style="display:none" class="spinner"></span>AI 生成内容</button>
+
+      <!-- Stepper -->
+      <div class="stepper" id="stepper">
+        <div class="step-item active" data-step="1">
+          <div class="step-circle" onclick="goStep(1)">1</div>
+          <div class="step-label">抓取</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="2">
+          <div class="step-circle" onclick="goStep(2)">2</div>
+          <div class="step-label">编辑</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="3">
+          <div class="step-circle" onclick="goStep(3)">3</div>
+          <div class="step-label">预览</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="4">
+          <div class="step-circle" onclick="goStep(4)">4</div>
+          <div class="step-label">导出</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Scrape -->
+      <div class="step-panel active" id="panel1">
+        <div class="step-content">
+          <div class="card">
+            <h2><span class="num">1</span> 抓取文章</h2>
+            <div class="url-bar">
+              <input type="text" id="urlInput" placeholder="粘贴文章链接或文章列表页链接，自动识别..." onkeydown="if(event.key==='Enter')doScrape()" />
+              <button class="btn" id="scrapeBtn" onclick="doScrape()">抓取</button>
+              <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap"><i data-lucide="clipboard-list" class="icon"></i> 示例</button>
+            </div>
+            <div class="scrape-hint">支持文章详情页（直接抓取）和列表页（展示文章列表供选择）</div>
+            <!-- Article list (auto-loaded from default source) -->
+            <div id="articleListBox" style="margin-top:12px">
+              <div class="article-list-loading" id="articleListLoading"><span class="spinner"></span> 正在加载文章列表...</div>
+              <div class="article-list" id="articleList" style="display:none"></div>
+            </div>
+            <!-- Scraped result -->
+            <div class="scraped-box" id="scrapedBox" style="display:none">
+              <label style="margin-bottom:6px">抓取结果 — <span id="scrapedTitle" style="color:var(--text);font-weight:600"></span></label>
+              <textarea id="scrapedText" readonly></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="step-actions-col" id="panel1Actions" style="display:none">
           <button class="btn secondary" onclick="resetScrape()">重新抓取</button>
           <button class="btn secondary" onclick="pasteManual()">手动粘贴</button>
+          <button class="btn" onclick="doAiGenerate()"><span id="aiGenSpinner" style="display:none" class="spinner"></span>AI 生成内容 →</button>
         </div>
       </div>
-    </div>
-    <!-- History -->
-    <div class="card" style="margin-top:14px" id="historyCard">
-      <h2><i data-lucide="history" class="icon"></i> 历史项目</h2>
-      <div id="historyList" style="max-height:480px;overflow-y:auto"></div>
-    </div>
-  </div>
-  <div class="step-panel" id="panel2">
-    <!-- Coze-style config panel -->
-    <div class="coze-panel">
-      <!-- Meta section -->
-      <div class="coze-section">
-        <div class="coze-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <span>基本信息</span>
-        </div>
-        <div class="coze-section-body">
-          <div class="coze-field">
-            <div class="coze-field-row">
-              <div class="coze-field-group" style="flex:0 0 140px">
-                <label class="coze-field-label">期号</label>
-                <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" class="coze-input" />
+
+      <!-- Step 2: Edit -->
+      <div class="step-panel" id="panel2">
+        <div class="step-content">
+          <div class="coze-panel">
+            <!-- Meta section -->
+            <div class="coze-section">
+            <div class="coze-section-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>基本信息</span>
+            </div>
+            <div class="coze-section-body">
+              <div class="coze-field">
+                <div class="coze-field-row">
+                  <div class="coze-field-group" style="flex:0 0 140px">
+                    <label class="coze-field-label">期号</label>
+                    <input type="number" id="f_issueNum" min="1" oninput="state.dirty=true" placeholder="自动生成" class="coze-input" />
+                  </div>
+                  <div class="coze-field-group" style="flex:1">
+                    <label class="coze-field-label">日期</label>
+                    <div class="coze-date-row">
+                      <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" placeholder="年" class="coze-input" />
+                      <span class="coze-date-sep">/</span>
+                      <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" placeholder="月" class="coze-input" />
+                      <span class="coze-date-sep">/</span>
+                      <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" placeholder="日" class="coze-input" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="coze-field-group" style="flex:1">
-                <label class="coze-field-label">日期</label>
-                <div class="coze-date-row">
-                  <input type="number" id="f_year" min="2020" max="2030" oninput="state.dirty=true" placeholder="年" class="coze-input" />
-                  <span class="coze-date-sep">/</span>
-                  <input type="number" id="f_month" min="1" max="12" oninput="state.dirty=true" placeholder="月" class="coze-input" />
-                  <span class="coze-date-sep">/</span>
-                  <input type="number" id="f_day" min="1" max="31" oninput="state.dirty=true" placeholder="日" class="coze-input" />
+              <div class="coze-field">
+                <label class="coze-field-label">描述文字</label>
+                <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" class="coze-input" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Cover section -->
+          <div class="coze-section">
+            <div class="coze-section-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>封面设置</span>
+            </div>
+            <div class="coze-section-body">
+              <div class="coze-field">
+                <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
+                <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" placeholder="吸引观众的第一句话" class="coze-input" />
+                <div class="char-count" id="cc_headline"></div>
+              </div>
+              <div class="coze-field">
+                <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>
+                <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" placeholder="来源：XX（日期）" class="coze-input" />
+                <div class="char-count" id="cc_coverSource"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content section -->
+          <div class="coze-section">
+            <div class="coze-section-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span>正文编辑</span>
+            </div>
+            <div class="coze-section-body">
+              <div class="coze-field-row">
+                <div class="coze-field" style="flex:1">
+                  <label class="coze-field-label">内容标题 <span class="coze-limit">≤20字</span></label>
+                  <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" placeholder="主标题" class="coze-input" />
+                  <div class="char-count" id="cc_title"></div>
+                </div>
+                <div class="coze-field" style="flex:1">
+                  <label class="coze-field-label">副标题 <span class="coze-limit">≤20字</span></label>
+                  <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" placeholder="副标题" class="coze-input" />
+                  <div class="char-count" id="cc_subtitle"></div>
+                </div>
+              </div>
+              <div class="coze-field">
+                <label class="coze-field-label">模板风格</label>
+                <select id="f_template" class="coze-input" onchange="state.dirty=true">
+                  <option value="default">🔴 红头文件（默认）</option>
+                </select>
+              </div>
+              <div class="coze-field">
+                <label class="coze-field-label">段落内容</label>
+                <div id="paragraphs"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Source section -->
+          <div class="coze-section">
+            <div class="coze-section-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span>来源信息</span>
+            </div>
+            <div class="coze-section-body">
+              <div class="coze-field">
+                <label class="coze-field-label">来源说明 <span class="coze-limit">≤60字</span></label>
+                <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" placeholder="显示在正文底部" class="coze-input" />
+                <div class="char-count" id="cc_source"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+        </div>
+        </div>
+        <div class="step-actions-col">
+          <button class="coze-btn coze-btn-secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            重新生成
+          </button>
+          <button class="coze-btn coze-btn-secondary" onclick="doSave()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            保存
+          </button>
+          <button class="coze-btn coze-btn-primary" onclick="goStep(3)">
+            下一步
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Preview -->
+      <div class="step-panel" id="panel3">
+        <div class="step-content">
+          <div class="card" style="display:flex;flex-direction:column;overflow:hidden">
+            <h2><span class="num">3</span> 预览效果</h2>
+            <div class="preview-grid">
+              <!-- Left: AI Chat -->
+              <div class="preview-col">
+                <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">💬 AI 助手</label>
+                <div class="chat-box">
+                  <div class="chat-messages" id="chatMessages">
+                    <div class="chat-msg ai">可以让我调整内容，比如：<br>• "标题更吸引人"<br>• "第一段太长了"<br>• "把关键词改成..."</div>
+                  </div>
+                  <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="输入修改要求..." onkeydown="if(event.key==='Enter')doChat()" />
+                    <button class="btn small" onclick="doChat()">发送</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Right: Animation Preview -->
+              <div class="preview-col">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><label style="font-size:13px;font-weight:600;color:var(--text)"><i data-lucide="play" class="icon"></i> 动画预览</label><button class="btn small secondary" onclick="loadExamplePreview()" style="font-size:11px">示例</button></div>
+                <div class="anim-wrap">
+                  <iframe id="animFrame" src="about:blank"></iframe>
                 </div>
               </div>
             </div>
           </div>
-          <div class="coze-field">
-            <label class="coze-field-label">描述文字</label>
-            <input type="text" id="f_description" oninput="state.dirty=true" placeholder="法理明如镜，务知天下事！" class="coze-input" />
-          </div>
+        </div>
+        <div class="step-actions-col">
+          <button class="btn secondary" onclick="goStep(2)">← 返回编辑</button>
+          <button class="btn green" onclick="doBuild()"><i data-lucide="video" class="icon"></i> 生成视频 →</button>
         </div>
       </div>
 
-      <!-- Cover section -->
-      <div class="coze-section">
-        <div class="coze-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <span>封面设置</span>
-        </div>
-        <div class="coze-section-body">
-          <div class="coze-field">
-            <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
-            <input type="text" id="f_headline" oninput="updateCC(this,20);state.dirty=true" placeholder="吸引观众的第一句话" class="coze-input" />
-            <div class="char-count" id="cc_headline"></div>
-          </div>
-          <div class="coze-field">
-            <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>
-            <input type="text" id="f_coverSource" oninput="updateCC(this,25);state.dirty=true" placeholder="来源：XX（日期）" class="coze-input" />
-            <div class="char-count" id="cc_coverSource"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content section -->
-      <div class="coze-section">
-        <div class="coze-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>正文编辑</span>
-        </div>
-        <div class="coze-section-body">
-          <div class="coze-field-row">
-            <div class="coze-field" style="flex:1">
-              <label class="coze-field-label">内容标题 <span class="coze-limit">≤20字</span></label>
-              <input type="text" id="f_title" oninput="updateCC(this,20);state.dirty=true" placeholder="主标题" class="coze-input" />
-              <div class="char-count" id="cc_title"></div>
-            </div>
-            <div class="coze-field" style="flex:1">
-              <label class="coze-field-label">副标题 <span class="coze-limit">≤20字</span></label>
-              <input type="text" id="f_subtitle" oninput="updateCC(this,20);state.dirty=true" placeholder="副标题" class="coze-input" />
-              <div class="char-count" id="cc_subtitle"></div>
-            </div>
-          </div>
-          <div class="coze-field">
-            <label class="coze-field-label">模板风格</label>
-            <select id="f_template" class="coze-input" onchange="state.dirty=true">
-              <option value="default">🔴 红头文件（默认）</option>
-            </select>
-          </div>
-          <div class="coze-field">
-            <label class="coze-field-label">段落内容</label>
-            <div id="paragraphs"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Source section -->
-      <div class="coze-section">
-        <div class="coze-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span>来源信息</span>
-        </div>
-        <div class="coze-section-body">
-          <div class="coze-field">
-            <label class="coze-field-label">来源说明 <span class="coze-limit">≤60字</span></label>
-            <input type="text" id="f_source" oninput="updateCC(this,60);state.dirty=true" placeholder="显示在正文底部" class="coze-input" />
-            <div class="char-count" id="cc_source"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="coze-actions">
-        <button class="coze-btn coze-btn-secondary" onclick="doRegenerate()" id="regenBtn" title="用AI重新生成全部内容">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          重新生成
-        </button>
-        <button class="coze-btn coze-btn-secondary" onclick="doSave()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          保存
-        </button>
-        <button class="coze-btn coze-btn-primary" onclick="goStep(3)">
-          下一步
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 3: Preview -->
-  <div class="step-panel" id="panel3">
-    <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <h2><span class="num">3</span> 预览效果</h2>
-      <div class="preview-grid">
-        <!-- Left: AI Chat -->
-        <div class="preview-col">
-          <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">💬 AI 助手</label>
-          <div class="chat-box">
-            <div class="chat-messages" id="chatMessages">
-              <div class="chat-msg ai">可以让我调整内容，比如：<br>• "标题更吸引人"<br>• "第一段太长了"<br>• "把关键词改成..."</div>
-            </div>
-            <div class="chat-input">
-              <input type="text" id="chatInput" placeholder="输入修改要求..." onkeydown="if(event.key==='Enter')doChat()" />
-              <button class="btn small" onclick="doChat()">发送</button>
-            </div>
-          </div>
-        </div>
-        <!-- Right: Animation Preview -->
-        <div class="preview-col">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><label style="font-size:13px;font-weight:600;color:var(--text)"><i data-lucide="play" class="icon"></i> 动画预览</label><button class="btn small secondary" onclick="loadExamplePreview()" style="font-size:11px">示例</button></div>
-          <div class="anim-wrap">
-            <iframe id="animFrame" src="about:blank"></iframe>
-          </div>
-        </div>
-      </div>
-      <div class="btn-group" style="justify-content:flex-end;margin-top:12px;flex-shrink:0">
-        <button class="btn secondary" onclick="goStep(2)">← 返回编辑</button>
-        <button class="btn green" onclick="doBuild()"><i data-lucide="video" class="icon"></i> 生成视频</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 4: Export -->
-  <div class="step-panel" id="panel4">
-    <div class="card">
-      <h2><span class="num">4</span> 导出视频</h2>
-      <div id="buildStatus" style="padding:20px 0">
-        <div style="text-align:center">
-          <span class="spinner" style="width:24px;height:24px;border-width:3px"></span>
-          <span id="buildTimer" style="margin-left:12px;color:var(--text);font-size:16px;font-weight:600"></span>
-        </div>
-        <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
-        <div style="text-align:right;margin-top:4px"><button class="btn secondary" id="copyBuildLog" onclick="navigator.clipboard.writeText(document.getElementById('buildLog').textContent)" style="font-size:12px;padding:4px 12px">📋 复制日志</button></div>
-        <div id="buildActions" style="text-align:center;margin-top:16px">
-          <button class="btn secondary" id="cancelBuildBtn" onclick="cancelBuild()" style="color:var(--danger);border-color:var(--danger)">取消生成</button>
-        </div>
-      </div>
-      <div id="videoResult" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
-          <!-- Left: Publish info -->
-          <div>
-            <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="share-2" class="icon"></i> 发布信息</h3>
-            <div style="margin-bottom:12px">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                <label style="font-size:12px;font-weight:600">视频标题</label>
-                <button class="btn small secondary" onclick="copyText('publishTitle')"><i data-lucide="copy" class="icon"></i> 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+      <!-- Step 4: Export -->
+      <div class="step-panel" id="panel4">
+        <div class="step-content">
+          <div class="card">
+            <h2><span class="num">4</span> 导出视频</h2>
+            <div id="buildStatus" style="padding:20px 0">
+              <div style="text-align:center">
+                <span class="spinner" style="width:24px;height:24px;border-width:3px"></span>
+                <span id="buildTimer" style="margin-left:12px;color:var(--text);font-size:16px;font-weight:600"></span>
               </div>
-              <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
-            </div>
-            <div style="margin-bottom:0">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                <label style="font-size:12px;font-weight:600">视频介绍</label>
-                <button class="btn small secondary" onclick="copyText('publishDesc')"><i data-lucide="copy" class="icon"></i> 复制</button>
-                <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+              <pre id="buildLog" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-all"></pre>
+              <div style="text-align:right;margin-top:4px"><button class="btn secondary" id="copyBuildLog" onclick="navigator.clipboard.writeText(document.getElementById('buildLog').textContent)" style="font-size:12px;padding:4px 12px">📋 复制日志</button></div>
+              <div id="buildActions" style="text-align:center;margin-top:16px">
+                <button class="btn secondary" id="cancelBuildBtn" onclick="cancelBuild()" style="color:var(--danger);border-color:var(--danger)">取消生成</button>
               </div>
-              <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
             </div>
-          </div>
-          <!-- Right: Video preview -->
-          <div>
-            <video id="videoPlayer" controls style="width:100%;border-radius:8px;background:#000;display:block;max-height:420px"></video>
+            <div id="videoResult" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+                <!-- Left: Publish info -->
+                <div>
+                  <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="share-2" class="icon"></i> 发布信息</h3>
+                  <div style="margin-bottom:12px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                      <label style="font-size:12px;font-weight:600">视频标题</label>
+                      <button class="btn small secondary" onclick="copyText('publishTitle')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                      <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+                    </div>
+                    <input type="text" id="publishTitle" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px" />
+                  </div>
+                  <div style="margin-bottom:0">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                      <label style="font-size:12px;font-weight:600">视频介绍</label>
+                      <button class="btn small secondary" onclick="copyText('publishDesc')"><i data-lucide="copy" class="icon"></i> 复制</button>
+                      <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
+                    </div>
+                    <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
+                  </div>
+                </div>
+                <!-- Right: Video preview -->
+                <div>
+                  <video id="videoPlayer" controls style="width:100%;border-radius:8px;background:#000;display:block;max-height:420px"></video>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- Bottom actions -->
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="btn green" id="downloadBtn" onclick="doDownload()" style="flex:1"><i data-lucide="download" class="icon"></i> 下载视频</button>
-          <button class="btn green" onclick="doDownloadImages()" style="flex:1"><i data-lucide="image" class="icon"></i> 下载图片</button>
-          <button class="btn secondary" onclick="goStep(3)" style="flex:1">← 返回预览</button>
-          <button class="btn blue" onclick="location.reload()" style="flex:1">新建项目</button>
+        <div class="step-actions-col" id="panel4Actions" style="display:none">
+          <button class="btn secondary" onclick="goStep(3)">← 返回预览</button>
+          <button class="btn blue" onclick="location.reload()">新建项目</button>
+          <button class="btn green" onclick="doDownloadImages()"><i data-lucide="image" class="icon"></i> 下载图片</button>
+          <button class="btn green" id="downloadBtn" onclick="doDownload()"><i data-lucide="download" class="icon"></i> 下载视频</button>
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 
 <!-- Settings panel -->
@@ -319,19 +345,33 @@
 <script type="module">
 import { state, setStatus, goStep, toast, updateCC, showModal, copyText, toggleTheme } from '/js/app.mjs';
 import { api } from '/js/api.mjs';
-import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample } from '/js/step1-scrape.mjs';
+import { doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample, quickScrape, loadDefaultArticleList } from '/js/step1-scrape.mjs';
 import { populateForm, readForm, loadTemplates } from '/js/step2-edit.mjs';
 import { doPreview, switchTab, doChat, addMsg, loadExamplePreview } from '/js/step3-preview.mjs';
 import { doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild } from '/js/step4-export.mjs';
 import { loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory, toggleSettings, loadSettingsUI, saveSettingsUI, toggleKeyVis, markSettingsDirty } from '/js/history.mjs';
 
+// Sidebar toggle
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '');
+  // Swap icon
+  const icon = sidebar.querySelector('.sidebar-toggle .icon');
+  if (icon) {
+    icon.setAttribute('data-lucide', collapsed ? 'panel-left-open' : 'panel-left-close');
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
 // Expose to HTML onclick handlers
 Object.assign(window, {
-  state,  doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample,
+  state,  doScrape, doAiGenerate, doRegenerate, resetScrape, pasteManual, loadExample, quickScrape,
   doPreview, switchTab, doChat,
   doBuild, viewVideo, doDownload, doDownloadImages, populatePublishInfo, regeneratePublishInfo, cancelBuild,
   loadHistory, editConfig, deleteConfig, saveToHistory, loadFromHistory, deleteFromHistory,
   toggleSettings, saveSettings: saveSettingsUI, toggleKeyVis, markSettingsDirty, toggleTheme,
+  toggleSidebar,
   goStep, toast, showModal, copyText, updateCC,
   doSave: async () => {
     state.config = readForm();
@@ -350,9 +390,16 @@ Object.assign(window, {
 // Init
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
+if (localStorage.getItem('sidebar-collapsed') === '1') {
+  document.getElementById('sidebar').classList.add('collapsed');
+  // Swap icon to open state
+  const icon = document.querySelector('.sidebar-toggle .icon');
+  if (icon) icon.setAttribute('data-lucide', 'panel-left-open');
+}
 loadTemplates();
 loadSettingsUI();
 loadHistory();
+loadDefaultArticleList();
 if (window.lucide) lucide.createIcons();
 </script>
 </body>

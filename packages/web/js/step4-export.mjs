@@ -21,6 +21,7 @@ export async function doBuild() {
 
   buildStatus.style.display = '';
   videoResult.style.display = 'none';
+  document.getElementById('panel4Actions').style.display = 'none';
   buildLog.textContent = '';
   buildTimer.textContent = '';
   if (buildActions) buildActions.style.display = '';
@@ -76,6 +77,7 @@ export async function doBuild() {
         clearInterval(timerInterval);
         buildStatus.style.display = 'none';
         videoResult.style.display = '';
+        document.getElementById('panel4Actions').style.display = '';
         const videoPlayer = document.getElementById('videoPlayer');
         videoPlayer.src = status.videoUrl;
         const buildPadded = String(status.issueNum || issueNum).padStart(3, '0');
@@ -137,6 +139,7 @@ export async function viewVideo(issueNum) {
   document.getElementById('buildLog').textContent = '';
   document.getElementById('buildTimer').textContent = '';
   document.getElementById('videoResult').style.display = '';
+  document.getElementById('panel4Actions').style.display = '';
   document.getElementById('videoPlayer').src = currentVideoUrl;
   document.getElementById('videoPlayer').poster = `/data/output/法务视频-${padded}期-poster.png`;
   setStatus(`第 ${padded} 期视频`, 'done');

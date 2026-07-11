@@ -55,7 +55,7 @@ function startServer(dir, port) {
     const srv = http.createServer((req, res) => {
       const urlPath = req.url.split('?')[0];
       if (urlPath === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      const fp = path.join(dir, urlPath === "/" ? "packages/pipeline/renderer.html" : urlPath);
+      const fp = path.join(dir, urlPath === "/" ? "packages/engine/renderer.html" : urlPath);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(fp)] || "application/octet-stream" });
       fs.createReadStream(fp).pipe(res);

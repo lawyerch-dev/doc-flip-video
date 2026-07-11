@@ -137,7 +137,7 @@ node run.mjs workflow.json      # 运行指定工作流
 
 **开发命令**:
 ```bash
-cd packages/pipeline
+cd packages/engine
 node build.mjs                  # 运行构建
 node capture.mjs                # 运行截图
 node gen-pages.mjs              # 生成页面
@@ -275,7 +275,7 @@ node mcp-server.mjs             # 启动 MCP 服务器
 ### 配置文件
 
 - `config/settings.json` — 应用配置
-- `packages/pipeline/templates/*.json` — 视频模板
+- `packages/engine/templates/*.json` — 视频模板
 
 ## 测试
 

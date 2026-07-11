@@ -1573,6 +1573,61 @@ select.coze-input {
 .toggle input:checked + .toggle-slider::before {
   transform: translateX(18px);
 }
+/* ── Tag selection UI ── */
+.tag-field {
+  margin-bottom: var(--space-4);
+}
+.tag-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg, #fff);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  max-width: 100%;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.tag:hover {
+  border-color: var(--primary, #3b82f6);
+  background: var(--card-hover, #f0f7ff);
+}
+.tag.selected {
+  border-color: var(--primary, #3b82f6);
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary, #3b82f6);
+  font-weight: 500;
+}
+.tag.editing {
+  border-color: var(--primary, #3b82f6);
+  background: #fff;
+  padding: 4px 8px;
+  cursor: text;
+}
+.tag-hl {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
 
 /* ─── History Items (Sidebar) ─── */
 .history-empty {

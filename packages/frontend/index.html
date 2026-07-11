@@ -74,7 +74,7 @@
           <div class="step-panel active" id="panel1">
             <div class="step-content">
               <div class="card">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px">
                   <h2 style="margin: 0"><span class="num">1</span> 抓取文章</h2>
                   <div id="sortBar" style="display: flex; gap: 6px; align-items: center">
                     <button class="btn small" id="sortOriginal" onclick="window._sortArticles('original')">
@@ -211,6 +211,7 @@
                 </div>
 
                 <!-- Cover section -->
+                <!-- Cover section -->
                 <div class="coze-section">
                   <div class="coze-section-header">
                     <svg
@@ -230,19 +231,13 @@
                     <span>封面设置</span>
                   </div>
                   <div class="coze-section-body">
-                    <div class="coze-field">
-                      <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
-                      <input
-                        type="text"
-                        id="f_headline"
-                        oninput="
-                          updateCC(this, 20);
-                          state.dirty = true;
-                        "
-                        placeholder="吸引观众的第一句话"
-                        class="coze-input"
-                      />
-                      <div class="char-count" id="cc_headline"></div>
+                    <div class="tag-field">
+                      <div class="tag-field-header">
+                        <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
+                        <button class="btn small secondary" onclick="aiOptimize('headline')">AI 优化</button>
+                      </div>
+                      <div class="tag-list" id="tags_headline"></div>
+                      <input type="hidden" id="f_headline" />
                     </div>
                     <div class="coze-field">
                       <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>
@@ -278,36 +273,21 @@
                       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                     </svg>
                     <span>正文编辑</span>
+                    <button class="btn small secondary" onclick="aiOptimize('all')" style="margin-left: auto">
+                      AI 优化全部
+                    </button>
                   </div>
                   <div class="coze-section-body">
                     <div class="coze-field-row">
-                      <div class="coze-field" style="flex: 1">
+                      <div class="tag-field" style="flex: 1">
                         <label class="coze-field-label">内容标题 <span class="coze-limit">≤20字</span></label>
-                        <input
-                          type="text"
-                          id="f_title"
-                          oninput="
-                            updateCC(this, 20);
-                            state.dirty = true;
-                          "
-                          placeholder="主标题"
-                          class="coze-input"
-                        />
-                        <div class="char-count" id="cc_title"></div>
+                        <div class="tag-list" id="tags_title"></div>
+                        <input type="hidden" id="f_title" />
                       </div>
-                      <div class="coze-field" style="flex: 1">
+                      <div class="tag-field" style="flex: 1">
                         <label class="coze-field-label">副标题 <span class="coze-limit">≤20字</span></label>
-                        <input
-                          type="text"
-                          id="f_subtitle"
-                          oninput="
-                            updateCC(this, 20);
-                            state.dirty = true;
-                          "
-                          placeholder="副标题"
-                          class="coze-input"
-                        />
-                        <div class="char-count" id="cc_subtitle"></div>
+                        <div class="tag-list" id="tags_subtitle"></div>
+                        <input type="hidden" id="f_subtitle" />
                       </div>
                     </div>
                     <div class="coze-field">
@@ -695,7 +675,7 @@
         quickScrape,
         loadDefaultArticleList,
       } from "/js/step1-scrape.mjs";
-      import { populateForm, readForm, loadTemplates } from "/js/step2-edit.mjs";
+      import { populateForm, readForm, loadTemplates, aiOptimize } from "/js/step2-edit.mjs";
       import { doPreview, switchTab, doChat, addMsg, loadExamplePreview } from "/js/step3-preview.mjs";
       import {
         doBuild,

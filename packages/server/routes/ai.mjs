@@ -394,5 +394,55 @@ export async function register(method, urlPath, req, res, params) {
     return true;
   }
 
+  // ── POST /api/generate-options — AI 生成多选项供标签选择 ──
+  if (method === "POST" && urlPath === "/api/generate-options") {
+    const config = await parseJson(req);
+    if (!config.content?.paragraphs) {
+      errorResponse(res, "Invalid config", 400);
+      return true;
+    }
+    const articleText = config.content.paragraphs.map((p) => p.text).join("\n");
+    const headline = config.cover?.headline || "";
+    const title = config.content?.title || "";
+    const subtitle = config.content?.subtitle || "";
+
+    const systemPrompt = `你是一个法律短视频内容编辑。请为以下视频内容生成优化选项。
+
+规则：
+- 标题/副标题 ≤20 字
+- 段落 30-50 字，口语化，有具体场景和数字
+- 高亮必须是段落原文中的连续片段，禁用法律术语
+- 高亮禁用词：瑕疵、构成、认定、违约、侵权、权益、义务、诉讼、仲裁、法院判决、违法解除、赔偿金、经济补偿、按份共有、连带责任
+
+输出 JSON：
+{
+  "headlineOptions": ["选项1", "选项2", "选项3"],
+  "titleOptions": ["选项1", "选项2", "选项3"],
+  "subtitleOptions": ["选项1", "选项2", "选项3"],
+  "paragraphOptions": [
+    { "options": [{ "text": "段落A", "highlight": "关键词" }, { "text": "段落B", "highlight": "关键词" }] },
+    { "options": [{ "text": "段落A", "highlight": "关键词" }, { "text": "段落B", "highlight": "关键词" }] }
+  ]
+}`;
+
+    const result = await aiChat(
+      [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `当前封面标题：${headline}\n当前内容标题：${title}\n当前副标题：${subtitle}\n\n段落内容：\n${articleText}`,
+        },
+      ],
+      0.7,
+    );
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      errorResponse(res, "AI did not return valid JSON", 500);
+      return true;
+    }
+    json(res, JSON.parse(jsonMatch[0]));
+    return true;
+  }
+
   return false;
 }

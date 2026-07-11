@@ -1,5 +1,85 @@
 import { getSettings, json, errorResponse, parseJson, nextIssueNumber, today } from "../shared.mjs";
-import { aiChat } from "../services/ai.mjs";
+import { aiChat, aiChatStream } from "../services/ai.mjs";
+
+// ── SSE helper ──
+async function handleSSE(req, res, callback) {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+  });
+  try {
+    await callback((data) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+  } catch (e) {
+    res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+  }
+  res.write("data: [DONE]\n\n");
+  res.end();
+}
+
+// ── Build streaming messages for generateConfig ──
+function buildGenerateMessages(articleText, sourceInfo) {
+  const systemPrompt = `你是一个法律短视频内容编辑专家。你的任务是从法律文章中提炼出**让普通人想停下来看**的短视频内容。
+
+## 核心原则
+
+**你不是在写法律摘要，你是在跟朋友讲一个让他吃惊的事。**
+
+### 语言规则
+- 用日常称呼代替法律角色：「室友」「老板」「一个姑娘」
+- 不用：「原告」「被告」「申请人」「被申请人」「法院」「依法」
+- 一个句子只说一件事
+
+### 段落结构
+第1段（具体场景）：发生了什么？必须有具体数字。
+第2段（观众建议）：现在知道这个规则了，该怎么做？
+
+### 高亮规则
+高亮选**观众会转述给别人的话**。
+
+### 字数限制（严格）
+- cover.headline: ≤20字符
+- cover.source: ≤25字符
+- content.title: ≤20字符
+- content.subtitle: ≤20字符
+- 每段正文: 30-50字符
+- content.source: ≤60字符
+
+### 高亮必须是段落原文
+highlight 必须是 paragraph text 中的原文片段。`;
+
+  return [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: `请从以下文章中提炼短视频内容。\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}` },
+  ];
+}
+
+// ── Build streaming messages for refine ──
+function buildRefineMessages(config, userMessage, chatHistory = []) {
+  const systemPrompt = `你是一个法律短视频内容编辑助手。用户会要求你调整视频内容的某个部分。
+
+当前配置：\n${JSON.stringify(config, null, 2)}\n
+## 规则
+- 高亮必须是正文原文片段
+- 修改后输出完整JSON
+- 不要输出其他内容`;
+
+  return [
+    { role: "system", content: systemPrompt },
+    ...chatHistory,
+    { role: "user", content: userMessage },
+  ];
+}
+
+// ── Parse JSON from AI response ──
+function parseAIResponse(text) {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("AI did not return valid JSON");
+  return JSON.parse(match[0]);
+}
 
 // ── AI: Generate article config from scraped content ──
 async function generateConfig(articleText, sourceInfo) {
@@ -221,6 +301,45 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，一个�
  * @returns {Promise<boolean>} true if this route handled the request
  */
 export async function register(method, urlPath, req, res, params) {
+  // ── SSE streaming: generate config ──
+  if (method === "POST" && urlPath === "/api/generate-config-stream") {
+    const { text, sourceInfo } = await parseJson(req);
+    if (!text) { errorResponse(res, "Missing text", 400); return true; }
+    await handleSSE(req, res, async (send) => {
+      send({ type: "status", text: "正在分析文章..." });
+      let full = "";
+      for await (const chunk of aiChatStream(buildGenerateMessages(text, sourceInfo || ""), 0.5)) {
+        full += chunk;
+        send({ type: "token", text: chunk });
+      }
+      const parsed = parseAIResponse(full);
+      const { year, month, day } = today();
+      const config = {
+        meta: { year, month, day, issueNumber: nextIssueNumber(), description: "法理明如镜，务知天下事！" },
+        timing: { settle: 1.2, cover: 2.0, curl: 2.5, sweep: 2.0, hold: 1.0, final: 2.0 },
+        ...parsed,
+      };
+      send({ type: "result", config });
+    });
+    return true;
+  }
+
+  // ── SSE streaming: refine config ──
+  if (method === "POST" && urlPath === "/api/refine-stream") {
+    const { config, message, history } = await parseJson(req);
+    if (!config || !message) { errorResponse(res, "Missing config or message", 400); return true; }
+    await handleSSE(req, res, async (send) => {
+      send({ type: "status", text: "正在调整..." });
+      let full = "";
+      for await (const chunk of aiChatStream(buildRefineMessages(config, message, history || []), 0.5)) {
+        full += chunk;
+        send({ type: "token", text: chunk });
+      }
+      send({ type: "result", config: parseAIResponse(full) });
+    });
+    return true;
+  }
+
   if (method === "POST" && urlPath === "/api/generate-config") {
     const { text, sourceInfo } = await parseJson(req);
     if (!text) {

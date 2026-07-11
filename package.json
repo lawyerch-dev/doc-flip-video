@@ -17,6 +17,7 @@
   "dependencies": {
     "canvas": "^3.2.3",
     "jsbarcode": "^3.12.3",
+    "openai": "^6.46.0",
     "puppeteer": "^25.3.0"
   },
   "devDependencies": {

@@ -267,11 +267,6 @@ async function refreshArticleListCache(listEl, loadingEl) {
 function renderArticleList(articles, container) {
   container = container || document.getElementById("articleList");
   const hasScores = articles.some((a) => a.score != null);
-
-  // Show/hide sort bar in title row
-  const sortBar = document.getElementById("sortBar");
-  if (sortBar) sortBar.style.display = hasScores ? "flex" : "none";
-
   const html = articles
     .map(
       (a, i) => `

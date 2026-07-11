@@ -98,7 +98,9 @@ export async function loadSettingsUI() {
     const el = document.getElementById("aiStatus");
     el.textContent = s.aiConfigured ? "AI: 已配置" : "AI: 未配置";
     el.className = "ai-badge " + (s.aiConfigured ? "ok" : "err");
-  } catch {}
+  } catch (e) {
+    console.error("loadSettingsUI failed:", e);
+  }
 }
 
 export async function saveSettingsUI() {

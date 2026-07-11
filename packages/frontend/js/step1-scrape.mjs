@@ -202,13 +202,13 @@ export async function loadDefaultArticleList() {
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
     if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.articles?.length) {
+      _scoredArticles = cached.articles;
+      const hasScores = cached.articles[0]?.score != null;
       renderArticleList(cached.articles, listEl);
       loadingEl.style.display = "none";
       listEl.style.display = "";
       boxEl.style.display = "";
-      // Score if enabled (async, non-blocking)
-      scoreArticles(cached.articles);
-      // Background refresh (don't await)
+      if (!hasScores) scoreArticles(cached.articles);
       refreshArticleListCache(listEl, loadingEl);
       return;
     }
@@ -239,10 +239,26 @@ async function refreshArticleListCache(listEl, loadingEl) {
     const result = await api("/api/scrape", { url: DEFAULT_SOURCE });
     const articles = result.type === "list" ? result.articles : [];
     if (articles.length) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ articles, timestamp: Date.now() }));
+      // Merge scores from existing cache
+      let cached;
+      try {
+        cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      } catch {}
+      const scoreMap = new Map();
+      if (cached?.articles) {
+        for (const a of cached.articles) {
+          if (a.score != null) scoreMap.set(a.url, { score: a.score, reason: a.reason });
+        }
+      }
+      const merged = articles.map((a) => {
+        const s = scoreMap.get(a.url);
+        return s ? { ...a, score: s.score, reason: s.reason } : a;
+      });
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ articles: merged, timestamp: Date.now() }));
+      _scoredArticles = merged;
       // Only update DOM if still showing default list (user hasn't scraped)
       if (listEl.style.display !== "none" && !document.getElementById("scrapedBox").style.display) {
-        renderArticleList(articles, listEl);
+        renderArticleList(merged, listEl);
       }
     }
   } catch {}
@@ -309,6 +325,11 @@ async function scoreArticles(articles) {
     }
   }
   await Promise.all(Array.from({ length: SCORE_CONCURRENCY }, runNext));
+
+  // Persist scored articles to cache
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ articles: _scoredArticles, timestamp: Date.now() }));
+  } catch {}
 }
 
 // ── Sort and render ──

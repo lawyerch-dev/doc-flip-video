@@ -32,7 +32,7 @@ function generateVideo(content) {
 
   try {
     execFileSync("node", [
-      path.join(__dirname, "pipeline", "build.mjs"),
+      path.join(__dirname, "engine", "index.mjs"),
       articlePath,
     ], {
       cwd: path.join(__dirname, ".."),

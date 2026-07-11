@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * build.mjs — 视频构建入口
+ * index.mjs — 视频构建入口
  *
  * 默认（向后兼容）：
- *   node src/pipeline/build.mjs data/articles/article-001.json
- *   → gen-pages.mjs + capture-xfade.mjs
+ *   node packages/engine/index.mjs data/articles/article-001.json
+ *   → render-images.mjs + render-video.mjs
  *
  * 工作流模式（--workflow 显式指定）：
- *   node src/pipeline/build.mjs --workflow workflows/article-default.json --config data/articles/article-001.json
- *   → gen-pages.mjs + workflow engine
+ *   node packages/engine/index.mjs --workflow workflows/article-default.json --config data/articles/article-001.json
+ *   → render-images.mjs + workflow engine
  */
 
 import { execFileSync } from "child_process";
@@ -55,25 +55,25 @@ function main() {
 
     // 渲染页面
     console.log("─── Generating images ───");
-    execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), configPath], {
+    execFileSync("node", [path.join(__dirname, "render-images.mjs"), configPath], {
       stdio: "inherit",
     });
 
     // 运行工作流引擎
     console.log("─── Rendering video (workflow) ───");
-    execFileSync("node", [path.join(ROOT, "src", "workflow", "run.mjs"), workflowPath, "--config", configPath], {
+    execFileSync("node", [path.join(ROOT, "packages", "workflow-engine", "run.mjs"), workflowPath, "--config", configPath], {
       stdio: "inherit",
     });
   } else {
     // 旧流水线模式（向后兼容）
     console.log(`📄 Config: ${configPath}`);
     console.log("─── Generating images ───");
-    execFileSync("node", [path.join(__dirname, "gen-pages.mjs"), configPath], {
+    execFileSync("node", [path.join(__dirname, "render-images.mjs"), configPath], {
       stdio: "inherit",
     });
     console.log("─── Rendering video ───");
     const captureScript =
-      process.env.CAPTURE === "puppeteer" ? "capture.mjs" : "capture-xfade.mjs";
+      process.env.CAPTURE === "puppeteer" ? "render-video-puppeteer.mjs" : "render-video.mjs";
     execFileSync("node", [path.join(__dirname, captureScript), configPath], {
       stdio: "inherit",
     });

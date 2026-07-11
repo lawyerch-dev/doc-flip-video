@@ -35,7 +35,7 @@ body.embed .canvas-wrap { width: 100%; height: auto; aspect-ratio: 1080/1840; bo
 <p class="status" id="status"></p>
 
 <script>
-// ── Shaders (identical to renderer.html) ──
+// ── Shaders (identical to video-renderer.html) ──
 const VERT = `attribute vec2 position;varying vec2 uv;void main(){uv=position*0.5+0.5;gl_Position=vec4(position,0,1);}`;
 
 const CURL = `
@@ -159,7 +159,7 @@ for (const [key, src] of Object.entries(sources)) {
   img.src = src;
 }
 
-// ── Render functions (match renderer.html exactly) ──
+// ── Render functions (match video-renderer.html exactly) ──
 function renderSettle(p) {
   gl.viewport(0, 0, W, H);
   const pr = use("settle");

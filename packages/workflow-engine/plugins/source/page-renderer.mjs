@@ -1,8 +1,8 @@
 /**
  * source:page-renderer
  *
- * 声明已由 gen-pages.mjs 渲染好的页面图片路径。
- * gen-pages.mjs 会在 workflow 引擎运行前被调用，由 run.mjs 或 build.mjs 触发。
+ * 声明已由 render-images.mjs 渲染好的页面图片路径。
+ * render-images.mjs 会在 workflow 引擎运行前被调用，由 run.mjs 或 index.mjs 触发。
  * 此插件只检查文件存在性并返回 descriptor。
  */
 
@@ -15,7 +15,7 @@ export default class PageRendererPlugin extends Plugin {
     id: "source:page-renderer",
     name: "页面渲染器",
     category: "source",
-    description: "声明已由 gen-pages.mjs 渲染好的页面图片路径",
+    description: "声明已由 render-images.mjs 渲染好的页面图片路径",
   };
 
   static paramSchema = {
@@ -56,7 +56,7 @@ export default class PageRendererPlugin extends Plugin {
 
     if (!fs.existsSync(imgPath)) {
       throw new Error(
-        `页面图片不存在: ${imgPath}\n请先运行 gen-pages.mjs 生成图片`
+        `页面图片不存在: ${imgPath}\n请先运行 render-images.mjs 生成图片`
       );
     }
 

@@ -71,7 +71,7 @@ export function goStep(n) {
           const dir = `data/temp/issue-${String(issueNum).padStart(3,'0')}`;
           const tm = state.config.timing || {};
           const qs = new URLSearchParams({ img: dir, w: 1080, h: 1840, settle: tm.settle||1.2, cover: tm.cover||2, curl: tm.curl||2.5, sweep: tm.sweep||2, hold: tm.hold||1, final: tm.final||2, autoplay: 1, loop: 1, embed: 1, t: Date.now() });
-          document.getElementById('animFrame').src = `/demo.html?${qs}`;
+          document.getElementById('animFrame').src = `/preview.html?${qs}`;
         }
       } else if (typeof doPreview === 'function') {
         doPreview();

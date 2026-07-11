@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node packages/engine/build.mjs",
+    "build": "node packages/engine/index.mjs",
     "workflow": "pnpm --filter @doc-flip/workflow-engine workflow",
-    "build:wf": "node packages/engine/build.mjs --workflow",
+    "build:wf": "node packages/engine/index.mjs --workflow",
     "studio:flow": "pnpm --filter @doc-flip/workflow-studio dev",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node packages/server/index.mjs",

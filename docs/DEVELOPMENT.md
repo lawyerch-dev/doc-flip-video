@@ -138,9 +138,9 @@ node run.mjs workflow.json      # 运行指定工作流
 **开发命令**:
 ```bash
 cd packages/engine
-node build.mjs                  # 运行构建
-node capture.mjs                # 运行截图
-node gen-pages.mjs              # 生成页面
+node index.mjs                  # 运行构建
+node render-video-puppeteer.mjs # 运行截图
+node render-images.mjs          # 生成页面
 ```
 
 ### @doc-flip/mcp

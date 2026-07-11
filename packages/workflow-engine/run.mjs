@@ -3,7 +3,7 @@
  * workflow/run.mjs — 工作流引擎 CLI 入口
  *
  * 分两步：
- *   1. 调用 gen-pages.mjs 渲染页面图片
+ *   1. 调用 render-images.mjs 渲染页面图片
  *   2. 调用 workflow engine 构建视频
  *
  * 用法：
@@ -55,7 +55,7 @@ async function main() {
     const coverPath = path.join(imgDir, "cover.png");
     if (!fs.existsSync(coverPath)) {
       console.log("─── Generating images ───");
-      const genPages = path.join(ROOT, "packages", "pipeline", "gen-pages.mjs");
+      const genPages = path.join(ROOT, "packages", "engine", "render-images.mjs");
       execFileSync("node", [genPages, configPath], { stdio: "inherit" });
     } else {
       console.log("  图片已存在，跳过渲染");

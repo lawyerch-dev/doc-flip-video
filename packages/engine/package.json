@@ -4,6 +4,6 @@
   "type": "module",
   "description": "Doc Flip Video Build Pipeline",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node index.mjs"
   }
 }

@@ -22,7 +22,7 @@ import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
-  execFileSync("node", [path.join(ROOT, "packages", "engine", "gen-pages.mjs"), configPath], {
+  execFileSync("node", [path.join(ROOT, "packages", "engine", "render-images.mjs"), configPath], {
     cwd: ROOT,
     stdio: "pipe",
     timeout: 15000,
@@ -34,7 +34,7 @@ function generateVideoAsync(configPath, issueNum) {
   return new Promise((resolve, reject) => {
     execFile(
       "node",
-      [path.join(ROOT, "packages", "engine", "build.mjs"), configPath],
+      [path.join(ROOT, "packages", "engine", "index.mjs"), configPath],
       { cwd: ROOT, timeout: 120000 },
       (err, stdout, stderr) => {
         if (err) reject(new Error(stderr || err.message));
@@ -61,7 +61,7 @@ function generateVideo(content) {
   try {
     execFileSync(
       "node",
-      [path.join(ROOT, "packages", "pipeline", "build.mjs"), articlePath],
+      [path.join(ROOT, "packages", "engine", "index.mjs"), articlePath],
       { cwd: ROOT, stdio: "pipe", timeout: 120000 }
     );
 
@@ -79,7 +79,7 @@ function generateVideo(content) {
 
 /**
  * Resolve and apply a named template. Writes the resolved template to
- * TEMPLATE_PATH so the build process (gen-pages.mjs) picks it up from the
+ * TEMPLATE_PATH so the build process (render-images.mjs) picks it up from the
  * standard location. Builds are processed sequentially by the queue, so
  * overwriting TEMPLATE_PATH is safe. If no template name is given, writes
  * the default template (red header style).

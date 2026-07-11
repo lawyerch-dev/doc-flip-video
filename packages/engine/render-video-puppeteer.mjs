@@ -55,7 +55,7 @@ function startServer(dir, port) {
     const srv = http.createServer((req, res) => {
       const urlPath = req.url.split('?')[0];
       if (urlPath === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      const fp = path.join(dir, urlPath === "/" ? "packages/engine/renderer.html" : urlPath);
+      const fp = path.join(dir, urlPath === "/" ? "packages/engine/video-renderer.html" : urlPath);
       if (!fs.existsSync(fp)) { console.log(`  404: ${req.url}`); res.writeHead(404); res.end(); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(fp)] || "application/octet-stream" });
       fs.createReadStream(fp).pipe(res);
@@ -83,7 +83,7 @@ async function main() {
     ],
   });
   const page = await browser.newPage();
-  // 1x viewport — renderer.html reads template for canvas size
+  // 1x viewport — video-renderer.html reads template for canvas size
   await page.setViewport({ width: W, height: H });
   page.on("console", msg => { if (msg.type() === "error") console.log("  [page]", msg.text()); });
   page.on("error", err => console.error("  [page error]", err.message));

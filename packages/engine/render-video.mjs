@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// capture-xfade.mjs — Pure FFmpeg video generation using xfade-easing
+// render-video.mjs — Pure FFmpeg video generation using xfade-easing
 // Uses custom FFmpeg for GLSL transitions, pipes to system FFmpeg for encoding
 
 import { execFileSync, spawn } from "child_process";
@@ -18,7 +18,7 @@ function findFFmpeg() {
   return { custom, system: "ffmpeg", hasCustom };
 }
 
-// ── Generate glow strip PNG (matching renderer.html SWEEP shader) ──
+// ── Generate glow strip PNG (matching video-renderer.html SWEEP shader) ──
 function generateGlowStrip(width, height, stripWidth) {
   const canvas = createCanvas(stripWidth, height);
   const ctx = canvas.getContext("2d");
@@ -46,7 +46,7 @@ function generateGlowStrip(width, height, stripWidth) {
 }
 // ── Load config ──
 const configPath = process.argv[2];
-if (!configPath) { console.error("Usage: node capture-xfade.mjs <config.json>"); process.exit(1); }
+if (!configPath) { console.error("Usage: node render-video.mjs <config.json>"); process.exit(1); }
 const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 const tm = cfg.timing || {};
 

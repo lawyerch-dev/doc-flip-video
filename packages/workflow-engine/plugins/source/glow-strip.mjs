@@ -1,7 +1,7 @@
 /**
  * source:glow-strip
  *
- * 生成高亮扫描用的光晕条 PNG（匹配 renderer.html SWEEP shader）。
+ * 生成高亮扫描用的光晕条 PNG（匹配 video-renderer.html SWEEP shader）。
  */
 
 import { createCanvas } from "canvas";

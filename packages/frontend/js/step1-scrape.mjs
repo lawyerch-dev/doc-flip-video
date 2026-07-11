@@ -113,6 +113,10 @@ export async function doAiGenerate() {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || "",
     });
+    // Use scraped title as headline, AI only generates paragraphs
+    if (state.scrapedData.title) {
+      state.config.cover.headline = state.scrapedData.title;
+    }
     populateForm();
     setStatus("内容已生成", "done");
     goStep(2);
@@ -136,6 +140,9 @@ export async function doRegenerate() {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || "",
     });
+    if (state.scrapedData.title) {
+      state.config.cover.headline = state.scrapedData.title;
+    }
     populateForm();
     setStatus("内容已重新生成", "done");
     toast("内容已重新生成", "success");

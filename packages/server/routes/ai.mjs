@@ -1,5 +1,5 @@
 import { getSettings, json, errorResponse, parseJson, nextIssueNumber, today } from "../shared.mjs";
-import { aiChat, aiChatStream } from "../services/ai.mjs";
+import { aiChat } from "../services/ai.mjs";
 
 // ── SSE helper ──
 async function handleSSE(req, res, callback) {

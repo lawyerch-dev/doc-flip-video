@@ -133,7 +133,7 @@ export async function viewVideo(issueNum) {
 
   goStep(4);
   setStatus(`第 ${padded} 期视频`, "done");
-  regeneratePublishInfo(null);
+  populatePublishInfo();
 }
 
 // ── Download ──

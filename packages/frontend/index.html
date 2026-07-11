@@ -250,6 +250,17 @@
                         class="coze-input"
                       />
                       <div class="char-count" id="cc_headline"></div>
+                      <div id="aiHeadlineSuggestion" style="margin-top: 4px; font-size: 12px; display: none">
+                        AI 建议：<span
+                          id="aiHeadlineText"
+                          style="color: var(--primary); cursor: pointer"
+                          onclick="
+                            document.getElementById('f_headline').value = this.textContent;
+                            updateCC(document.getElementById('f_headline'), 20);
+                            state.dirty = true;
+                          "
+                        ></span>
+                      </div>
                     </div>
                     <div class="coze-field">
                       <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>

@@ -113,7 +113,8 @@ export async function doAiGenerate() {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || "",
     });
-    // Use scraped title as headline, AI only generates paragraphs
+    // Keep AI headline as suggestion, default to scraped title
+    state._aiHeadline = state.config.cover.headline;
     if (state.scrapedData.title) {
       state.config.cover.headline = state.scrapedData.title;
     }

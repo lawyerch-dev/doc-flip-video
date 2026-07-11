@@ -38,6 +38,15 @@ export function populateForm() {
   document.getElementById("f_coverSource").value = cover.source || "";
   document.getElementById("f_title").value = cover.headline || "";
   document.getElementById("f_subtitle").value = content.subtitle || "";
+  // Show AI headline suggestion if available
+  const aiSug = document.getElementById("aiHeadlineSuggestion");
+  const aiText = document.getElementById("aiHeadlineText");
+  if (state._aiHeadline && state._aiHeadline !== cover.headline && aiSug && aiText) {
+    aiText.textContent = state._aiHeadline;
+    aiSug.style.display = "";
+  } else if (aiSug) {
+    aiSug.style.display = "none";
+  }
   ["f_headline|20", "f_coverSource|25", "f_title|20", "f_subtitle|20"].forEach((s) => {
     const [id, lim] = s.split("|");
     updateCC(document.getElementById(id), parseInt(lim));

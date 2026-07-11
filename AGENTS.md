@@ -54,6 +54,10 @@ pnpm build
 
 # 启动 MCP 服务器
 pnpm mcp
+
+# 运行简化工作流引擎 v2
+node packages/workflow-engine/v2/run.mjs --demo --config data/articles/article-001.json
+node packages/workflow-engine/v2/run.mjs data/workflows/demo-v2.json
 ```
 
 ## 工作流系统
@@ -62,19 +66,19 @@ pnpm mcp
 
 Studio 提供预配置的视频模板，用户只需替换素材内容：
 
-| 模板 | 内容类型 | 效果 |
-|------|----------|------|
-| 文字淡入 | 文字 | 淡入 2s |
-| 文字淡出 | 文字 | 淡出 2s |
-| 文字停留 | 文字 | 停留 3s |
-| 文字高亮扫描 | 文字 | 高亮扫描 3s |
-| 图片淡入 | 图片 | 淡入 1.5s |
-| 图片停留 | 图片 | 停留 4s |
-| 图片高亮扫描 | 图片 | 高亮扫描 3s |
-| 视频淡入 | 视频 | 淡入 1.5s |
-| 视频淡出 | 视频 | 淡出 2s |
-| 音频淡入 | 音频 | 淡入 2s |
-| 音频淡出 | 音频 | 淡出 3s |
+| 模板         | 内容类型 | 效果        |
+| ------------ | -------- | ----------- |
+| 文字淡入     | 文字     | 淡入 2s     |
+| 文字淡出     | 文字     | 淡出 2s     |
+| 文字停留     | 文字     | 停留 3s     |
+| 文字高亮扫描 | 文字     | 高亮扫描 3s |
+| 图片淡入     | 图片     | 淡入 1.5s   |
+| 图片停留     | 图片     | 停留 4s     |
+| 图片高亮扫描 | 图片     | 高亮扫描 3s |
+| 视频淡入     | 视频     | 淡入 1.5s   |
+| 视频淡出     | 视频     | 淡出 2s     |
+| 音频淡入     | 音频     | 淡入 2s     |
+| 音频淡出     | 音频     | 淡出 3s     |
 
 ### 模板展开
 
@@ -85,32 +89,33 @@ Studio 提供预配置的视频模板，用户只需替换素材内容：
 ```
 
 例如："文字淡入" 模板会展开为：
+
 - `source:page-renderer` — 渲染文字为图片
 - `effect:fade-in` — 应用淡入效果
 
 ## API 端点
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/scrape` | 从 URL 抓取文章 |
-| POST | `/api/generate-config` | AI 生成配置 |
-| POST | `/api/refine` | AI 优化配置 |
-| POST | `/api/preview` | 生成预览图片 |
-| POST | `/api/build` | 生成视频 |
-| GET | `/api/status?issue=N` | 查询视频状态 |
-| POST | `/api/workflow/save` | 保存工作流 JSON |
-| GET | `/api/workflow/load` | 读取工作流 JSON |
-| POST | `/generate` | 原版视频生成（返回 MP4） |
-| GET | `/health` | 健康检查 |
+| 方法 | 路径                   | 说明                     |
+| ---- | ---------------------- | ------------------------ |
+| POST | `/api/scrape`          | 从 URL 抓取文章          |
+| POST | `/api/generate-config` | AI 生成配置              |
+| POST | `/api/refine`          | AI 优化配置              |
+| POST | `/api/preview`         | 生成预览图片             |
+| POST | `/api/build`           | 生成视频                 |
+| GET  | `/api/status?issue=N`  | 查询视频状态             |
+| POST | `/api/workflow/save`   | 保存工作流 JSON          |
+| GET  | `/api/workflow/load`   | 读取工作流 JSON          |
+| POST | `/generate`            | 原版视频生成（返回 MP4） |
+| GET  | `/health`              | 健康检查                 |
 
 ## 环境变量
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AI_API_KEY` | （必填） | OpenAI 兼容 API Key |
-| `AI_BASE_URL` | `https://api.openai.com/v1` | API 基础 URL |
-| `AI_MODEL` | `deepseek-v4-flash` | 模型名称 |
-| `PORT` | `3000` | 服务器端口 |
+| 变量          | 默认值                      | 说明                |
+| ------------- | --------------------------- | ------------------- |
+| `AI_API_KEY`  | （必填）                    | OpenAI 兼容 API Key |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | API 基础 URL        |
+| `AI_MODEL`    | `deepseek-v4-flash`         | 模型名称            |
+| `PORT`        | `3000`                      | 服务器端口          |
 
 ## 配置文件
 
@@ -154,6 +159,7 @@ Studio 提供预配置的视频模板，用户只需替换素材内容：
 ### 视觉模板 (template.json)
 
 编辑 `template.json` 可自定义视觉样式：
+
 - `style.font` — 全局字体
 - `style.background` — 页面背景色
 - `top.logo` — 红色抬头 logo 配置
@@ -185,19 +191,19 @@ Studio 提供预配置的视频模板，用户只需替换素材内容：
 
 ### 内容页
 
-| 区域 | 字号 | 每行字数 | 建议限制 |
-|------|------|----------|----------|
-| 标题 (title) | 48px 粗体 | ~19字 | ≤20字（1行） |
-| 副标题 (subtitle) | 42px 粗体 | ~21字 | ≤20字（1行） |
-| 正文 (paragraphs) | 32px | ~28字 | ≤100字（约3-4行） |
-| 来源 (source) | 28px | ~32字 | ≤60字（约2行） |
+| 区域              | 字号      | 每行字数 | 建议限制          |
+| ----------------- | --------- | -------- | ----------------- |
+| 标题 (title)      | 48px 粗体 | ~19字    | ≤20字（1行）      |
+| 副标题 (subtitle) | 42px 粗体 | ~21字    | ≤20字（1行）      |
+| 正文 (paragraphs) | 32px      | ~28字    | ≤100字（约3-4行） |
+| 来源 (source)     | 28px      | ~32字    | ≤60字（约2行）    |
 
 ### 封面页
 
-| 区域 | 字号 | 每行字数 | 建议限制 |
-|------|------|----------|----------|
-| 标题 (headline) | 50px 粗体 | ~18字 | ≤20字（1行） |
-| 来源 (source) | 36px | ~25字 | ≤25字（1行） |
+| 区域            | 字号      | 每行字数 | 建议限制     |
+| --------------- | --------- | -------- | ------------ |
+| 标题 (headline) | 50px 粗体 | ~18字    | ≤20字（1行） |
+| 来源 (source)   | 36px      | ~25字    | ≤25字（1行） |
 
 ## 内容提取规则
 

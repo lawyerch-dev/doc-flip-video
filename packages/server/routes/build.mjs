@@ -19,7 +19,7 @@ import {
 } from "../shared.mjs";
 import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY } from "../../../config/paths.mjs";
 
-import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
+import { enqueue, enqueueWorkflow, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
@@ -118,6 +118,11 @@ export function register(method, urlPath, req, res, params) {
   // ── Enqueue video build ──
   if (method === "POST" && urlPath === "/api/build") {
     return handleBuild(req, res);
+  }
+
+  // ── Enqueue workflow build (v2) ──
+  if (method === "POST" && urlPath === "/api/workflow/build") {
+    return handleWorkflowBuild(req, res);
   }
 
   // ── Cancel running build ──
@@ -237,6 +242,38 @@ async function handleBuild(req, res) {
   const jobId = enqueue(config);
 
   json(res, { jobId, issueNum });
+  return true;
+}
+
+async function handleWorkflowBuild(req, res) {
+  const workflow = await parseJson(req);
+  if (!workflow.name) {
+    errorResponse(res, "Invalid workflow: missing name", 400);
+    return true;
+  }
+
+  // 确保有输出配置
+  if (!workflow.output) {
+    workflow.output = {};
+  }
+
+  // 如果没有指定输出文件名，生成一个默认的
+  if (!workflow.output.filename) {
+    const issueNum = workflow.variables?.issueNumber || Date.now() % 1000;
+    workflow.output.filename = `workflow-${issueNum}-${Date.now()}.mp4`;
+  }
+
+  // 可选：从请求中获取文章配置路径
+  const configPath = workflow._configPath || null;
+  delete workflow._configPath;
+
+  // 入队
+  const jobId = enqueueWorkflow(workflow, configPath);
+
+  json(res, {
+    jobId,
+    outputFilename: workflow.output.filename,
+  });
   return true;
 }
 

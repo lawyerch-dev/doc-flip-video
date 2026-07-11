@@ -6,8 +6,8 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 
-import { ROOT, OUTPUT_DIR, CONFIGS_DIR, DIRNAME } from "../shared.mjs";
-import { ENGINE_ENTRY } from "../../../config/paths.mjs";
+import { ROOT, OUTPUT_DIR, CONFIGS_DIR, TEMP_DIR, DIRNAME } from "../shared.mjs";
+import { ENGINE_ENTRY, WORKFLOW_V2_RUNNER } from "../../../config/paths.mjs";
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }
@@ -48,6 +48,48 @@ export function enqueue(config) {
     status: "queued",
     config,
     issueNum,
+    progress: [],
+    videoUrl: null,
+    error: null,
+    startedAt: null,
+    finishedAt: null,
+    child: null,
+  };
+
+  jobs.set(jobId, job);
+
+  // Start processing the queue if idle
+  if (!processing) {
+    setImmediate(() => _processNext());
+  }
+
+  return jobId;
+}
+
+/**
+ * Accept a workflow JSON and return a jobId immediately.
+ * Uses the new simplified workflow engine (v2).
+ */
+export function enqueueWorkflow(workflow, configPath = null) {
+  if (!workflow || !workflow.name) {
+    throw new Error("Invalid workflow: missing name");
+  }
+
+  const jobId = nextJobId();
+  const issueNum = workflow.variables?.issueNumber || 0;
+
+  // Save workflow to temp file
+  const workflowPath = path.join(TEMP_DIR, `workflow-${jobId}.json`);
+  fs.mkdirSync(path.dirname(workflowPath), { recursive: true });
+  fs.writeFileSync(workflowPath, JSON.stringify(workflow, null, 2));
+
+  const job = {
+    status: "queued",
+    workflow,
+    workflowPath,
+    configPath,
+    issueNum,
+    mode: "workflow-v2",
     progress: [],
     videoUrl: null,
     error: null,
@@ -158,13 +200,25 @@ function _processNext() {
   processing = true;
   const { jobId, job } = entry;
   const issueNum = job.issueNum;
-  const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
 
   job.status = "running";
   job.startedAt = Date.now();
   job.progress.push("[build started]");
 
-  const child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
+  // 根据模式选择引擎
+  let child;
+  if (job.mode === "workflow-v2" && job.workflowPath) {
+    // 新工作流引擎 v2
+    const args = [WORKFLOW_V2_RUNNER, job.workflowPath];
+    if (job.configPath) {
+      args.push("--config", job.configPath);
+    }
+    child = spawn("node", args, { cwd: ROOT, timeout: 120000 });
+  } else {
+    // 旧引擎
+    const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
+    child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
+  }
 
   job.child = child;
 
@@ -197,8 +251,17 @@ function _processNext() {
   });
 
   child.on("close", (code) => {
-    const padded = String(issueNum).padStart(3, "0");
-    const videoFilename = `法务视频-${padded}期.mp4`;
+    // 确定输出文件名
+    let videoFilename;
+    if (job.mode === "workflow-v2" && job.workflow?.output?.filename) {
+      // 新引擎使用工作流中配置的文件名
+      videoFilename = job.workflow.output.filename;
+    } else {
+      // 旧引擎使用默认文件名
+      const padded = String(issueNum).padStart(3, "0");
+      videoFilename = `法务视频-${padded}期.mp4`;
+    }
+
     const videoPath = path.join(OUTPUT_DIR, videoFilename);
     const ready = fs.existsSync(videoPath);
 

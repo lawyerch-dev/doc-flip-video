@@ -24,7 +24,7 @@ const TOAST_CONFIG = { top: 80, duration: 3 };
 
 import '@flowgram.ai/free-layout-editor/index.css';
 import './styles/index.css';
-import { nodeRegistries, fetchDefaultWorkflow, toEngineJSON } from './nodes';
+import { nodeRegistries, fetchDefaultWorkflow, toEngineJSON, toWorkflowV2JSON } from './nodes';
 import { initialData } from './initial-data';
 import type { FlowDocumentJSON } from './typings';
 import { useEditorProps } from './hooks';
@@ -63,21 +63,38 @@ function TopBar({ onBack }: { onBack: () => void }) {
   }, [doc]);
 
   const handleRun = useCallback(async () => {
-    const wf = toEngineJSON(doc.toJSON() as FlowDocumentJSON);
+    const wf = toWorkflowV2JSON(doc.toJSON() as FlowDocumentJSON);
     try {
-      const res = await fetch('/api/workflow/save', {
+      // 1. 保存工作流
+      const saveRes = await fetch('/api/workflow/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(wf),
       });
-      const data = await res.json();
-      if (data.ok) {
-        Toast.success({ content: '已保存，终端运行: npm run workflow', ...TOAST_CONFIG });
-      } else {
+      const saveData = await saveRes.json();
+      if (!saveData.ok) {
         Toast.error({ content: '保存失败', ...TOAST_CONFIG });
+        return;
       }
-    } catch {
-      Toast.error({ content: '保存失败，请确认服务端已启动', ...TOAST_CONFIG });
+
+      // 2. 触发构建
+      Toast.info({ content: '正在启动渲染...', ...TOAST_CONFIG });
+      const buildRes = await fetch('/api/workflow/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(wf),
+      });
+      const buildData = await buildRes.json();
+
+      if (buildData.error) {
+        Toast.error({ content: `构建失败: ${buildData.error}`, ...TOAST_CONFIG });
+        return;
+      }
+
+      Toast.success({ content: `已提交构建: ${buildData.outputFilename}`, ...TOAST_CONFIG });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '未知错误';
+      Toast.error({ content: `操作失败: ${message}`, ...TOAST_CONFIG });
     }
   }, [doc]);
 

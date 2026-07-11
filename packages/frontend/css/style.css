@@ -1,16 +1,16 @@
 /* ─── Design Tokens ─── */
 :root {
-  /* Colors — Light (default) */
-  --bg: #fafafa;
-  --bg-subtle: #f4f4f5;
-  --card: #ffffff;
-  --card-hover: #fafafa;
-  --border: #e4e4e7;
-  --border-subtle: #f0f0f2;
+  /* Colors — Light (warm) */
+  --bg: #f5f0eb;
+  --bg-subtle: #efe8e0;
+  --card: #fcf9f6;
+  --card-hover: #f5f0eb;
+  --border: #e5ddd4;
+  --border-subtle: #ede5dc;
   --text: #18181b;
   --text-secondary: #3f3f46;
   --text-muted: #71717a;
-  --surface: #f4f4f5;
+  --surface: #f0eae3;
 
   /* Accent */
   --accent: #dc2626;

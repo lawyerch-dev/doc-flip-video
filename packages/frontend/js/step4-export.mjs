@@ -185,7 +185,16 @@ export async function regeneratePublishInfo(btn) {
       issueNum: padded,
     });
     if (result?.title) document.getElementById("publishTitle").value = result.title;
-    if (result?.desc) document.getElementById("publishDesc").value = result.desc;
+    if (result?.desc) {
+      // Ensure blank line before tags
+      let desc = result.desc;
+      const tagIdx = desc.indexOf("#");
+      if (tagIdx > 0) {
+        const before = desc.substring(0, tagIdx).replace(/\n+$/, "");
+        desc = before + "\n\n" + desc.substring(tagIdx);
+      }
+      document.getElementById("publishDesc").value = desc;
+    }
     toast("已重新生成", "success");
   } catch (e) {
     toast("生成失败: " + e.message, "error");

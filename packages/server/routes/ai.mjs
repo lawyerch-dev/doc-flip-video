@@ -193,6 +193,7 @@ GOOD：
     delete parsed.cover.headlineHighlight;
   }
   // Use configured source name, strip any existing "来源：" prefix
+  const settings = getSettings();
   const raw = settings.sourceName || "中国法院网";
   parsed.cover.source = raw.startsWith("来源：") ? raw : `来源：${raw}`;
   if (parsed.content) parsed.content.source = parsed.cover.source;

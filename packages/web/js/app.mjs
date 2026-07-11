@@ -65,7 +65,7 @@ export function goStep(n) {
   // Step 3: auto-preview
   if (n === 3 && state.config) {
     setTimeout(() => {
-      if (state.previewImages.cover) {
+      if (state.previewImages.cover && !state.dirty) {
         const issueNum = state.config.meta?.issueNumber;
         if (issueNum) {
           const dir = `data/temp/issue-${String(issueNum).padStart(3,'0')}`;

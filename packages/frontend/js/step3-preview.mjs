@@ -56,35 +56,33 @@ export async function doChat() {
   state.chatHistory.push({ role:'user', content:msg });
   if (!state.config) { addMsg('请先完成前面的步骤。', 'ai'); return; }
   setStatus('AI 处理中...', 'working');
-  const statusMsg = addMsg('正在思考...', 'ai thinking');
+  const aiMsg = addMsg('', 'ai');
   try {
     let full = '';
     let refined = null;
     for await (const evt of apiStream('/api/refine-stream', { config: state.config, message:msg, history:state.chatHistory.slice(-6) })) {
       if (evt.type === 'token') {
         full += evt.text;
-        statusMsg.textContent = full.slice(-200);
+        aiMsg.textContent = full;
       } else if (evt.type === 'result') {
         refined = evt.config;
       }
     }
-    statusMsg.remove();
     if (refined && refined.cover && refined.content) {
       state.config = { ...state.config, ...refined };
       populateForm();
       state.chatHistory.push({ role:'assistant', content:'已更新' });
-      addMsg('已更新内容，正在刷新预览...', 'ai');
+      aiMsg.textContent += '\n\n✅ 已更新内容，刷新预览中...';
       state.dirty = true;
       toast('内容已更新', 'success');
       // Auto-preview
       doPreview();
     } else {
-      addMsg('AI 返回的内容格式不正确，请重试或换种说法。', 'ai');
+      aiMsg.textContent = '⚠️ AI 返回的内容格式不正确，请重试或换种说法。';
       setStatus('内容有误', 'error');
     }
   } catch(e) {
-    statusMsg.remove();
-    addMsg('AI 出错了: '+e.message, 'ai');
+    aiMsg.textContent = '❌ AI 出错了: '+e.message;
     setStatus('AI 出错', 'error');
   }
 }

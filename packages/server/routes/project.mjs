@@ -12,6 +12,7 @@ import {
   updateSettings,
   saveSettings,
 } from "../shared.mjs";
+import { aiChat } from "../services/ai.mjs";
 
 /**
  * Register project/config route handlers.
@@ -125,6 +126,47 @@ export async function register(method, urlPath, req, res, params) {
     const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     json(res, { issueNum, path: configPath });
+    return true;
+  }
+
+  // ── POST /api/score-articles — AI score articles for recommendation ──
+  if (method === "POST" && urlPath === "/api/score-articles") {
+    const { articles, prompt } = await parseJson(req);
+    if (!articles?.length) {
+      errorResponse(res, "No articles", 400);
+      return true;
+    }
+    const settings = getSettings();
+    const scoringPrompt = prompt || settings.scoringPrompt;
+    if (!scoringPrompt) {
+      errorResponse(res, "未配置评分提示词", 400);
+      return true;
+    }
+
+    // Build article list for AI
+    const list = articles.map((a, i) => `${i + 1}. ${a.title} | ${a.source}`).join("\n");
+    const msg = `${scoringPrompt}\n\n请为以下文章逐一打分，返回 JSON 数组，每个元素 {id, score, reason}，id 对应序号：\n${list}`;
+
+    try {
+      const reply = await aiChat([{ role: "user", content: msg }], 0.3);
+      const match = reply.match(/\[[\s\S]*\]/);
+      if (match) {
+        const scores = JSON.parse(match[0]);
+        const scored = articles.map((a, i) => {
+          const s = scores.find((x) => x.id === i + 1);
+          return {
+            ...a,
+            score: s ? Math.min(10, Math.max(1, Number(s.score) || 5)) : 5,
+            reason: s?.reason || "",
+          };
+        });
+        json(res, { articles: scored });
+        return true;
+      }
+    } catch {}
+
+    // Fallback: return articles with default score
+    json(res, { articles: articles.map((a) => ({ ...a, score: 5, reason: "评分失败" })) });
     return true;
   }
 

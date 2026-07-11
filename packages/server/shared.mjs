@@ -27,6 +27,9 @@ function loadSettings() {
     coverTagline: "法务视频",
     port: 33011,
     defaultSource: "https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml",
+    enableScoring: false,
+    scoringPrompt:
+      '你是一个法律内容编辑。请根据以下标准为文章打分（1-10）：\n- 话题热度和关注度（是否是近期热点）\n- 内容通俗程度（是否适合普通观众）\n- 实用价值（观众能否从中获得有用信息）\n- 故事性和吸引力（是否有具体案例或故事）\n\n请只返回 JSON：{"score": 分数, "reason": "简短理由"}',
   };
   try {
     if (fs.existsSync(SETTINGS_PATH)) {

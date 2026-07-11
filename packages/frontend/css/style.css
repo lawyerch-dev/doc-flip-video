@@ -1512,6 +1512,36 @@ select.coze-input {
   justify-content: center;
   gap: var(--space-2);
 }
+/* ── Article scoring ── */
+.article-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.article-score {
+  flex-shrink: 0;
+  min-width: 28px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0 6px;
+  cursor: default;
+  color: #fff;
+}
+.article-score[data-score-high] {
+  background: #22c55e;
+}
+.article-score[data-score-mid] {
+  background: #f59e0b;
+}
+.article-score[data-score-low] {
+  background: #ef4444;
+}
 
 /* ─── History Items (Sidebar) ─── */
 .history-empty {

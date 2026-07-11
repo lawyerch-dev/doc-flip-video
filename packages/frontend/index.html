@@ -640,6 +640,23 @@
         />
         <div class="hint">文章列表页 URL，第一步自动加载</div>
       </div>
+      <div class="settings-group">
+        <label style="display: flex; align-items: center; gap: 8px">
+          <input type="checkbox" id="s_enableScoring" onchange="markSettingsDirty()" />
+          AI 文章推荐评分
+        </label>
+        <div class="hint">开启后文章列表显示推荐分数，支持按分数排序</div>
+      </div>
+      <div class="settings-group">
+        <label>评分提示词</label>
+        <textarea
+          id="s_scoringPrompt"
+          rows="5"
+          oninput="markSettingsDirty()"
+          style="width: 100%; font-size: 13px; font-family: monospace"
+        ></textarea>
+        <div class="hint">AI 评分依据，留空使用默认提示词</div>
+      </div>
       <div style="display: flex; align-items: center; gap: 10px">
         <button class="btn" onclick="saveSettings()">保存设置</button>
         <span id="settingsUnsaved" style="display: none; font-size: 12px; color: var(--accent); font-weight: 600"

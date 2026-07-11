@@ -79,6 +79,7 @@ export function readForm() {
   c.cover.source = document.getElementById("f_coverSource").value;
   c.content.title = c.cover.headline;
   c.content.subtitle = document.getElementById("f_subtitle").value;
+  c.content.source = c.content.source || "";
   c.content.paragraphs = (c.content.paragraphs || []).map((_, i) => ({
     text: document.getElementById(`f_para_${i}`)?.value || "",
     highlight: document.getElementById(`f_hl_${i}`)?.value || undefined,

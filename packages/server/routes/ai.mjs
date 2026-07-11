@@ -195,6 +195,7 @@ GOOD：
   // Use configured source name
   const settings = getSettings();
   parsed.cover.source = settings.sourceName || "中国法院网";
+  if (parsed.content) parsed.content.source = parsed.cover.source;
 
   return {
     meta: { year, month, day, issueNumber: issueNum, description: "法理明如镜，务知天下事！" },

@@ -1530,10 +1530,10 @@ select.coze-input {
   background: #22c55e;
 }
 .article-score[data-score-mid] {
-  background: #f59e0b;
+  background: #eab308;
 }
 .article-score[data-score-low] {
-  background: #ef4444;
+  background: #9ca3af;
 }
 /* ── Toggle switch ── */
 .toggle {

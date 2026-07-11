@@ -275,8 +275,9 @@ function renderArticleList(articles, container) {
   container.innerHTML = html;
 }
 
-// ── Score articles via AI (batched, parallel) ──
+// ── Score articles via AI (batched, 3 concurrent) ──
 const SCORE_BATCH = 5;
+const SCORE_CONCURRENCY = 3;
 
 async function scoreArticles(articles) {
   const settings = await _getSettings();
@@ -285,27 +286,29 @@ async function scoreArticles(articles) {
   _scoredArticles = articles.map((a) => ({ ...a })); // shallow copy
   const listEl = document.getElementById("articleList");
 
-  // Split into batches and score in parallel
+  // Split into batches
   const batches = [];
   for (let i = 0; i < articles.length; i += SCORE_BATCH) {
-    batches.push(articles.slice(i, i + SCORE_BATCH));
+    batches.push({ batch: articles.slice(i, i + SCORE_BATCH), offset: i });
   }
 
-  await Promise.all(
-    batches.map(async (batch, batchIdx) => {
+  // Run with limited concurrency
+  let idx = 0;
+  async function runNext() {
+    while (idx < batches.length) {
+      const { batch, offset } = batches[idx++];
       try {
         const result = await api("/api/score-articles", { articles: batch, prompt: settings.scoringPrompt });
-        const offset = batchIdx * SCORE_BATCH;
         for (let j = 0; j < result.articles.length; j++) {
           _scoredArticles[offset + j] = result.articles[j];
         }
-        // Progressive render after each batch
         applySortAndRender(listEl);
       } catch (e) {
-        console.error(`Scoring batch ${batchIdx} failed:`, e);
+        console.error(`Scoring batch failed:`, e);
       }
-    }),
-  );
+    }
+  }
+  await Promise.all(Array.from({ length: SCORE_CONCURRENCY }, runNext));
 }
 
 // ── Sort and render ──

@@ -1,9 +1,8 @@
 import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import JsBarcode from "jsbarcode";
-import { FRONTEND_ASSETS } from "../../config/paths.mjs";
+import { FRONTEND_ASSETS, ROOT, TEMP_DIR, TEMPLATE_PATH, ARTICLES_DIR } from "../../config/paths.mjs";
 
 const ASSETS = FRONTEND_ASSETS;
 const FONTS_DIR = path.join(ASSETS, "fonts");
@@ -42,8 +41,8 @@ if (fs.existsSync(FONTS_DIR)) {
   }
 }
 
-const templatePath = process.argv[3] || path.join(__dirname, "templates", "default.json");
-const articlePath = process.argv[2] || path.join(__dirname, "..", "article.json");
+const templatePath = process.argv[3] || TEMPLATE_PATH;
+const articlePath = process.argv[2] || path.join(ARTICLES_DIR, "article-001.json");
 const T = JSON.parse(fs.readFileSync(templatePath, "utf-8"));
 const A = JSON.parse(fs.readFileSync(articlePath, "utf-8"));
 
@@ -564,7 +563,7 @@ function generateContent(withHighlights) {
 async function loadQrImage() {
   const qrImg = T.bottom?.qrImage;
   if (qrImg && qrImg.enabled && qrImg.src) {
-    const imgPath = path.join(__dirname, "../..", qrImg.src);
+    const imgPath = path.join(ROOT, qrImg.src);
     if (fs.existsSync(imgPath)) {
       qrImg._img = await loadImage(imgPath);
       console.log(`✅ Loaded QR image: ${imgPath}`);
@@ -590,7 +589,7 @@ const { canvas: plainCanvas } = generateContent(false);
 const { canvas: hlCanvas, hlPositions } = generateContent(true);
 
 const issueNum = String(A.meta.issueNumber).padStart(3, "0");
-const tempDir = path.join(__dirname, "../..", "data", "temp", `issue-${issueNum}`);
+const tempDir = path.join(TEMP_DIR, `issue-${issueNum}`);
 fs.mkdirSync(tempDir, { recursive: true });
 
 const coverPath = path.join(tempDir, "cover.png");

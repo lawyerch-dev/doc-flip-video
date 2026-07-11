@@ -328,12 +328,13 @@ export async function register(method, urlPath, req, res, params) {
       errorResponse(res, "Missing articleText", 400);
       return true;
     }
+    const _pubSettings = getSettings();
+    const _pubPrompt =
+      _pubSettings.publishPrompt ||
+      "你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。标题要求：20字以内，吸引眼球。介绍要求：100字以内，末尾空一行后加5个以上话题标签。严格输出JSON。";
     const result = await aiChat(
       [
-        {
-          role: "system",
-          content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括。末尾空一行后加5个以上话题标签，包含通用标签（#法律 #普法）和视频核心关键词标签。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}`,
-        },
+        { role: "system", content: _pubPrompt },
         { role: "user", content: `期号：${issueNum || "001"}\n\n视频内容：\n${articleText}` },
       ],
       0.5,

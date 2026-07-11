@@ -330,7 +330,7 @@ header h1 span { color: var(--accent); }
 #panel3 .chat-box { flex: 1; min-height: 0; }
 #panel3 .anim-wrap {
   flex: 1; min-height: 0;
-  max-height: 420px;
+  max-height: 360px;
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
   background: var(--bg-subtle);

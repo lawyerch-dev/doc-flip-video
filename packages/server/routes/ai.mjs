@@ -20,59 +20,6 @@ async function handleSSE(req, res, callback) {
   res.end();
 }
 
-// ── Build streaming messages for generateConfig ──
-function buildGenerateMessages(articleText, sourceInfo) {
-  const systemPrompt = `你是一个法律短视频内容编辑专家。你的任务是从法律文章中提炼出**让普通人想停下来看**的短视频内容。
-
-## 核心原则
-
-**你不是在写法律摘要，你是在跟朋友讲一个让他吃惊的事。**
-
-### 语言规则
-- 用日常称呼代替法律角色：「室友」「老板」「一个姑娘」
-- 不用：「原告」「被告」「申请人」「被申请人」「法院」「依法」
-- 一个句子只说一件事
-
-### 段落结构
-第1段（具体场景）：发生了什么？必须有具体数字。
-第2段（观众建议）：现在知道这个规则了，该怎么做？
-
-### 高亮规则
-高亮选**观众会转述给别人的话**。
-
-### 字数限制（严格）
-- cover.headline: ≤20字符
-- cover.source: ≤25字符
-- content.title: ≤20字符
-- content.subtitle: ≤20字符
-- 每段正文: 30-50字符
-- content.source: ≤60字符
-
-### 高亮必须是段落原文
-highlight 必须是 paragraph text 中的原文片段。`;
-
-  return [
-    { role: "system", content: systemPrompt },
-    {
-      role: "user",
-      content: `请从以下文章中提炼短视频内容。\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
-    },
-  ];
-}
-
-// ── Build streaming messages for refine ──
-function buildRefineMessages(config, userMessage, chatHistory = []) {
-  const systemPrompt = `你是一个法律短视频内容编辑助手。用户会要求你调整视频内容的某个部分。
-
-当前配置：\n${JSON.stringify(config, null, 2)}\n
-## 规则
-- 高亮必须是正文原文片段
-- 修改后输出完整JSON
-- 不要输出其他内容`;
-
-  return [{ role: "system", content: systemPrompt }, ...chatHistory, { role: "user", content: userMessage }];
-}
-
 // ── Parse JSON from AI response ──
 function parseAIResponse(text) {
   const match = text.match(/\{[\s\S]*\}/);
@@ -230,12 +177,10 @@ GOOD：
     0.5,
   );
 
-  // Parse JSON from response
   const jsonMatch = result.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("AI did not return valid JSON");
   const parsed = JSON.parse(jsonMatch[0]);
 
-  // Validate & fix highlights: must be exact substring of paragraph text
   if (parsed.content?.paragraphs) {
     for (const para of parsed.content.paragraphs) {
       if (para.highlight && !para.text.includes(para.highlight)) {
@@ -248,7 +193,6 @@ GOOD：
     delete parsed.cover.headlineHighlight;
   }
 
-  // Build full article config
   return {
     meta: { year, month, day, issueNumber: issueNum, description: "法理明如镜，务知天下事！" },
     timing: { settle: 1.2, cover: 2.0, curl: 2.5, sweep: 2.0, hold: 1.0, final: 2.0 },
@@ -401,41 +345,39 @@ export async function register(method, urlPath, req, res, params) {
       errorResponse(res, "Invalid config", 400);
       return true;
     }
+    const field = config._field || "all";
     const articleText = config.content.paragraphs.map((p) => p.text).join("\n");
     const headline = config.cover?.headline || "";
     const title = config.content?.title || "";
     const subtitle = config.content?.subtitle || "";
 
-    const systemPrompt = `你是一个法律短视频内容编辑。请为以下视频内容生成优化选项。
+    let systemPrompt, userMsg;
 
-规则：
-- 标题/副标题 ≤20 字
-- 段落 30-50 字，口语化，有具体场景和数字
-- 高亮必须是段落原文中的连续片段，禁用法律术语
-- 高亮禁用词：瑕疵、构成、认定、违约、侵权、权益、义务、诉讼、仲裁、法院判决、违法解除、赔偿金、经济补偿、按份共有、连带责任
-
-输出 JSON：
-{
-  "headlineOptions": ["选项1", "选项2", "选项3"],
-  "titleOptions": ["选项1", "选项2", "选项3"],
-  "subtitleOptions": ["选项1", "选项2", "选项3"],
-  "paragraphOptions": [
-    { "options": [{ "text": "段落A", "highlight": "关键词" }, { "text": "段落B", "highlight": "关键词" }] },
-    { "options": [{ "text": "段落A", "highlight": "关键词" }, { "text": "段落B", "highlight": "关键词" }] }
-  ]
-}`;
+    if (field === "headline") {
+      systemPrompt = "生成 3 个封面标题（≤20字），有悬念冲突感。只返回 JSON 数组。";
+      userMsg = `当前：${headline}\n内容：${articleText}`;
+    } else if (field === "title") {
+      systemPrompt = "生成 3 个内容标题（≤20字），口语化。只返回 JSON 数组。";
+      userMsg = `当前：${title}\n内容：${articleText}`;
+    } else if (field === "subtitle") {
+      systemPrompt = "生成 3 个副标题（≤20字）。只返回 JSON 数组。";
+      userMsg = `标题：${title}\n当前副标题：${subtitle}\n内容：${articleText}`;
+    } else if (field === "paragraphs") {
+      systemPrompt = "为每段生成 2 个替代版本（30-50字，口语化）。highlight 必须是原文片段。只返回 JSON 数组。";
+      userMsg = config.content.paragraphs.map((p, i) => `${i + 1}. ${p.text}`).join("\n");
+    } else {
+      systemPrompt = `生成优化选项。封面标题3个，内容标题3个，副标题3个，段落各2个替代版本（30-50字口语化）。highlight必须是原文片段。返回JSON：{"headlineOptions":[],"titleOptions":[],"subtitleOptions":[],"paragraphOptions":[{"options":[{"text":"","highlight":""}]}]}`;
+      userMsg = `封面：${headline}\n标题：${title}\n副标题：${subtitle}\n\n段落：\n${articleText}`;
+    }
 
     const result = await aiChat(
       [
         { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: `当前封面标题：${headline}\n当前内容标题：${title}\n当前副标题：${subtitle}\n\n段落内容：\n${articleText}`,
-        },
+        { role: "user", content: userMsg },
       ],
       0.7,
     );
-    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    const jsonMatch = result.match(/[{[][\s\S]*[}\]]$/);
     if (!jsonMatch) {
       errorResponse(res, "AI did not return valid JSON", 500);
       return true;

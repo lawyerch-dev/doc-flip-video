@@ -10,6 +10,7 @@ export async function doBuild() {
   state.config = readForm();
   if (!state.config) return setStatus('没有可生成的内容', 'error');
   goStep(4);
+  state._autoDetectVideo = false;
 
   const buildLog = document.getElementById('buildLog');
   const buildTimer = document.getElementById('buildTimer');
@@ -21,6 +22,9 @@ export async function doBuild() {
   document.getElementById('panel4Actions').style.display = 'none';
   buildLog.textContent = '';
   buildTimer.textContent = '';
+  // Restore spinner and cancel button (may have been hidden by showNoVideo)
+  document.querySelectorAll('#buildStatus .spinner').forEach(s => s.style.display = '');
+  document.getElementById('cancelBuildBtn').style.display = '';
   if (buildActions) buildActions.style.display = '';
   setStatus('视频生成中...', 'working');
 

@@ -81,10 +81,58 @@ export function goStep(n) {
 
   // Step 4: show video or build UI
   if (n === 4) {
-    const hasVideo = isStepReady(4);
-    document.getElementById('buildStatus').style.display = hasVideo ? 'none' : '';
-    document.getElementById('videoResult').style.display = hasVideo ? '' : 'none';
-    document.getElementById('panel4Actions').style.display = hasVideo ? '' : 'none';
+    state._autoDetectVideo = true;
+
+    const showVideo = (url, poster) => {
+      const vp = document.getElementById('videoPlayer');
+      vp.src = url;
+      if (poster) vp.poster = poster;
+      document.getElementById('buildStatus').style.display = 'none';
+      document.getElementById('videoResult').style.display = '';
+      document.getElementById('panel4Actions').style.display = '';
+    };
+
+    const showNoVideo = (msg) => {
+      if (!state._autoDetectVideo) return;
+      document.getElementById('buildStatus').style.display = '';
+      document.getElementById('buildTimer').textContent = msg;
+      document.getElementById('buildLog').textContent = '';
+      // Hide spinner + cancel button — nothing is building
+      const spinners = document.querySelectorAll('#buildStatus .spinner');
+      spinners.forEach(s => s.style.display = 'none');
+      document.getElementById('buildActions').style.display = 'none';
+      document.getElementById('cancelBuildBtn').style.display = 'none';
+      document.getElementById('videoResult').style.display = 'none';
+      document.getElementById('panel4Actions').style.display = 'none';
+    };
+
+    if (isStepReady(4)) {
+      state._autoDetectVideo = false;
+      showVideo(document.getElementById('videoPlayer').src);
+    } else if (state.config?.meta?.issueNumber) {
+      const padded = String(state.config.meta.issueNumber).padStart(3, '0');
+      const videoUrl = `/data/output/法务视频-${padded}期.mp4`;
+      const posterUrl = `/data/output/法务视频-${padded}期-poster.png`;
+      fetch(videoUrl, { method: 'HEAD' })
+        .then(r => {
+          if (!state._autoDetectVideo) return;
+          state._autoDetectVideo = false;
+          if (r.ok) {
+            showVideo(videoUrl, posterUrl);
+            setStatus(`第 ${padded} 期视频`, 'done');
+          } else {
+            showNoVideo('无视频文件，请重新生成');
+          }
+        })
+        .catch(() => {
+          if (!state._autoDetectVideo) return;
+          state._autoDetectVideo = false;
+          showNoVideo('无视频文件，请重新生成');
+        });
+    } else {
+      state._autoDetectVideo = false;
+      showNoVideo('请先生成视频');
+    }
   }
 }
 

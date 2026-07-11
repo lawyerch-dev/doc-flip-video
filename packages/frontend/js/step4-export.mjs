@@ -142,7 +142,7 @@ export function doDownload() {
   if (!src || src.includes("about:blank")) return toast("没有可下载的视频", "error");
   const a = document.createElement("a");
   a.href = src;
-  a.download = src.split("/").pop();
+  a.download = decodeURIComponent(src.split("/").pop());
   document.body.appendChild(a);
   a.click();
   a.remove();

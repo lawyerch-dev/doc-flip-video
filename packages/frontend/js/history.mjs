@@ -82,6 +82,13 @@ export function toggleSettings() {
 }
 window.toggleSettings = toggleSettings;
 
+export function switchSettingsTab(tab) {
+  document.querySelectorAll(".settings-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
+  document.getElementById("settingsTabBasic").style.display = tab === "basic" ? "" : "none";
+  document.getElementById("settingsTabPrompts").style.display = tab === "prompts" ? "" : "none";
+}
+window.switchSettingsTab = switchSettingsTab;
+
 export async function loadSettingsUI() {
   try {
     const s = await api("/api/settings");
@@ -92,6 +99,8 @@ export async function loadSettingsUI() {
     document.getElementById("s_enableScoring").checked = !!s.enableScoring;
     document.getElementById("s_scoringPrompt").value = s.scoringPrompt || "";
     document.getElementById("s_headlinePrompt").value = s.headlinePrompt || "";
+    document.getElementById("s_contentPrompt").value = s.contentPrompt || "";
+    document.getElementById("s_publishPrompt").value = s.publishPrompt || "";
     if (s.aiKeyMasked) {
       document.getElementById("s_apiKey").value = s.aiKeyMasked;
       document.getElementById("s_apiKey").dataset.masked = "1";
@@ -113,6 +122,8 @@ export async function saveSettingsUI() {
     enableScoring: document.getElementById("s_enableScoring").checked,
     scoringPrompt: document.getElementById("s_scoringPrompt").value.trim(),
     headlinePrompt: document.getElementById("s_headlinePrompt").value.trim(),
+    contentPrompt: document.getElementById("s_contentPrompt").value.trim(),
+    publishPrompt: document.getElementById("s_publishPrompt").value.trim(),
   };
   const keyInput = document.getElementById("s_apiKey");
   const key = keyInput.value.trim();

@@ -91,6 +91,7 @@ export async function loadSettingsUI() {
     document.getElementById("s_defaultSource").value = s.defaultSource || "";
     document.getElementById("s_enableScoring").checked = !!s.enableScoring;
     document.getElementById("s_scoringPrompt").value = s.scoringPrompt || "";
+    document.getElementById("s_headlinePrompt").value = s.headlinePrompt || "";
     if (s.aiKeyMasked) {
       document.getElementById("s_apiKey").value = s.aiKeyMasked;
       document.getElementById("s_apiKey").dataset.masked = "1";
@@ -111,6 +112,7 @@ export async function saveSettingsUI() {
     defaultSource: document.getElementById("s_defaultSource").value.trim(),
     enableScoring: document.getElementById("s_enableScoring").checked,
     scoringPrompt: document.getElementById("s_scoringPrompt").value.trim(),
+    headlinePrompt: document.getElementById("s_headlinePrompt").value.trim(),
   };
   const keyInput = document.getElementById("s_apiKey");
   const key = keyInput.value.trim();

@@ -358,7 +358,8 @@ export async function register(method, urlPath, req, res, params) {
     let systemPrompt, userMsg;
 
     if (field === "headline") {
-      systemPrompt = "生成 3 个封面标题（≤20字），有悬念冲突感。只返回 JSON 数组。";
+      const settings = getSettings();
+      systemPrompt = settings.headlinePrompt || "生成 3 个爆款标题（≤20字），有悬念、冲突或好奇心。只返回 JSON 数组。";
       userMsg = `当前：${headline}\n内容：${articleText}`;
     } else if (field === "title") {
       systemPrompt = "生成 3 个内容标题（≤20字），口语化。只返回 JSON 数组。";

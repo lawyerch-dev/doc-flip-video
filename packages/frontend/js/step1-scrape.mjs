@@ -1,5 +1,5 @@
 import { api } from "./api.mjs";
-import { state, setStatus, goStep, toast } from "./app.mjs";
+import { state, setStatus, goStep, toast, updateCC } from "./app.mjs";
 import { populateForm } from "./step2-edit.mjs";
 import { loadHistory } from "./history.mjs";
 
@@ -100,6 +100,37 @@ export async function quickScrape(btn) {
   }
 }
 
+// ── Fetch AI headline options as tags ──
+async function fetchHeadlineOptions() {
+  try {
+    const result = await api("/api/generate-options", {
+      ...state.config,
+      _field: "headline",
+    });
+    if (!Array.isArray(result)) return;
+    const container = document.getElementById("headlineOptions");
+    if (!container) return;
+    const options = [...new Set(result)];
+    container.innerHTML = "";
+    options.forEach((opt) => {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = opt;
+      tag.onclick = () => {
+        document.getElementById("f_headline").value = opt;
+        document.getElementById("f_title").value = opt;
+        updateCC(document.getElementById("f_headline"), 20);
+        state.dirty = true;
+        container.querySelectorAll(".tag").forEach((t) => t.classList.remove("selected"));
+        tag.classList.add("selected");
+      };
+      container.appendChild(tag);
+    });
+  } catch (e) {
+    console.warn("Headline options failed:", e);
+  }
+}
+
 // ── AI generate from scraped content ──
 
 export async function doAiGenerate() {
@@ -119,6 +150,8 @@ export async function doAiGenerate() {
       state.config.cover.headline = state.scrapedData.title;
     }
     populateForm();
+    // Fetch AI headline options as tags
+    fetchHeadlineOptions();
     setStatus("内容已生成", "done");
     goStep(2);
   } catch (e) {
@@ -145,6 +178,7 @@ export async function doRegenerate() {
       state.config.cover.headline = state.scrapedData.title;
     }
     populateForm();
+    fetchHeadlineOptions();
     setStatus("内容已重新生成", "done");
     toast("内容已重新生成", "success");
   } catch (e) {

@@ -250,6 +250,7 @@
                         class="coze-input"
                       />
                       <div class="char-count" id="cc_headline"></div>
+                      <div class="tag-list" id="headlineOptions" style="margin-top: 6px"></div>
                       <div id="aiHeadlineSuggestion" style="margin-top: 4px; font-size: 12px; display: none">
                         AI 建议：<span
                           id="aiHeadlineText"
@@ -645,6 +646,16 @@
           style="width: 100%; font-size: 13px; font-family: monospace"
         ></textarea>
         <div class="hint">AI 评分依据，只需写评分要求，返回格式已固定</div>
+      </div>
+      <div class="settings-group">
+        <label>标题生成提示词</label>
+        <textarea
+          id="s_headlinePrompt"
+          rows="3"
+          oninput="markSettingsDirty()"
+          style="width: 100%; font-size: 13px; font-family: monospace"
+        ></textarea>
+        <div class="hint">AI 生成标题的依据，只需写要求，返回格式已固定</div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px">
         <button class="btn" onclick="saveSettings()">保存设置</button>

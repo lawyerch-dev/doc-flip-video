@@ -3,9 +3,9 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import JsBarcode from "jsbarcode";
+import { FRONTEND_ASSETS } from "../../config/paths.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ASSETS = path.join(__dirname, "../..", "assets");
+const ASSETS = FRONTEND_ASSETS;
 const FONTS_DIR = path.join(ASSETS, "fonts");
 fs.mkdirSync(ASSETS, { recursive: true });
 

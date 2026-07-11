@@ -29,7 +29,7 @@ export const RENDER_IMAGES_SCRIPT = path.join(ENGINE_DIR, "render-images.mjs");
 export const ENGINE_ENTRY = path.join(ENGINE_DIR, "index.mjs");
 
 // ── 素材 ──
-export const FRONTEND_ASSETS = path.join(FRONTEND_DIR, "assets");
+export const FRONTEND_ASSETS = path.join(ROOT, "assets");
 
 // ── 工作流 ──
 export const WORKFLOW_RUNNER = path.join(WORKFLOW_ENGINE_DIR, "run.mjs");

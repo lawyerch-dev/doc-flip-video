@@ -1,16 +1,17 @@
 {
   "name": "doc-flip-video",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "node src/pipeline/build.mjs",
-    "workflow": "node src/workflow/run.mjs",
-    "build:wf": "node src/pipeline/build.mjs --workflow",
-    "studio:flow": "cd studio && npm run dev",
+    "build": "node packages/pipeline/build.mjs",
+    "workflow": "pnpm --filter @doc-flip/workflow-engine workflow",
+    "build:wf": "node packages/pipeline/build.mjs --workflow",
+    "studio:flow": "pnpm --filter @doc-flip/studio dev",
     "demo": "npx serve . -p 8080 --no-clipboard",
-    "server": "node src/server/index.mjs",
-    "studio": "node src/server/index.mjs",
-    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; concurrently -n backend,flowgram 'nodemon --watch src/server --watch src/web -e mjs,html,js,css --delay 1 src/server/index.mjs' 'cd studio && npm run dev'",
-    "mcp": "node src/mcp-server.mjs",
+    "server": "node packages/server/index.mjs",
+    "studio": "node packages/server/index.mjs",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; concurrently -n backend,flowgram 'nodemon --watch packages/server --watch packages/web -e mjs,html,js,css --delay 1 packages/server/index.mjs' 'pnpm --filter @doc-flip/studio dev'",
+    "mcp": "node packages/mcp/mcp-server.mjs",
     "fonts": "bash scripts/download-fonts.sh"
   },
   "dependencies": {

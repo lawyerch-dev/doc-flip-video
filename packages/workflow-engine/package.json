@@ -1,0 +1,11 @@
+{
+  "name": "@doc-flip/workflow-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Doc Flip Video Workflow Engine",
+  "main": "engine.mjs",
+  "scripts": {
+    "start": "node run.mjs",
+    "workflow": "node run.mjs"
+  }
+}

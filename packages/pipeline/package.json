@@ -1,0 +1,9 @@
+{
+  "name": "@doc-flip/pipeline",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Doc Flip Video Build Pipeline",
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@doc-flip/web",
+  "version": "1.0.0",
+  "description": "Doc Flip Video Web UI (Legacy)",
+  "scripts": {
+    "serve": "npx serve . -p 8080"
+  }
+}

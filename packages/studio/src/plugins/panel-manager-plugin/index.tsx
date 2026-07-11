@@ -1,0 +1,45 @@
+/**
+ * Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
+ * SPDX-License-Identifier: MIT
+ */
+
+import {
+  createPanelManagerPlugin as create,
+  PanelFactory,
+} from '@flowgram.ai/panel-manager-plugin';
+
+import {
+  TestRunSidePanel,
+  TestRunSidePanelProps,
+} from '../../components/testrun/testrun-panel/test-run-panel';
+import { NodeFormPanel, NodeFormPanelProps } from '../../components/sidebar/node-form-panel';
+import { ProblemPanel } from '../../components/problem-panel/problem-panel';
+import { PanelType } from './constants';
+
+const nodeFormPanelFactory: PanelFactory<NodeFormPanelProps> = {
+  key: PanelType.NodeFormPanel,
+  defaultSize: 360,
+  maxSize: 520,
+  minSize: 280,
+  render: (props: NodeFormPanelProps) => <NodeFormPanel {...props} />,
+};
+
+const testRunPanelFactory: PanelFactory<TestRunSidePanelProps> = {
+  key: PanelType.TestRunFormPanel,
+  defaultSize: 400,
+  render: () => <TestRunSidePanel />,
+};
+
+const problemPanelFactory: PanelFactory<void> = {
+  key: PanelType.ProblemPanel,
+  defaultSize: 240,
+  minSize: 120,
+  maxSize: 480,
+  render: () => <ProblemPanel />,
+};
+
+export const createPanelManagerPlugin = () =>
+  create({
+    factories: [nodeFormPanelFactory, testRunPanelFactory, problemPanelFactory],
+    layerProps: {},
+  });

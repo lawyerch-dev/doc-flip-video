@@ -1,0 +1,14 @@
+{
+  "name": "@doc-flip/server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Doc Flip Video API Server",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node index.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/workflow-engine": "workspace:*"
+  }
+}

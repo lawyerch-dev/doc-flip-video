@@ -8,61 +8,115 @@ Generate flip-page animation videos from JSON configurations for legal documents
 
 默认用中文回复用户；代码、命令、技术术语保持原文不翻译。
 
-## What This Project Does
+## 项目结构
 
-Creates red-header style (红头文件) videos with:
-- Page curl transitions
-- Highlight sweep effects (glowing marker)
-- Entrance animations
-- 60fps output
+```
+doc-flip-video/
+├── packages/
+│   ├── studio/           # React 可视化编辑器
+│   ├── server/           # API 服务器
+│   ├── workflow-engine/  # 工作流引擎
+│   ├── web/              # 旧版 Web UI
+│   ├── pipeline/         # 构建脚本
+│   └── mcp/              # MCP 服务器
+├── vendor/
+│   ├── flowgram.ai/      # flowgram 源码（参考）
+│   └── xfade-easing/     # ffmpeg 效果库
+├── data/
+│   ├── output/           # 输出视频
+│   ├── temp/             # 临时文件
+│   └── workflows/        # 工作流定义
+├── docs/                 # 文档
+├── scripts/              # 脚本
+├── config/               # 配置
+├── build/                # 构建输出
+├── pnpm-workspace.yaml
+└── package.json
+```
 
-## AI Agent Integration
-
-### API Server (Recommended)
+## 常用命令
 
 ```bash
-npm run server
-# POST http://localhost:3000/generate
+# 开发模式
+pnpm dev
+
+# 启动 API 服务器
+pnpm server
+
+# 启动 Studio 编辑器
+pnpm studio:flow
+
+# 运行工作流引擎
+pnpm workflow
+
+# 构建视频
+pnpm build
+
+# 启动 MCP 服务器
+pnpm mcp
 ```
 
-### MCP Server (For Claude, Cursor, etc.)
+## 工作流系统
 
-```bash
-npm run mcp
+### 模板节点
+
+Studio 提供预配置的视频模板，用户只需替换素材内容：
+
+| 模板 | 内容类型 | 效果 |
+|------|----------|------|
+| 文字淡入 | 文字 | 淡入 2s |
+| 文字淡出 | 文字 | 淡出 2s |
+| 文字停留 | 文字 | 停留 3s |
+| 文字高亮扫描 | 文字 | 高亮扫描 3s |
+| 图片淡入 | 图片 | 淡入 1.5s |
+| 图片停留 | 图片 | 停留 4s |
+| 图片高亮扫描 | 图片 | 高亮扫描 3s |
+| 视频淡入 | 视频 | 淡入 1.5s |
+| 视频淡出 | 视频 | 淡出 2s |
+| 音频淡入 | 音频 | 淡入 2s |
+| 音频淡出 | 音频 | 淡出 3s |
+
+### 模板展开
+
+模板节点在执行时会被展开为标准节点：
+
+```
+模板节点 → source 节点 + effect 节点
 ```
 
-Configure in AI tool:
-```json
-{
-  "mcpServers": {
-    "doc-flip-video": {
-      "command": "node",
-      "args": ["src/mcp-server.mjs"]
-    }
-  }
-}
-```
+例如："文字淡入" 模板会展开为：
+- `source:page-renderer` — 渲染文字为图片
+- `effect:fade-in` — 应用淡入效果
 
-### Docker
+## API 端点
 
-```bash
-docker-compose up -d
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/scrape` | 从 URL 抓取文章 |
+| POST | `/api/generate-config` | AI 生成配置 |
+| POST | `/api/refine` | AI 优化配置 |
+| POST | `/api/preview` | 生成预览图片 |
+| POST | `/api/build` | 生成视频 |
+| GET | `/api/status?issue=N` | 查询视频状态 |
+| POST | `/api/workflow/save` | 保存工作流 JSON |
+| GET | `/api/workflow/load` | 读取工作流 JSON |
+| POST | `/generate` | 原版视频生成（返回 MP4） |
+| GET | `/health` | 健康检查 |
 
-## Quick Start
+## 环境变量
 
-```bash
-npm install
-npm run build
-```
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `AI_API_KEY` | （必填） | OpenAI 兼容 API Key |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | API 基础 URL |
+| `AI_MODEL` | `deepseek-v4-flash` | 模型名称 |
+| `PORT` | `3000` | 服务器端口 |
 
-## Configuration
+## 配置文件
 
-Edit `article.json`.
+### 文章配置 (article.json)
 
-> **Default date rule**: Always use today's date (`year`/`month`/`day`) unless the user explicitly specifies otherwise. Generate the date programmatically at config creation time.
->
-> **Config file organization**: All article JSON configs go in `configs/` directory, named `article-NNN.json` (e.g. `configs/article-001.json`). Build command: `node src/build.mjs configs/article-002.json` or just `node src/build.mjs article-002.json` (auto-prefixed).
+> **日期规则**: 默认使用当天日期（`year`/`month`/`day`），除非用户明确指定其他日期。
 
 ```json
 {
@@ -71,21 +125,21 @@ Edit `article.json`.
     "month": 7,
     "day": 1,
     "issueNumber": 458,
-    "description": "Description text"
+    "description": "描述"
   },
   "cover": {
-    "headline": "Main headline",
-    "source": "Source citation"
+    "headline": "标题",
+    "source": "来源"
   },
   "content": {
-    "title": "Section title",
-    "subtitle": "Subtitle",
-    "subtitleHighlight": "keyword",
+    "title": "章节标题",
+    "subtitle": "副标题",
+    "subtitleHighlight": "关键词",
     "paragraphs": [
-      { "text": "Bold heading", "bold": true },
-      { "text": "Body text", "highlight": "keyword" }
+      { "text": "粗体标题", "bold": true },
+      { "text": "正文内容", "highlight": "关键词" }
     ],
-    "source": "Source"
+    "source": "来源"
   },
   "timing": {
     "settle": 1.2,
@@ -97,241 +151,96 @@ Edit `article.json`.
 }
 ```
 
-## Key Configuration Fields
+### 视觉模板 (template.json)
 
-### Paragraphs
+编辑 `template.json` 可自定义视觉样式：
+- `style.font` — 全局字体
+- `style.background` — 页面背景色
+- `top.logo` — 红色抬头 logo 配置
+- `middle.headline` — 标题样式
+- `middle.body` — 正文样式，包括高亮颜色
+- `bottom.text` — 底部文字配置
+- `bottom.qrImage` — 二维码图片（可选）
 
-- `{ "text": "...", "bold": true }` — Bold red text
-- `{ "text": "...", "highlight": "keyword" }` — Text with highlighted keyword
-- `{ "text": "" }` — Empty line
+### 配置字段说明
 
-### Timing
+#### 段落 (paragraphs)
 
-- `settle` — Entrance animation duration
-- `cover` — Cover hold time
-- `curl` — Page flip duration
-- `sweep` — Highlight sweep duration
-- `hold` — Highlight hold time after sweep
-- `final` — Fade out animation duration
+- `{ "text": "...", "bold": true }` — 粗体红色文字
+- `{ "text": "...", "highlight": "关键词" }` — 带高亮关键词的文字
+- `{ "text": "" }` — 空行
 
-## Character Limits
+#### 时间配置 (timing)
 
-Based on 1080×1840 canvas with 80px margins:
+- `settle` — 入场动画时长
+- `cover` — 封面停留时长
+- `curl` — 翻页动画时长
+- `sweep` — 高亮涂抹时长
+- `hold` — 高亮后停留时长
+- `final` — 淡出动画时长
 
-### Content Page
+## 字数限制
 
-| Field | Font Size | Per Line | Limit |
-|-------|-----------|----------|-------|
-| title | 48px bold | ~19 chars | ≤20 chars (1 line) |
-| subtitle | 42px bold | ~21 chars | ≤20 chars (1 line) |
-| paragraphs | 32px | ~28 chars | **See rules below** |
-| source | 28px | ~32 chars | ≤60 chars (2 lines) |
+各区域字数限制（基于 1080×1840 画布、80px 边距）：
 
-### Cover Page
+### 内容页
 
-| Field | Font Size | Per Line | Limit |
-|-------|-----------|----------|-------|
-| headline | 50px bold | ~18 chars | ≤20 chars (1 line) |
-| source | 36px | ~25 chars | ≤25 chars (1 line) |
+| 区域 | 字号 | 每行字数 | 建议限制 |
+|------|------|----------|----------|
+| 标题 (title) | 48px 粗体 | ~19字 | ≤20字（1行） |
+| 副标题 (subtitle) | 42px 粗体 | ~21字 | ≤20字（1行） |
+| 正文 (paragraphs) | 32px | ~28字 | ≤100字（约3-4行） |
+| 来源 (source) | 28px | ~32字 | ≤60字（约2行） |
 
-### Paragraph Rules (Critical)
+### 封面页
 
-The content page has fixed height. Title + subtitle + body + source must all fit **above the bottom red line**.
+| 区域 | 字号 | 每行字数 | 建议限制 |
+|------|------|----------|----------|
+| 标题 (headline) | 50px 粗体 | ~18字 | ≤20字（1行） |
+| 来源 (source) | 36px | ~25字 | ≤25字（1行） |
 
-**Total available body area ≈ 6 lines** (after title, subtitle, gap, and source).
+## 内容提取规则
 
-| Paragraphs Count | Max Chars Per Paragraph | Max Lines Per Paragraph |
-|------------------|------------------------|------------------------|
-| 2 paragraphs | ~70 chars each | 2-3 lines each |
-| 3 paragraphs | ~50 chars each | ~2 lines each |
+从 URL 提取文章时，遵循以下原则：
 
-**Recommended: 2 paragraphs, ≤50 chars each.** When in doubt, keep it short.
+1. **观众优先**: 观众是普通市民，不是律师。每段都要回答"这跟我有什么关系？"
+2. **具体胜于抽象**: 用日常场景替代法律术语。"按份共有财产" → "各付各的钱，各退各的份"
+3. **可操作的要点**: 每个视频都应该给观众留下可以做或记住的东西
+4. **无废话**: 每个字都要有价值。删除程序细节、法院名称、案件编号——只保留对观众重要的内容
 
-> **Important**: Total lines = 1 title + 1 subtitle + 1 gap + body lines + 1 gap + 2 source lines. Exceeding limits causes overflow beyond the red line.
-
-## Content Extraction Rules (Critical)
-
-When generating article JSON from a source URL, follow these rules to produce audience-oriented content:
-
-### Writing Principles
-
-1. **Audience-first**: Viewers are ordinary citizens, not lawyers. Answer "这跟我有什么关系?" (how does this affect me?) in every paragraph.
-2. **Concrete over abstract**: Replace legal jargon with everyday scenarios. "按份共有财产" → "各付各的钱，各退各的份".
-3. **Actionable takeaway**: Each video should leave viewers with something they can DO or REMEMBER.
-4. **No filler**: Every word must earn its place. Cut procedural details, court names, case numbers — keep only what matters to the viewer.
-
-### Extraction Process
+### 提取流程
 
 ```
-Step 1: Read the full article
-Step 2: Identify the ONE thing a viewer should remember
-Step 3: Write cover headline — the "hook" (why should I watch?)
-Step 4: Write 2 body paragraphs:
-   - Para 1: What happened? (specific scenario, relatable)
-   - Para 2: What's the takeaway? (what to do / what the rule is)
-Step 5: Highlight only the KEY PHRASE that carries the core message
+步骤 1: 阅读全文
+步骤 2: 识别观众应该记住的一件事
+步骤 3: 写封面标题——"钩子"（为什么要看？）
+步骤 4: 写 2 个正文段落：
+   - 段落 1: 发生了什么？（具体场景，贴近生活）
+   - 段落 2: 要点是什么？（该做什么/记住什么规则）
+步骤 5: 只高亮承载核心信息的关键词
 ```
 
-### Highlight Rules
+### 高亮规则
 
-- Highlight is a **glowing marker sweep** — it draws the eye. Use it on the ONE phrase that IS the takeaway.
-- NEVER highlight generic words like "法院", "判决", "法律".
-- Highlight the specific rule or outcome: "押金各退各的", "信用修复免费".
-- One highlight per paragraph maximum.
+- 高亮是**荧光笔涂抹**——吸引眼球。只用在承载要点的那个词上。
+- 不要高亮"法院"、"判决"、"法律"等通用词。
+- 高亮具体的规则或结果："押金各退各的"、"信用修复免费"。
+- 每段最多一个高亮。
 
-### Paragraph Structure
+## 输出文件
 
-| Paragraph | Purpose | Example Pattern |
-|-----------|---------|------------------|
-| Para 1 | Concrete scenario (what happened) | [谁] [做了什么]，[结果怎样] |
-| Para 2 | Takeaway (what to do / remember) | [规则/建议]，[具体怎么做] |
+- `data/output/法务视频-NNN期.mp4` — 最终视频
+- `data/temp/issue-NNN/` — 中间图片
+- `data/temp/workflow-to-run.json` — 工作流配置
 
-Para 1 can use `highlight` to mark the key fact. Para 2 can be `bold` if it's the critical warning/takeaway.
+## 技术要点
 
-### Bad vs Good Examples
+### WebGL UNPACK_FLIP_Y_WEBGL 竞态问题
 
-**BAD** (procedural, abstract, no audience value):
-```json
-{"text": "法院认定押金系按份共有财产，赖某某无权截留。但颜某某提前退租有过错，最终赖某某返还1200元。", "highlight": "按份共有财产"}
-```
+renderer.html 中 `gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)` 必须在 WebGL 上下文创建后**立即**设置，不能放在异步回调里。
 
-**GOOD** (concrete, actionable, audience-oriented):
-```json
-{"text": "各出的押金归各人，室友不能代扣。提前退租的违约金应找房东要，不能扣别人押金。", "highlight": "室友不能代扣"}
-```
+**绝不能用 ffmpeg vflip 来修补这个问题**——那是治标不治本，会引入新的时序问题。
 
-**BAD** (jargon-heavy):
-```json
-{"text": "失信被执行人主动履行义务后，可向法院申请信用修复，删除失信信息并解除限制消费。", "highlight": "申请信用修复"}
-```
+## 许可证
 
-**GOOD** (plain language):
-```json
-{"text": "还清欠款后，去法院申请就能恢复信用，坐飞机高铁不再受限。", "highlight": "恢复信用"}
-```
-
-## Visual Customization
-
-Edit `template.json` for:
-- Fonts, colors, backgrounds
-- Logo, headline, body text styles
-- Highlight colors
-- QR code
-
-## Output Files
-
-- `output/法务视频-NNN期.mp4` — Final video
-- `temp/issue-NNN/` — Intermediate images (cover.png, content-plain.png, content-hl.png)
-- `configs/article-NNN.json` — Article configurations
-
-## Requirements
-
-- Node.js ≥ 18
-- ffmpeg (system install)
-- Chinese fonts (for proper rendering)
-
-## Platform Installation
-
-### macOS
-```bash
-brew install ffmpeg
-npm install
-```
-
-### Ubuntu/Debian
-```bash
-sudo apt install -y ffmpeg fonts-noto-cjk
-npm install
-```
-
-### Docker (Recommended)
-```bash
-docker-compose up -d
-```
-
-## Common Commands
-
-```bash
-npm run build          # Generate video from config
-npm run studio         # Start Web Studio (port 33011)
-npm run server         # Start API server (same as studio)
-npm run dev            # Dev mode with hot reload
-npm run mcp            # Start MCP server
-npm run demo           # Browser preview
-```
-
-## Web Studio
-
-A visual web UI for the full pipeline: URL input → AI content → preview → video.
-
-### Quick Start
-
-```bash
-# Set your AI API key
-export AI_API_KEY="sk-..."
-export AI_BASE_URL="https://api.openai.com/v1"  # optional
-export AI_MODEL="gpt-4o-mini"                    # optional
-
-npm run studio
-# Open http://localhost:3000
-```
-
-### Workflow
-
-1. **粘贴链接** — 输入法律文章URL，点击“抓取内容”
-2. **确认抓取** — 查看抓取的原文，确认后点击“AI 生成内容”
-3. **编辑调整** — AI 自动生成标题/正文/高亮，可手动编辑或通过AI对话调整
-4. **预览图片** — 点击“预览图片”查看封面和正文效果
-5. **生成视频** — 点击“生成视频”，完成后在页面内预览和下载
-
-### API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/generate` | Original video generation (returns MP4) |
-| GET | `/health` | Health check |
-| POST | `/api/scrape` | Scrape article from URL |
-| POST | `/api/generate-config` | AI generates config from text |
-| POST | `/api/refine` | AI refines config |
-| POST | `/api/preview` | Generate preview images |
-| POST | `/api/build` | Start video generation |
-| GET | `/api/status?issue=N` | Check video status |
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AI_API_KEY` | (required) | OpenAI-compatible API key |
-| `AI_BASE_URL` | `https://api.openai.com/v1` | API base URL |
-| `AI_MODEL` | `deepseek-v4-flash` | Model name |
-| `PORT` | `3000` | Server port |
-
-## Troubleshooting
-
-- **ffmpeg not found**: Install with package manager
-- **Font issues**: Install Chinese fonts
-- **Highlight offset**: Check keyword matches exactly
-
-## Technical Gotchas
-
-### WebGL UNPACK_FLIP_Y_WEBGL Race Condition
-
-In `renderer.html`, `gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)` MUST be called **immediately** after WebGL context creation, NOT inside async callbacks (like fetch for template.json). 
-
-**Why:** Texture loading (Image onload) and template fetch run in parallel. If images load before the fetch callback sets the flag, textures upload without Y-flip → video is upside down. The flag only affects `texImage2D` calls made AFTER it's set.
-
-**Correct:** Set flag synchronously right after `getContext()`:
-```js
-const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
-gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // IMMEDIATELY
-```
-
-**Wrong:** Flag inside async callback (race condition):
-```js
-const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
-fetch('template.json').then(tmpl => {
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // TOO LATE
-});
-```
-
-**Never** use ffmpeg `vflip` to work around this — it's a band-aid that causes other issues.
+MIT

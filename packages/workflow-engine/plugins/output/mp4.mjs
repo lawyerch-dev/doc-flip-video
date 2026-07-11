@@ -29,19 +29,14 @@ export default class MP4OutputPlugin extends Plugin {
   };
 
   static async build(inputs, params, ctx) {
-    const { outputDir, filename, issueNumber } = mergeParams(
-      this.paramSchema,
-      params
-    );
+    const { outputDir, filename, issueNumber } = mergeParams(this.paramSchema, params);
 
     const video = inputs.video;
     const audio = inputs.audio;
 
     const issueStr = String(issueNumber).padStart(3, "0");
     const outDir = outputDir || OUTPUT_DIR;
-    const outFile =
-      filename ||
-      path.join(outDir, `法务视频-${issueStr}期.mp4`);
+    const outFile = filename || path.join(outDir, `法务视频-${issueStr}期.mp4`);
 
     console.log(`  📦 输出: ${outFile}`);
 

@@ -34,9 +34,7 @@ export default class FadeOutPlugin extends Plugin {
       type: "filter-chain",
       inputLabels: { source: inLabel },
       outputLabel: outLabel,
-      filters: [
-        `[${inLabel}]fade=t=out:st=${offset}:d=${duration}:color=${color}[${outLabel}]`,
-      ],
+      filters: [`[${inLabel}]fade=t=out:st=${offset}:d=${duration}:color=${color}[${outLabel}]`],
       duration,
       inputs: [inputs.source],
     };

@@ -20,18 +20,23 @@ export async function aiChat(messages, temperature = 0.7) {
 
   let lastErr;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (attempt > 0) await new Promise(r => setTimeout(r, 1000));
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
     try {
       const resp = await client.chat.completions.create({
-        model: aiModel, messages, temperature, stream: false,
+        model: aiModel,
+        messages,
+        temperature,
+        stream: false,
       });
       return resp.choices[0].message.content;
     } catch (e) {
       if (e.status === 429 || (e.status >= 500 && e.status < 600)) {
-        lastErr = e; continue;
+        lastErr = e;
+        continue;
       }
       if (e.message?.includes("fetch") || e.cause) {
-        lastErr = e; continue;
+        lastErr = e;
+        continue;
       }
       throw e;
     }

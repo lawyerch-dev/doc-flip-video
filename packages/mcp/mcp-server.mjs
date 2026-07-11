@@ -1,9 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
@@ -26,10 +23,7 @@ function generateVideo(content) {
   fs.writeFileSync(templatePath, JSON.stringify(defaultTemplate, null, 2));
 
   try {
-    execFileSync("node", [
-      ENGINE_ENTRY,
-      articlePath,
-    ], {
+    execFileSync("node", [ENGINE_ENTRY, articlePath], {
       cwd: path.join(ROOT, "packages"),
       stdio: "pipe",
       timeout: 120000,
@@ -37,12 +31,12 @@ function generateVideo(content) {
 
     const generatedPath = path.join(OUTPUT_DIR, "output.mp4");
     const outputPath = path.join(jobDir, "output.mp4");
-    
+
     if (fs.existsSync(generatedPath)) {
       fs.renameSync(generatedPath, outputPath);
       return { jobId, outputPath, success: true };
     }
-    
+
     return { jobId, success: false, error: "Output file not found" };
   } catch (error) {
     fs.rmSync(jobDir, { recursive: true, force: true });
@@ -59,7 +53,7 @@ const server = new Server(
     capabilities: {
       tools: {},
     },
-  }
+  },
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -67,7 +61,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "generate_video",
-        description: "Generate a flip-page animation video from document content. Use this when you need to create a video from legal documents, official announcements, or policy content.",
+        description:
+          "Generate a flip-page animation video from document content. Use this when you need to create a video from legal documents, official announcements, or policy content.",
         inputSchema: {
           type: "object",
           properties: {
@@ -138,19 +133,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "generate_video") {
     const content = request.params.arguments;
-    
+
     try {
       const result = generateVideo(content);
-      
+
       if (result.success) {
         const videoBuffer = fs.readFileSync(result.outputPath);
         const base64Video = videoBuffer.toString("base64");
-        
+
         // Cleanup
         setTimeout(() => {
           fs.rmSync(path.join(OUTPUT_DIR, result.jobId), { recursive: true, force: true });
         }, 5000);
-        
+
         return {
           content: [
             {
@@ -190,7 +185,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
   }
-  
+
   throw new Error(`Unknown tool: ${request.params.name}`);
 });
 

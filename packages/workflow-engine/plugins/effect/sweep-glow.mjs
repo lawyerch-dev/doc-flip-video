@@ -41,14 +41,14 @@ export default class SweepGlowPlugin extends Plugin {
     // 完整 sweep：wiperight + glow overlay
     // glow 动画：t=offset ~ t=offset+duration 期间，x 从 -glowW 移动到 W
     // 注意 overlay 的 x 表达式使用绝对时间 t（输出时间线）
-    const glowX = `(t-${offset})/${duration}*${W}-${glowW/2}`;
+    const glowX = `(t-${offset})/${duration}*${W}-${glowW / 2}`;
 
     let filters = [];
     if (ctx.hasCustomFFmpeg && hasGlow) {
       const glowLabel = inputs.glowStrip.outputLabel;
       filters = [
         `[${fromLabel}][${toLabel}]xfade=easing=cubic-in-out:transition=wiperight:duration=${duration}:offset=${offset}[sweep_base]`,
-        `[sweep_base][${glowLabel}]overlay=x='if(between(t,${offset},${offset+duration}),${glowX},-${glowW})':y=0:format=auto[${outLabel}]`,
+        `[sweep_base][${glowLabel}]overlay=x='if(between(t,${offset},${offset + duration}),${glowX},-${glowW})':y=0:format=auto[${outLabel}]`,
       ];
     } else {
       // 只有 wiperight，无光晕

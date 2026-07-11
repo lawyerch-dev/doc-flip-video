@@ -32,14 +32,9 @@ export default class AudioPickerPlugin extends Plugin {
 
     let musicFile = null;
     if (fs.existsSync(musicDir)) {
-      const files = fs
-        .readdirSync(musicDir)
-        .filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i));
+      const files = fs.readdirSync(musicDir).filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i));
       if (files.length > 0) {
-        musicFile = path.join(
-          musicDir,
-          files[Math.floor(Math.random() * files.length)]
-        );
+        musicFile = path.join(musicDir, files[Math.floor(Math.random() * files.length)]);
       }
     }
 

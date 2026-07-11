@@ -95,17 +95,23 @@ export class WorkflowEngine {
   }
 
   _resolveNodes(rawNodes, options) {
-    return rawNodes.map(n => {
+    return rawNodes.map((n) => {
       const PluginClass = this._plugins.get(n.type);
       if (!PluginClass) throw new Error(`Unknown plugin type: ${n.type}`);
-      return { id: n.id, _type: n.type, _inputs: n.inputs || {}, _params: { ...n.params, ...options.params }, _meta: PluginClass.meta };
+      return {
+        id: n.id,
+        _type: n.type,
+        _inputs: n.inputs || {},
+        _params: { ...n.params, ...options.params },
+        _meta: PluginClass.meta,
+      };
     });
   }
 
   _topoSort(nodes) {
-    const map = new Map(nodes.map(n => [n.id, n]));
-    const inDeg = new Map(nodes.map(n => [n.id, 0]));
-    const adj = new Map(nodes.map(n => [n.id, []]));
+    const map = new Map(nodes.map((n) => [n.id, n]));
+    const inDeg = new Map(nodes.map((n) => [n.id, 0]));
+    const adj = new Map(nodes.map((n) => [n.id, []]));
     for (const n of nodes) {
       for (const up of Object.values(n._inputs)) {
         if (!map.has(up)) throw new Error(`Node "${n.id}" → unknown "${up}"`);
@@ -113,7 +119,7 @@ export class WorkflowEngine {
         inDeg.set(n.id, inDeg.get(n.id) + 1);
       }
     }
-    const q = nodes.filter(n => inDeg.get(n.id) === 0).map(n => n.id);
+    const q = nodes.filter((n) => inDeg.get(n.id) === 0).map((n) => n.id);
     const out = [];
     while (q.length) {
       const id = q.shift();
@@ -165,7 +171,7 @@ export class WorkflowEngine {
     for (const img of imageInputs) {
       const dur = img.duration;
       filterParts.push(
-        `[${inputIdx}:v]fps=${fps},loop=loop=-1:size=1,setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=white@0,trim=duration=${dur},setpts=PTS-STARTPTS[${img.label}]`
+        `[${inputIdx}:v]fps=${fps},loop=loop=-1:size=1,setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=white@0,trim=duration=${dur},setpts=PTS-STARTPTS[${img.label}]`,
       );
       inputIdx++;
     }
@@ -181,7 +187,18 @@ export class WorkflowEngine {
 
     const filterComplex = filterParts.join(";\n");
 
-    return { imageInputs, audioInputs, filterComplex, finalLabel, outputFile, totalDuration, inputCount: inputIdx, W: ctx.width, H: ctx.height, fps: ctx.fps };
+    return {
+      imageInputs,
+      audioInputs,
+      filterComplex,
+      finalLabel,
+      outputFile,
+      totalDuration,
+      inputCount: inputIdx,
+      W: ctx.width,
+      H: ctx.height,
+      fps: ctx.fps,
+    };
   }
 
   // ── 执行 FFmpeg ──
@@ -226,10 +243,7 @@ export class WorkflowEngine {
     const { audioInputs, outputFile } = compiled;
     const args = this._buildArgs(compiled);
 
-    args.push(
-      "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-      "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-    );
+    args.push("-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", "-movflags", "+faststart");
     if (audioInputs.length > 0) {
       for (const a of audioInputs) args.push("-i", a.path);
       args.push("-c:a", "aac", "-b:a", "128k", "-shortest");
@@ -262,8 +276,16 @@ export class WorkflowEngine {
       for (const a of audioInputs) encodeArgs.push("-i", a.path);
     }
     encodeArgs.push(
-      "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-      "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "slow",
+      "-crf",
+      "14",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
     );
     if (audioInputs.length > 0) encodeArgs.push("-c:a", "aac", "-b:a", "128k", "-shortest");
     encodeArgs.push(outputFile);
@@ -272,8 +294,10 @@ export class WorkflowEngine {
       const customProc = spawn(customFFmpeg, customArgs, { stdio: ["ignore", "pipe", "inherit"] });
       const encodeProc = spawn(systemFFmpeg, encodeArgs, { stdio: [customProc.stdout, "inherit", "inherit"] });
       await new Promise((resolve, reject) => {
-        encodeProc.on("close", c => c === 0 ? resolve() : reject(new Error(`encode exit ${c}`)));
-        customProc.on("close", c => { if (c !== 0) reject(new Error(`xfade exit ${c}`)); });
+        encodeProc.on("close", (c) => (c === 0 ? resolve() : reject(new Error(`encode exit ${c}`))));
+        customProc.on("close", (c) => {
+          if (c !== 0) reject(new Error(`xfade exit ${c}`));
+        });
       });
     } catch (e) {
       console.error(`\n❌ 渲染失败: ${e.message}`);
@@ -288,17 +312,75 @@ export class WorkflowEngine {
       const pc = outputFile.replace(".mp4", ".poster-clip.mp4");
       const po = outputFile.replace(".mp4", ".poster-out.mp4");
       const pf = outputFile.replace(".mp4", "-poster.png");
-      for (const f of [pc, po, pf]) try { fs.unlinkSync(f); } catch {}
+      for (const f of [pc, po, pf])
+        try {
+          fs.unlinkSync(f);
+        } catch {}
 
-      execFileSync(ff, ["-y", "-ss", "0.6", "-i", outputFile, "-frames:v", "1", "-q:v", "2", pf], { stdio: "pipe", timeout: 10000 });
-      execFileSync(ff, ["-y", "-loop", "1", "-i", pf, "-c:v", "libx264", "-preset", "ultrafast", "-crf", "14", "-pix_fmt", "yuv420p", "-r", "30", "-t", "0.033", pc], { stdio: "pipe", timeout: 10000 });
-      execFileSync(ff, ["-y", "-i", pc, "-ss", "0.3", "-i", outputFile,
-        "-filter_complex", "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
-        "-map", "[outv]", "-map", "1:a",
-        "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-        "-c:a", "copy", po], { stdio: "pipe", timeout: 30000 });
+      execFileSync(ff, ["-y", "-ss", "0.6", "-i", outputFile, "-frames:v", "1", "-q:v", "2", pf], {
+        stdio: "pipe",
+        timeout: 10000,
+      });
+      execFileSync(
+        ff,
+        [
+          "-y",
+          "-loop",
+          "1",
+          "-i",
+          pf,
+          "-c:v",
+          "libx264",
+          "-preset",
+          "ultrafast",
+          "-crf",
+          "14",
+          "-pix_fmt",
+          "yuv420p",
+          "-r",
+          "30",
+          "-t",
+          "0.033",
+          pc,
+        ],
+        { stdio: "pipe", timeout: 10000 },
+      );
+      execFileSync(
+        ff,
+        [
+          "-y",
+          "-i",
+          pc,
+          "-ss",
+          "0.3",
+          "-i",
+          outputFile,
+          "-filter_complex",
+          "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "1:a",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "slow",
+          "-crf",
+          "14",
+          "-pix_fmt",
+          "yuv420p",
+          "-movflags",
+          "+faststart",
+          "-c:a",
+          "copy",
+          po,
+        ],
+        { stdio: "pipe", timeout: 30000 },
+      );
       fs.renameSync(po, outputFile);
-      try { fs.unlinkSync(pc); } catch {}
+      try {
+        fs.unlinkSync(pc);
+      } catch {}
       console.log(`🖼️  海报已置为视频首帧`);
     } catch (e) {
       console.warn(`⚠️  海报嵌入失败: ${e.message}`);

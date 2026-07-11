@@ -61,9 +61,13 @@ function main() {
 
     // 运行工作流引擎
     console.log("─── Rendering video (workflow) ───");
-    execFileSync("node", [path.join(ROOT, "packages", "workflow-engine", "run.mjs"), workflowPath, "--config", configPath], {
-      stdio: "inherit",
-    });
+    execFileSync(
+      "node",
+      [path.join(ROOT, "packages", "workflow-engine", "run.mjs"), workflowPath, "--config", configPath],
+      {
+        stdio: "inherit",
+      },
+    );
   } else {
     // 旧流水线模式（向后兼容）
     console.log(`📄 Config: ${configPath}`);
@@ -72,8 +76,7 @@ function main() {
       stdio: "inherit",
     });
     console.log("─── Rendering video ───");
-    const captureScript =
-      process.env.CAPTURE === "puppeteer" ? "render-video-puppeteer.mjs" : "render-video.mjs";
+    const captureScript = process.env.CAPTURE === "puppeteer" ? "render-video-puppeteer.mjs" : "render-video.mjs";
     execFileSync("node", [path.join(__dirname, captureScript), configPath], {
       stdio: "inherit",
     });

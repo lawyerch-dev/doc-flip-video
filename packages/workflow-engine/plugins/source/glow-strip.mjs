@@ -30,10 +30,7 @@ export default class GlowStripPlugin extends Plugin {
   };
 
   static async build(inputs, params, ctx) {
-    const { stripWidthRatio, outputDir } = mergeParams(
-      this.paramSchema,
-      params
-    );
+    const { stripWidthRatio, outputDir } = mergeParams(this.paramSchema, params);
 
     const W = ctx.width;
     const H = ctx.height;

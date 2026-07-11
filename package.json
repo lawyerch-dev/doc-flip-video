@@ -12,6 +12,11 @@
     "studio": "node packages/server/index.mjs",
     "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; (sleep 3 && open http://localhost:33011) & concurrently -n server,studio 'nodemon --watch packages/server --watch packages/frontend -e mjs,html,js,css --delay 1 packages/server/index.mjs' 'pnpm --filter @doc-flip/workflow-studio dev'",
     "mcp": "node packages/mcp/mcp-server.mjs",
+    "lint": "eslint 'packages/**/*.{mjs,js}'",
+    "format": "prettier --write 'packages/**/*.{mjs,js,json,css,html}'",
+    "format:check": "prettier --check 'packages/**/*.{mjs,js,json,css,html}'",
+    "check": "eslint 'packages/**/*.{mjs,js}' && prettier --check 'packages/**/*.{mjs,js,json,css,html}'",
+    "prepare": "husky",
     "fonts": "bash scripts/download-fonts.sh"
   },
   "dependencies": {
@@ -21,8 +26,14 @@
     "puppeteer": "^25.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "concurrently": "^10.0.3",
-    "nodemon": "^3.1.14"
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

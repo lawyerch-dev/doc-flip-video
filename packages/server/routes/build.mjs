@@ -33,15 +33,10 @@ function generateImages(configPath) {
 // ── Video generation (returns job ID, runs async) ──
 function generateVideoAsync(configPath, issueNum) {
   return new Promise((resolve, reject) => {
-    execFile(
-      "node",
-      [ENGINE_ENTRY, configPath],
-      { cwd: ROOT, timeout: 120000 },
-      (err, stdout, stderr) => {
-        if (err) reject(new Error(stderr || err.message));
-        else resolve({ issueNum, stdout });
-      }
-    );
+    execFile("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 }, (err, stdout, stderr) => {
+      if (err) reject(new Error(stderr || err.message));
+      else resolve({ issueNum, stdout });
+    });
   });
 }
 
@@ -60,11 +55,7 @@ function generateVideo(content) {
   const outputPath = path.join(jobDir, "output.mp4");
 
   try {
-    execFileSync(
-      "node",
-      [ENGINE_ENTRY, articlePath],
-      { cwd: ROOT, stdio: "pipe", timeout: 120000 }
-    );
+    execFileSync("node", [ENGINE_ENTRY, articlePath], { cwd: ROOT, stdio: "pipe", timeout: 120000 });
 
     const generatedPath = path.join(OUTPUT_DIR, "output.mp4");
     if (fs.existsSync(generatedPath)) {
@@ -165,7 +156,7 @@ async function handleGenerate(req, res) {
           recursive: true,
           force: true,
         }),
-      5000
+      5000,
     );
   });
   return true;
@@ -179,10 +170,7 @@ async function handlePreview(req, res) {
   }
   const issueNum = config.meta.issueNumber || nextIssueNumber();
   config.meta.issueNumber = issueNum;
-  const configPath = path.join(
-    CONFIGS_DIR,
-    `article-${String(issueNum).padStart(3, "0")}.json`
-  );
+  const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   generateImages(configPath);
   const imgDir = `data/temp/issue-${String(issueNum).padStart(3, "0")}`;
@@ -201,9 +189,7 @@ function handleDownloadImages(urlPath, res) {
   const issueNum = urlPath.split("/").pop();
   const padded = String(issueNum).padStart(3, "0");
   const imgDir = path.join(TEMP_DIR, `issue-${padded}`);
-  const files = ["cover.png", "content-plain.png", "content-hl.png"].filter(
-    (f) => fs.existsSync(path.join(imgDir, f))
-  );
+  const files = ["cover.png", "content-plain.png", "content-hl.png"].filter((f) => fs.existsSync(path.join(imgDir, f)));
   if (!files.length) {
     errorResponse(res, "No images found", 404);
     return true;
@@ -211,10 +197,7 @@ function handleDownloadImages(urlPath, res) {
   const zipName = `\u6cd5\u52a1\u89c6\u9891-${padded}\u671f-\u56fe\u7247.zip`;
   const zipPath = path.join(TEMP_DIR, zipName);
   try {
-    execSync(
-      `cd "${imgDir}" && zip -j "${zipPath}" ${files.join(" ")}`,
-      { stdio: "pipe" }
-    );
+    execSync(`cd "${imgDir}" && zip -j "${zipPath}" ${files.join(" ")}`, { stdio: "pipe" });
     const stat = fs.statSync(zipPath);
     res.writeHead(200, {
       "Content-Type": "application/zip",
@@ -262,24 +245,17 @@ function handleStatus(params, res) {
     return true;
   }
   const padded = String(issueNum).padStart(3, "0");
-  const videoPath = path.join(
-    OUTPUT_DIR,
-    `法务视频-${padded}期.mp4`
-  );
+  const videoPath = path.join(OUTPUT_DIR, `法务视频-${padded}期.mp4`);
   const exists = fs.existsSync(videoPath);
   const stat = exists ? fs.statSync(videoPath) : null;
 
   // Check queue for active job
-  const queueJob = listJobs().find(j => j.issueNum === Number(issueNum)) || null;
+  const queueJob = listJobs().find((j) => j.issueNum === Number(issueNum)) || null;
 
   let progress = null;
   if (!exists) {
     try {
-      const progressFile = path.join(
-        TEMP_DIR,
-        `issue-${padded}`,
-        "progress.json"
-      );
+      const progressFile = path.join(TEMP_DIR, `issue-${padded}`, "progress.json");
       if (fs.existsSync(progressFile)) {
         progress = JSON.parse(fs.readFileSync(progressFile, "utf-8"));
       }
@@ -287,15 +263,13 @@ function handleStatus(params, res) {
   }
 
   // If current build failed, don't report ready even if old video file exists
-  const buildFailed = queueJob?.status === 'failed';
+  const buildFailed = queueJob?.status === "failed";
 
   json(res, {
     issueNum,
     ready: exists && !buildFailed,
     size: stat?.size || 0,
-    videoUrl: exists
-      ? `/data/output/法务视频-${padded}期.mp4`
-      : null,
+    videoUrl: exists ? `/data/output/法务视频-${padded}期.mp4` : null,
     progress,
     queueJob: queueJob
       ? {

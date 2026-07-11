@@ -4,7 +4,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { execFileSync, execFile, execSync, spawn } from "child_process";
 import { randomUUID } from "crypto";
-import { ROOT, FRONTEND_DIR as WEB_DIR, ARTICLES_DIR as CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, TEMPLATES_DIR, TEMPLATE_PATH, SETTINGS_PATH } from "../../config/paths.mjs";
+import {
+  ROOT,
+  FRONTEND_DIR as WEB_DIR,
+  ARTICLES_DIR as CONFIGS_DIR,
+  TEMP_DIR,
+  OUTPUT_DIR,
+  TEMPLATES_DIR,
+  TEMPLATE_PATH,
+  SETTINGS_PATH,
+} from "../../config/paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +91,7 @@ export function errorResponse(res, message, status = 500, details = null) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
-    req.on("data", c => (body += c));
+    req.on("data", (c) => (body += c));
     req.on("end", () => resolve(body));
     req.on("error", reject);
   });
@@ -94,9 +103,10 @@ async function parseJson(req) {
 }
 
 function nextIssueNumber() {
-  const existing = fs.readdirSync(CONFIGS_DIR)
-    .filter(f => f.startsWith("article-") && f.endsWith(".json"))
-    .map(f => parseInt(f.match(/article-(\d+)\.json/)?.[1] || "0", 10));
+  const existing = fs
+    .readdirSync(CONFIGS_DIR)
+    .filter((f) => f.startsWith("article-") && f.endsWith(".json"))
+    .map((f) => parseInt(f.match(/article-(\d+)\.json/)?.[1] || "0", 10));
   return (existing.length ? Math.max(...existing) : 0) + 1;
 }
 

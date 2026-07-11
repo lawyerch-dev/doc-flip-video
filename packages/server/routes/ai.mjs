@@ -6,7 +6,7 @@ async function handleSSE(req, res, callback) {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
+    Connection: "keep-alive",
     "Access-Control-Allow-Origin": "*",
   });
   try {
@@ -53,7 +53,10 @@ highlight 必须是 paragraph text 中的原文片段。`;
 
   return [
     { role: "system", content: systemPrompt },
-    { role: "user", content: `请从以下文章中提炼短视频内容。\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}` },
+    {
+      role: "user",
+      content: `请从以下文章中提炼短视频内容。\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
+    },
   ];
 }
 
@@ -67,11 +70,7 @@ function buildRefineMessages(config, userMessage, chatHistory = []) {
 - 修改后输出完整JSON
 - 不要输出其他内容`;
 
-  return [
-    { role: "system", content: systemPrompt },
-    ...chatHistory,
-    { role: "user", content: userMessage },
-  ];
+  return [{ role: "system", content: systemPrompt }, ...chatHistory, { role: "user", content: userMessage }];
 }
 
 // ── Parse JSON from AI response ──
@@ -218,12 +217,18 @@ BAD：
 
 GOOD：
 {"text": "试用期也必须交社保！入职就该交，不交可以要求公司补缴。", "highlight": "试用期也必须交社保"}
-→ 冲击感（很多人以为试用期没有），高亮是纠正认知的关键句`
+→ 冲击感（很多人以为试用期没有），高亮是纠正认知的关键句`;
 
-  const result = await aiChat([
-    { role: "system", content: systemPrompt },
-    { role: "user", content: `请从以下文章中提炼短视频内容。\n\n要求：\n1. 先通读全文，找出最让普通人吃惊或最有用的那个点\n2. 第1段用具体场景讲故事（必须有数字），第2段给看完就能用的建议\n3. 高亮选观众会转述给别人的话，不要选法律术语\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}` },
-  ], 0.5);
+  const result = await aiChat(
+    [
+      { role: "system", content: systemPrompt },
+      {
+        role: "user",
+        content: `请从以下文章中提炼短视频内容。\n\n要求：\n1. 先通读全文，找出最让普通人吃惊或最有用的那个点\n2. 第1段用具体场景讲故事（必须有数字），第2段给看完就能用的建议\n3. 高亮选观众会转述给别人的话，不要选法律术语\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
+      },
+    ],
+    0.5,
+  );
 
   // Parse JSON from response
   const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -280,11 +285,7 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，一个�
 
 修改后严格输出完整的JSON对象（和输入格式一样），不要输出其他内容。`;
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    ...chatHistory,
-    { role: "user", content: userMessage },
-  ];
+  const messages = [{ role: "system", content: systemPrompt }, ...chatHistory, { role: "user", content: userMessage }];
 
   const result = await aiChat(messages, 0.5);
   const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -304,7 +305,10 @@ export async function register(method, urlPath, req, res, params) {
   // ── SSE streaming: generate config ──
   if (method === "POST" && urlPath === "/api/generate-config-stream") {
     const { text, sourceInfo } = await parseJson(req);
-    if (!text) { errorResponse(res, "Missing text", 400); return true; }
+    if (!text) {
+      errorResponse(res, "Missing text", 400);
+      return true;
+    }
     await handleSSE(req, res, async (send) => {
       send({ type: "status", text: "正在分析文章..." });
       let full = "";
@@ -327,7 +331,10 @@ export async function register(method, urlPath, req, res, params) {
   // ── SSE streaming: refine config ──
   if (method === "POST" && urlPath === "/api/refine-stream") {
     const { config, message, history } = await parseJson(req);
-    if (!config || !message) { errorResponse(res, "Missing config or message", 400); return true; }
+    if (!config || !message) {
+      errorResponse(res, "Missing config or message", 400);
+      return true;
+    }
     await handleSSE(req, res, async (send) => {
       send({ type: "status", text: "正在调整..." });
       let full = "";
@@ -368,10 +375,16 @@ export async function register(method, urlPath, req, res, params) {
       errorResponse(res, "Missing articleText", 400);
       return true;
     }
-    const result = await aiChat([
-      { role: "system", content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括，末尾加3个话题标签。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}` },
-      { role: "user", content: `期号：${issueNum || '001'}\n\n视频内容：\n${articleText}` },
-    ], 0.5);
+    const result = await aiChat(
+      [
+        {
+          role: "system",
+          content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括，末尾加3个话题标签。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}`,
+        },
+        { role: "user", content: `期号：${issueNum || "001"}\n\n视频内容：\n${articleText}` },
+      ],
+      0.5,
+    );
     const jsonMatch = result.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       errorResponse(res, "AI did not return valid JSON", 500);

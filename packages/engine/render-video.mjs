@@ -43,7 +43,10 @@ function generateGlowStrip(width, height, stripWidth) {
 }
 // ── Load config ──
 const configPath = process.argv[2];
-if (!configPath) { console.error("Usage: node render-video.mjs <config.json>"); process.exit(1); }
+if (!configPath) {
+  console.error("Usage: node render-video.mjs <config.json>");
+  process.exit(1);
+}
 const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 const tm = cfg.timing || {};
 
@@ -54,7 +57,9 @@ fs.mkdirSync(outDir, { recursive: true });
 const outFile = path.join(outDir, `法务视频-${issueNum}期.mp4`);
 
 // ── Output dimensions ──
-const outW = 1080, outH = 1840, fps = 30;
+const outW = 1080,
+  outH = 1840,
+  fps = 30;
 
 // ── Timing ──
 const settleDur = tm.settle || 1.2;
@@ -67,10 +72,9 @@ const totalDur = settleDur + coverDur + curlDur + sweepDur + holdDur + finalDur;
 
 // ── Pick background music ──
 const musicDir = path.join(ROOT, "assets", "music");
-const musicFiles = fs.readdirSync(musicDir).filter(f => f.match(/\.(mp3|wav|ogg|m4a)$/i));
-const musicFile = musicFiles.length > 0
-  ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)])
-  : null;
+const musicFiles = fs.readdirSync(musicDir).filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i));
+const musicFile =
+  musicFiles.length > 0 ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]) : null;
 if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
 
 // ── Find FFmpeg ──
@@ -87,7 +91,10 @@ const coverImg = path.join(imgDir, "cover.png");
 const plainImg = path.join(imgDir, "content-plain.png");
 const hlImg = path.join(imgDir, "content-hl.png");
 for (const img of [coverImg, plainImg, hlImg]) {
-  if (!fs.existsSync(img)) { console.error(`❌ 缺少: ${img}`); process.exit(1); }
+  if (!fs.existsSync(img)) {
+    console.error(`❌ 缺少: ${img}`);
+    process.exit(1);
+  }
 }
 
 // ── Generate glow strip image ──
@@ -118,7 +125,7 @@ if (hasCustom) {
   videoFilters.push(
     `[v0][v1]xfade=${easing}transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${settleDur}:offset=0[s1]`,
     `[s1][v2]xfade=${easing}transition=gl_InvertedPageCurl:duration=${curlDur}:offset=${curlOffset}[s2]`,
-    `[s2][v3]xfade=${easing}transition=wiperight:duration=${sweepDur}:offset=${sweepOffset}[s3]`
+    `[s2][v3]xfade=${easing}transition=wiperight:duration=${sweepDur}:offset=${sweepOffset}[s3]`,
   );
 } else {
   videoFilters.push(
@@ -131,7 +138,7 @@ if (hasCustom) {
 // Overlay glow strip: moves left→right during sweep phase
 // x = -glowStripW (hidden left) → outW (hidden right), linear over sweepDur
 videoFilters.push(
-  `[s3][glow]overlay=x='if(between(t,${sweepOffset},${sweepOffset + sweepDur}),(t-${sweepOffset})/${sweepDur}*${outW}-${glowStripW/2},-${glowStripW})':y=0:format=auto[s4]`,
+  `[s3][glow]overlay=x='if(between(t,${sweepOffset},${sweepOffset + sweepDur}),(t-${sweepOffset})/${sweepDur}*${outW}-${glowStripW / 2},-${glowStripW})':y=0:format=auto[s4]`,
   `[s4]fade=t=out:st=${fadeOutStart}:d=${finalDur},trim=duration=${totalDur},setpts=PTS-STARTPTS[vout]`,
 );
 const filterComplex = videoFilters.join(";");
@@ -145,23 +152,50 @@ const start = Date.now();
 if (hasCustom) {
   const customArgs = [
     "-y",
-    "-f", "lavfi", "-i", `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", coverImg,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", plainImg,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", hlImg,
-    "-loop", "1", "-t", String(totalDur), "-i", glowStripPath,
-    "-filter_complex", filterComplex,
-    "-map", "[vout]",
-    "-c:v", "rawvideo", "-pix_fmt", "yuv420p",
-    "-f", "yuv4mpegpipe", "-",
+    "-f",
+    "lavfi",
+    "-i",
+    `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    coverImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    plainImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    hlImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur),
+    "-i",
+    glowStripPath,
+    "-filter_complex",
+    filterComplex,
+    "-map",
+    "[vout]",
+    "-c:v",
+    "rawvideo",
+    "-pix_fmt",
+    "yuv420p",
+    "-f",
+    "yuv4mpegpipe",
+    "-",
   ];
 
   const encodeArgs = ["-y", "-i", "pipe:0"];
   if (musicFile) encodeArgs.push("-i", musicFile);
-  encodeArgs.push(
-    "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-  );
+  encodeArgs.push("-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", "-movflags", "+faststart");
   if (musicFile) encodeArgs.push("-c:a", "aac", "-b:a", "128k", "-shortest");
   encodeArgs.push(outFile);
 
@@ -169,8 +203,10 @@ if (hasCustom) {
     const customProc = spawn(customFFmpeg, customArgs, { stdio: ["ignore", "pipe", "inherit"] });
     const encodeProc = spawn(systemFFmpeg, encodeArgs, { stdio: [customProc.stdout, "inherit", "inherit"] });
     await new Promise((resolve, reject) => {
-      encodeProc.on("close", code => code === 0 ? resolve() : reject(new Error(`encode exit ${code}`)));
-      customProc.on("close", code => { if (code !== 0) reject(new Error(`xfade exit ${code}`)); });
+      encodeProc.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`encode exit ${code}`))));
+      customProc.on("close", (code) => {
+        if (code !== 0) reject(new Error(`xfade exit ${code}`));
+      });
     });
     console.log(`\n✅ 完成 (${((Date.now() - start) / 1000).toFixed(1)}s): ${outFile}`);
   } catch (e) {
@@ -180,15 +216,48 @@ if (hasCustom) {
 } else {
   const args = [
     "-y",
-    "-f", "lavfi", "-i", `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", coverImg,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", plainImg,
-    "-loop", "1", "-t", String(totalDur + 1), "-i", hlImg,
-    "-loop", "1", "-t", String(totalDur), "-i", glowStripPath,
-    "-filter_complex", filterComplex,
-    "-map", "[vout]",
-    "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+    "-f",
+    "lavfi",
+    "-i",
+    `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    coverImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    plainImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur + 1),
+    "-i",
+    hlImg,
+    "-loop",
+    "1",
+    "-t",
+    String(totalDur),
+    "-i",
+    glowStripPath,
+    "-filter_complex",
+    filterComplex,
+    "-map",
+    "[vout]",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "slow",
+    "-crf",
+    "14",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
   ];
   if (musicFile) args.push("-i", musicFile, "-c:a", "aac", "-b:a", "128k", "-shortest");
   args.push(outFile);
@@ -213,18 +282,70 @@ try {
   if (fs.existsSync(oldPoster)) fs.unlinkSync(oldPoster);
   const posterFrame = outFile.replace(".mp4", "-poster.png");
   // Extract poster frame from the full video
-  execFileSync(systemFFmpeg, ["-y", "-ss", String(posterTime), "-i", outFile, "-frames:v", "1", "-q:v", "2", posterFrame], { stdio: "pipe", timeout: 10000 });
+  execFileSync(
+    systemFFmpeg,
+    ["-y", "-ss", String(posterTime), "-i", outFile, "-frames:v", "1", "-q:v", "2", posterFrame],
+    { stdio: "pipe", timeout: 10000 },
+  );
   // Create a 1-frame video clip from poster
-  execFileSync(systemFFmpeg, ["-y", "-loop", "1", "-i", posterFrame, "-c:v", "libx264", "-preset", "ultrafast", "-crf", "14", "-pix_fmt", "yuv420p", "-r", String(fps), "-t", "0.033", posterClip], { stdio: "pipe", timeout: 10000 });
+  execFileSync(
+    systemFFmpeg,
+    [
+      "-y",
+      "-loop",
+      "1",
+      "-i",
+      posterFrame,
+      "-c:v",
+      "libx264",
+      "-preset",
+      "ultrafast",
+      "-crf",
+      "14",
+      "-pix_fmt",
+      "yuv420p",
+      "-r",
+      String(fps),
+      "-t",
+      "0.033",
+      posterClip,
+    ],
+    { stdio: "pipe", timeout: 10000 },
+  );
   // Concat: poster frame + original video starting from 0.3s (skip settle start)
   // First frame is poster (macOS thumbnail), video starts from mid-settle
-  execFileSync(systemFFmpeg, ["-y", "-i", posterClip, "-ss", "0.3", "-i", outFile,
-    "-filter_complex", "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
-    "-map", "[outv]", "-map", "1:a",
-    "-c:v", "libx264", "-preset", "slow", "-crf", "14",
-    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-    "-c:a", "copy",
-  posterOut], { stdio: "pipe", timeout: 30000 });
+  execFileSync(
+    systemFFmpeg,
+    [
+      "-y",
+      "-i",
+      posterClip,
+      "-ss",
+      "0.3",
+      "-i",
+      outFile,
+      "-filter_complex",
+      "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
+      "-map",
+      "[outv]",
+      "-map",
+      "1:a",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "slow",
+      "-crf",
+      "14",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "-c:a",
+      "copy",
+      posterOut,
+    ],
+    { stdio: "pipe", timeout: 30000 },
+  );
   fs.renameSync(posterOut, outFile);
   fs.unlinkSync(posterClip);
   console.log(`🖼️  海报已置为视频首帧 (${posterTime.toFixed(2)}s 帧)`);

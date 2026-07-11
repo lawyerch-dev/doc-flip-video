@@ -6,12 +6,7 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 
-import {
-  ROOT,
-  OUTPUT_DIR,
-  CONFIGS_DIR,
-  DIRNAME,
-} from "../shared.mjs";
+import { ROOT, OUTPUT_DIR, CONFIGS_DIR, DIRNAME } from "../shared.mjs";
 import { ENGINE_ENTRY } from "../../../config/paths.mjs";
 
 // ── Job store ──
@@ -44,10 +39,7 @@ export function enqueue(config) {
 
   const jobId = nextJobId();
   const issueNum = config.meta.issueNumber;
-  const configPath = path.join(
-    CONFIGS_DIR,
-    `article-${String(issueNum).padStart(3, "0")}.json`
-  );
+  const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
 
   // Persist config to disk
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -166,20 +158,13 @@ function _processNext() {
   processing = true;
   const { jobId, job } = entry;
   const issueNum = job.issueNum;
-  const configPath = path.join(
-    CONFIGS_DIR,
-    `article-${String(issueNum).padStart(3, "0")}.json`
-  );
+  const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
 
   job.status = "running";
   job.startedAt = Date.now();
   job.progress.push("[build started]");
 
-  const child = spawn(
-    "node",
-    [ENGINE_ENTRY, configPath],
-    { cwd: ROOT, timeout: 120000 }
-  );
+  const child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
 
   job.child = child;
 
@@ -206,11 +191,7 @@ function _processNext() {
       .replace(/\r/g, "")
       .replace(/\x1b\[[0-9;]*m/g, "")
       .trim();
-    if (
-      clean &&
-      !clean.match(/^(frame=|\s*\d+%|.*kb\/s)/) &&
-      clean.length > 2
-    ) {
+    if (clean && !clean.match(/^(frame=|\s*\d+%|.*kb\/s)/) && clean.length > 2) {
       job.progress.push(`[stderr] ${clean}`);
     }
   });
@@ -229,9 +210,7 @@ function _processNext() {
         job.progress.push("[build complete]");
       } else {
         job.status = "failed";
-        job.error = ready
-          ? `Exit code ${code}`
-          : `Exit code ${code} — output file not found`;
+        job.error = ready ? `Exit code ${code}` : `Exit code ${code} — output file not found`;
         job.progress.push(`[build failed: exit code ${code}]`);
       }
     }

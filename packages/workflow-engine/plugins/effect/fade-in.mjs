@@ -40,8 +40,8 @@ export default class FadeInPlugin extends Plugin {
         inputLabels: { source: inLabel },
         outputLabel: outLabel,
         filters: [
-          `color=c=${color}:s=${ctx.width}x${ctx.height}:r=${ctx.fps}:d=${duration+0.1}[wc];` +
-          `[${inLabel}][wc]xfade=easing=cubic-in-out:transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${duration}:offset=${offset}[${outLabel}]`,
+          `color=c=${color}:s=${ctx.width}x${ctx.height}:r=${ctx.fps}:d=${duration + 0.1}[wc];` +
+            `[${inLabel}][wc]xfade=easing=cubic-in-out:transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${duration}:offset=${offset}[${outLabel}]`,
         ],
         duration,
         inputs: [inputs.source],
@@ -52,9 +52,7 @@ export default class FadeInPlugin extends Plugin {
         type: "filter-chain",
         inputLabels: { source: inLabel },
         outputLabel: outLabel,
-        filters: [
-          `[${inLabel}]fade=t=in:st=0:d=${duration}:color=${color}[${outLabel}]`,
-        ],
+        filters: [`[${inLabel}]fade=t=in:st=0:d=${duration}:color=${color}[${outLabel}]`],
         duration,
         inputs: [inputs.source],
       };

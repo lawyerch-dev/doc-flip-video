@@ -4,8 +4,12 @@ import path from "path";
 import { execSync } from "child_process";
 
 // ── Catch hidden crashes ──
-process.on('uncaughtException', (e) => { console.error('[uncaughtException]', e); });
-process.on('unhandledRejection', (e) => { console.error('[unhandledRejection]', e); });
+process.on("uncaughtException", (e) => {
+  console.error("[uncaughtException]", e);
+});
+process.on("unhandledRejection", (e) => {
+  console.error("[unhandledRejection]", e);
+});
 
 import { WEB_DIR, ROOT, MIME, json, PORT, getSettings } from "./shared.mjs";
 import { register as scrapeRoutes } from "./routes/scrape.mjs";
@@ -19,16 +23,19 @@ const STUDIO_PORT = 5173;
 // ── Proxy to Studio dev server ──
 function proxyToStudio(req, res) {
   const url = req.url;
-  const proxyReq = http.request({
-    hostname: "localhost",
-    port: STUDIO_PORT,
-    path: url,
-    method: req.method,
-    headers: req.headers,
-  }, (proxyRes) => {
-    res.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(res);
-  });
+  const proxyReq = http.request(
+    {
+      hostname: "localhost",
+      port: STUDIO_PORT,
+      path: url,
+      method: req.method,
+      headers: req.headers,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    },
+  );
   proxyReq.on("error", () => {
     res.writeHead(502, { "Content-Type": "text/plain" });
     res.end("Studio 未启动，请运行: pnpm studio:flow");
@@ -128,22 +135,26 @@ function startServer(retries = 10) {
     console.log(`   POST /api/preview         — Generate preview images`);
     console.log(`   POST /api/build           — Generate video`);
     console.log(`   GET  /api/status?issue=N  — Check video status`);
-    console.log(`   AI: ${settings.aiApiKey ? settings.aiModel + ' @ ' + settings.aiBaseUrl : '\u26a0\ufe0f  \u672a\u914d\u7f6e AI\uff08\u8bf7\u5728\u8bbe\u7f6e\u4e2d\u586b\u5199\uff09'}`);
+    console.log(
+      `   AI: ${settings.aiApiKey ? settings.aiModel + " @ " + settings.aiBaseUrl : "\u26a0\ufe0f  \u672a\u914d\u7f6e AI\uff08\u8bf7\u5728\u8bbe\u7f6e\u4e2d\u586b\u5199\uff09"}`,
+    );
   });
 
-  server.once('error', (e) => {
-    if (e.code === 'EADDRINUSE') {
+  server.once("error", (e) => {
+    if (e.code === "EADDRINUSE") {
       if (retries <= 0) {
         console.error(`Port ${PORT} still busy, giving up.`);
         process.exit(1);
       }
       // Try to kill the process holding the port
-      try { execSync(`lsof -ti:${PORT} | xargs kill -9 2>/dev/null`); } catch {}
+      try {
+        execSync(`lsof -ti:${PORT} | xargs kill -9 2>/dev/null`);
+      } catch {}
       console.log(`Port ${PORT} busy, killing old process and retrying (${retries} left)...`);
       server.close();
       setTimeout(() => startServer(retries - 1), 500);
     } else {
-      console.error('Server error:', e);
+      console.error("Server error:", e);
       process.exit(1);
     }
   });

@@ -56,9 +56,7 @@ export default class PageRendererPlugin extends Plugin {
     const imgPath = path.join(imgDir, filename);
 
     if (!fs.existsSync(imgPath)) {
-      throw new Error(
-        `页面图片不存在: ${imgPath}\n请先运行 render-images.mjs 生成图片`
-      );
+      throw new Error(`页面图片不存在: ${imgPath}\n请先运行 render-images.mjs 生成图片`);
     }
 
     const label = ctx.nextLabel(page === "cover" ? "cover" : "content");

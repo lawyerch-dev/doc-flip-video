@@ -1,6 +1,17 @@
 import fs from "fs";
 import path from "path";
-import { CONFIGS_DIR, OUTPUT_DIR, TEMPLATES_DIR, json, errorResponse, parseJson, nextIssueNumber, getSettings, updateSettings, saveSettings } from "../shared.mjs";
+import {
+  CONFIGS_DIR,
+  OUTPUT_DIR,
+  TEMPLATES_DIR,
+  json,
+  errorResponse,
+  parseJson,
+  nextIssueNumber,
+  getSettings,
+  updateSettings,
+  saveSettings,
+} from "../shared.mjs";
 
 /**
  * Register project/config route handlers.
@@ -9,36 +20,40 @@ import { CONFIGS_DIR, OUTPUT_DIR, TEMPLATES_DIR, json, errorResponse, parseJson,
 export async function register(method, urlPath, req, res, params) {
   // ── GET /api/configs — list all configs with videoReady flag ──
   if (method === "GET" && urlPath === "/api/configs") {
-    const files = fs.readdirSync(CONFIGS_DIR)
-      .filter(f => f.startsWith("article-") && f.endsWith(".json"))
+    const files = fs
+      .readdirSync(CONFIGS_DIR)
+      .filter((f) => f.startsWith("article-") && f.endsWith(".json"))
       .sort()
       .reverse();
-    const configs = files.map(f => {
-      try {
-        const data = JSON.parse(fs.readFileSync(path.join(CONFIGS_DIR, f), "utf-8"));
-        const padded = String(data.meta?.issueNumber).padStart(3, "0");
-        const videoReady = fs.existsSync(path.join(OUTPUT_DIR, `法务视频-${padded}期.mp4`));
-        return {
-          issueNum: data.meta?.issueNumber,
-          headline: data.cover?.headline,
-          date: `${data.meta?.year}-${String(data.meta?.month).padStart(2, "0")}-${String(data.meta?.day).padStart(2, "0")}`,
-          filename: f,
-          videoReady,
-        };
-      } catch {
-        return null;
-      }
-    }).filter(Boolean);
+    const configs = files
+      .map((f) => {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(CONFIGS_DIR, f), "utf-8"));
+          const padded = String(data.meta?.issueNumber).padStart(3, "0");
+          const videoReady = fs.existsSync(path.join(OUTPUT_DIR, `法务视频-${padded}期.mp4`));
+          return {
+            issueNum: data.meta?.issueNumber,
+            headline: data.cover?.headline,
+            date: `${data.meta?.year}-${String(data.meta?.month).padStart(2, "0")}-${String(data.meta?.day).padStart(2, "0")}`,
+            filename: f,
+            videoReady,
+          };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
     json(res, configs);
     return true;
   }
 
   // ── GET /api/templates — list available templates ──
   if (method === "GET" && urlPath === "/api/templates") {
-    const files = fs.readdirSync(TEMPLATES_DIR)
-      .filter(f => f.endsWith(".json"))
+    const files = fs
+      .readdirSync(TEMPLATES_DIR)
+      .filter((f) => f.endsWith(".json"))
       .sort();
-    const templates = files.map(f => {
+    const templates = files.map((f) => {
       const name = f.replace(/\.json$/, "");
       const isDefault = name === "template";
       // Read description from the template's top.logo.text if available

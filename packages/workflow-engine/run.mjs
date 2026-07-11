@@ -20,19 +20,19 @@ import { BUILTIN_PLUGINS } from "./plugins/index.mjs";
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  let workflowPath = args[0] || 'data/temp/workflow-to-run.json';
+  let workflowPath = args[0] || "data/temp/workflow-to-run.json";
   let configPath = null;
   let templatePath = null;
 
   for (let i = 1; i < args.length; i++) {
-    if (args[i] === '--config' && args[i + 1]) configPath = args[++i];
-    else if (args[i] === '--template' && args[i + 1]) templatePath = args[++i];
+    if (args[i] === "--config" && args[i + 1]) configPath = args[++i];
+    else if (args[i] === "--template" && args[i + 1]) templatePath = args[++i];
   }
 
   // Resolve relative paths
-  for (const p of ['workflowPath', 'configPath', 'templatePath']) {
+  for (const p of ["workflowPath", "configPath", "templatePath"]) {
     const val = eval(p);
-    if (val && !val.startsWith('/')) {
+    if (val && !val.startsWith("/")) {
       eval(`${p} = path.join(ROOT, val)`);
     }
   }

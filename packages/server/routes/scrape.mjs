@@ -38,9 +38,17 @@ function extractArticleContent() {
   // 2. Try common content selectors
   if (!articleEl || articleEl.innerText.length < 200) {
     const sels = [
-      ".article_content", ".article-content", ".text_content",
-      "#Content", ".content", ".article", ".detail_content",
-      ".TRS_Editor", ".pages_content", "#fontzoom", "main",
+      ".article_content",
+      ".article-content",
+      ".text_content",
+      "#Content",
+      ".content",
+      ".article",
+      ".detail_content",
+      ".TRS_Editor",
+      ".pages_content",
+      "#fontzoom",
+      "main",
     ];
     for (const s of sels) {
       const el = document.querySelector(s);
@@ -94,7 +102,7 @@ async function smartScrape(url) {
   try {
     const page = await browser.newPage();
     await page.setUserAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     );
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 

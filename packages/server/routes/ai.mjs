@@ -101,7 +101,7 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，一个�
 
 ## 字数限制（超出会导致排版溢出，必须严格遵守）
 - cover.headline: ≤20字符，要有悬念或冲突感
-- cover.source: ≤25字符，格式"来源：XX（YYYY年M月D日）"
+- cover.source: ≤25字符，来源名称（如"中国法院网"）
 - content.title: ≤20字符
 - content.subtitle: ≤20字符
 - 每段正文: 30-50字符（约2行），共2段。太少则内容空洞，太多则溢出
@@ -192,6 +192,9 @@ GOOD：
   if (parsed.cover?.headlineHighlight && !parsed.cover.headline?.includes(parsed.cover.headlineHighlight)) {
     delete parsed.cover.headlineHighlight;
   }
+  // Use configured source name
+  const settings = getSettings();
+  parsed.cover.source = settings.sourceName || "中国法院网";
 
   return {
     meta: { year, month, day, issueNumber: issueNum, description: "法理明如镜，务知天下事！" },

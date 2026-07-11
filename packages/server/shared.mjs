@@ -28,6 +28,7 @@ function loadSettings() {
     port: 33011,
     defaultSource: "https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml",
     enableScoring: false,
+    sourceName: "中国法院网",
     scoringPrompt:
       "请根据以下标准为文章打分：\n- 话题热度和关注度（是否是近期热点）\n- 内容通俗程度（是否适合普通观众）\n- 实用价值（观众能否从中获得有用信息）\n- 故事性和吸引力（是否有具体案例或故事）",
   };

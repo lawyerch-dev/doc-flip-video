@@ -1513,13 +1513,6 @@ select.coze-input {
   gap: var(--space-2);
 }
 /* ── Article scoring ── */
-.article-sort-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-}
 .article-score {
   flex-shrink: 0;
   min-width: 28px;

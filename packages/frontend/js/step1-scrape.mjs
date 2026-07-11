@@ -49,10 +49,8 @@ function showArticleList(articles) {
   renderArticleList(articles, container);
   container.style.display = "";
   box.style.display = "";
-  // Score if enabled
-  _getSettings().then((s) => {
-    if (s.enableScoring) scoreArticles(articles);
-  });
+  // Score if enabled (async, non-blocking)
+  scoreArticles(articles);
 }
 
 function hideArticleList() {
@@ -180,19 +178,12 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 // ── Scoring state ──
 let _scoredArticles = null;
-let _scoringInProgress = false;
 let _sortMode = "original"; // "original" | "score"
-let _cachedSettings = null;
 
-async function _getSettings() {
-  if (!_cachedSettings) {
-    try {
-      _cachedSettings = await api("/api/settings");
-    } catch {
-      _cachedSettings = {};
-    }
-  }
-  return _cachedSettings;
+function _getSettings() {
+  return fetch("/api/settings")
+    .then((r) => r.json())
+    .catch(() => ({}));
 }
 
 export async function loadDefaultArticleList() {
@@ -215,10 +206,8 @@ export async function loadDefaultArticleList() {
       loadingEl.style.display = "none";
       listEl.style.display = "";
       boxEl.style.display = "";
-      // Score if enabled
-      if ((await _getSettings()).enableScoring && !cached.articles[0]?.score) {
-        scoreArticles(cached.articles);
-      }
+      // Score if enabled (async, non-blocking)
+      scoreArticles(cached.articles);
       // Background refresh (don't await)
       refreshArticleListCache(listEl, loadingEl);
       return;
@@ -234,10 +223,8 @@ export async function loadDefaultArticleList() {
       renderArticleList(articles, listEl);
       loadingEl.style.display = "none";
       listEl.style.display = "";
-      // Score if enabled
-      if ((await _getSettings()).enableScoring) {
-        scoreArticles(articles);
-      }
+      // Score if enabled (async, non-blocking)
+      scoreArticles(articles);
     } else {
       loadingEl.textContent = "未找到文章";
     }
@@ -265,26 +252,22 @@ function renderArticleList(articles, container) {
   container = container || document.getElementById("articleList");
   const hasScores = articles.some((a) => a.score != null);
 
-  // Sort toggle + scoring indicator
-  let html = "";
-  if (hasScores || _scoringInProgress) {
-    html += `<div class="article-sort-bar">
-      <button class="btn small ${_sortMode === "original" ? "" : "secondary"}" onclick="window._sortArticles('original')">原文顺序</button>
-      <button class="btn small ${_sortMode === "score" ? "" : "secondary"}" onclick="window._sortArticles('score')">推荐指数</button>
-      ${_scoringInProgress ? '<span style="color:var(--muted);font-size:12px;margin-left:8px"><span class="spinner" style="width:12px;height:12px;border-width:2px"></span> 评分中...</span>' : ""}
-    </div>`;
-  }
+  // Show/hide sort bar in title row
+  const sortBar = document.getElementById("sortBar");
+  if (sortBar) sortBar.style.display = hasScores ? "flex" : "none";
 
-  html += articles
+  const html = articles
     .map(
       (a, i) => `
     <div class="article-item" data-url="${escapeAttr(a.url)}">
       <div class="article-item-body">
         <span class="article-item-num">${i + 1}</span>
         <span class="article-item-title">${escapeHtml(a.title)}</span>
-        ${a.score != null ? `<span class="article-score" ${a.score >= 7 ? "data-score-high" : a.score >= 4 ? "data-score-mid" : "data-score-low"} title="${escapeAttr(a.reason || "")}">${a.score}</span>` : ""}
       </div>
-      <button class="btn small article-scrape-btn" onclick="quickScrape(this)">获取</button>
+      <div style="display: flex; align-items: center; gap: 6px">
+        ${a.score != null ? `<span class="article-score" ${a.score >= 7 ? "data-score-high" : a.score >= 4 ? "data-score-mid" : "data-score-low"} title="${escapeAttr(a.reason || "")}">${a.score}</span>` : ""}
+        <button class="btn small article-scrape-btn" onclick="quickScrape(this)">获取</button>
+      </div>
     </div>
   `,
     )
@@ -292,36 +275,56 @@ function renderArticleList(articles, container) {
   container.innerHTML = html;
 }
 
-// ── Score articles via AI ──
-async function scoreArticles(articles) {
-  if (_scoringInProgress) return;
-  _scoringInProgress = true;
-  // Re-render to show scoring indicator
-  const listEl = document.getElementById("articleList");
-  renderArticleList(articles, listEl);
+// ── Score articles via AI (batched, parallel) ──
+const SCORE_BATCH = 5;
 
-  try {
-    const result = await api("/api/score-articles", { articles });
-    _scoredArticles = result.articles;
-    // Apply sort and re-render
-    applySortAndRender();
-  } catch (e) {
-    console.error("Scoring failed:", e);
-    // Show articles without scores
-    _scoredArticles = null;
-  } finally {
-    _scoringInProgress = false;
+async function scoreArticles(articles) {
+  const settings = await _getSettings();
+  if (!settings.enableScoring || !settings.scoringPrompt) return;
+
+  _scoredArticles = articles.map((a) => ({ ...a })); // shallow copy
+  const listEl = document.getElementById("articleList");
+
+  // Split into batches and score in parallel
+  const batches = [];
+  for (let i = 0; i < articles.length; i += SCORE_BATCH) {
+    batches.push(articles.slice(i, i + SCORE_BATCH));
   }
+
+  await Promise.all(
+    batches.map(async (batch, batchIdx) => {
+      try {
+        const result = await api("/api/score-articles", { articles: batch, prompt: settings.scoringPrompt });
+        const offset = batchIdx * SCORE_BATCH;
+        for (let j = 0; j < result.articles.length; j++) {
+          _scoredArticles[offset + j] = result.articles[j];
+        }
+        // Progressive render after each batch
+        applySortAndRender(listEl);
+      } catch (e) {
+        console.error(`Scoring batch ${batchIdx} failed:`, e);
+      }
+    }),
+  );
 }
 
 // ── Sort and render ──
-function applySortAndRender() {
+function applySortAndRender(container) {
   if (!_scoredArticles) return;
   const sorted = [..._scoredArticles];
   if (_sortMode === "score") {
     sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
   }
-  renderArticleList(sorted, document.getElementById("articleList"));
+  renderArticleList(sorted, container);
+  // Update sort button styles
+  const orig = document.getElementById("sortOriginal");
+  const score = document.getElementById("sortScore");
+  if (orig) {
+    orig.className = "btn small" + (_sortMode === "original" ? "" : " secondary");
+  }
+  if (score) {
+    score.className = "btn small" + (_sortMode === "score" ? "" : " secondary");
+  }
 }
 
 window._sortArticles = function (mode) {

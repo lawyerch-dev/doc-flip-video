@@ -74,7 +74,17 @@
           <div class="step-panel active" id="panel1">
             <div class="step-content">
               <div class="card">
-                <h2><span class="num">1</span> 抓取文章</h2>
+                <div style="display: flex; align-items: center; justify-content: space-between">
+                  <h2 style="margin: 0"><span class="num">1</span> 抓取文章</h2>
+                  <div id="sortBar" style="display: none; gap: 6px; align-items: center">
+                    <button class="btn small" id="sortOriginal" onclick="window._sortArticles('original')">
+                      原文顺序
+                    </button>
+                    <button class="btn small secondary" id="sortScore" onclick="window._sortArticles('score')">
+                      推荐指数
+                    </button>
+                  </div>
+                </div>
                 <div class="url-bar">
                   <input
                     type="text"

@@ -1595,7 +1595,7 @@ select.coze-input {
   font-size: 13px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--card-bg, #fff);
+  background: var(--card);
   color: var(--text);
   cursor: pointer;
   transition: all 0.15s;
@@ -1604,18 +1604,18 @@ select.coze-input {
   line-height: 1.4;
 }
 .tag:hover {
-  border-color: var(--primary, #3b82f6);
-  background: var(--card-hover, #f0f7ff);
+  border-color: var(--accent);
+  background: var(--card-hover);
 }
 .tag.selected {
-  border-color: var(--primary, #3b82f6);
-  background: var(--primary-light, #eff6ff);
-  color: var(--primary, #3b82f6);
+  border-color: var(--accent);
+  background: var(--card-hover);
+  color: var(--accent);
   font-weight: 500;
 }
 .tag.editing {
-  border-color: var(--primary, #3b82f6);
-  background: #fff;
+  border-color: var(--accent);
+  background: var(--card);
   padding: 4px 8px;
   cursor: text;
 }

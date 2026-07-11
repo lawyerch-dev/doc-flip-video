@@ -4,6 +4,48 @@ import { api } from "./api.mjs";
 
 // ── Step 2: Edit ──
 
+// ── Regenerate single paragraph via AI ──
+window.regeneratePara = async function (idx, btn) {
+  const cfg = readForm();
+  if (!cfg) return;
+  if (btn) btn.disabled = true;
+  try {
+    const result = await api("/api/generate-options", { ...cfg, _field: "paragraphs", _paraIndex: idx });
+    const options = Array.isArray(result) && result.length ? result : [];
+    if (!options.length) return;
+    const container = document.getElementById(`paraOptions_${idx}`);
+    if (!container) return;
+    const curText = document.getElementById(`f_para_${idx}`).value;
+    const curHl = document.getElementById(`f_hl_${idx}`).value;
+    const all = [{ text: curText, highlight: curHl }, ...options];
+    const seen = new Set();
+    const deduped = all.filter((o) => {
+      if (seen.has(o.text)) return false;
+      seen.add(o.text);
+      return true;
+    });
+    container.innerHTML = "";
+    deduped.forEach((opt) => {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = opt.text.substring(0, 40) + (opt.text.length > 40 ? "..." : "");
+      tag.onclick = () => {
+        document.getElementById(`f_para_${idx}`).value = opt.text;
+        document.getElementById(`f_hl_${idx}`).value = opt.highlight || "";
+        updateCC(document.getElementById(`f_para_${idx}`), 50);
+        state.dirty = true;
+        container.querySelectorAll(".tag").forEach((t) => t.classList.remove("selected"));
+        tag.classList.add("selected");
+      };
+      container.appendChild(tag);
+    });
+  } catch (e) {
+    console.warn("Regenerate paragraph failed:", e);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
 export async function loadTemplates() {
   const sel = document.getElementById("f_template");
   if (!sel) return;
@@ -60,9 +102,11 @@ export function populateForm() {
         <span class="coze-para-num">${i + 1}</span>
         <span class="coze-para-label">段落 ${i + 1}</span>
         <span class="coze-para-limit">30-50字</span>
+        <button class="btn small secondary" onclick="window.regeneratePara(${i},this)" style="margin-left:auto;font-size:11px;padding:2px 8px">AI 重新生成</button>
       </div>
       <textarea id="f_para_${i}" class="coze-para-input" oninput="updateCC(this,50);state.dirty=true" placeholder="输入段落内容...">${p.text || ""}</textarea>
       <div class="char-count" id="cc_para_${i}"></div>
+      <div class="tag-list" id="paraOptions_${i}" style="margin-top:4px"></div>
       <div class="coze-para-tools">
         <div class="coze-para-hl-group">
           <span class="coze-para-hl-label">高亮</span>

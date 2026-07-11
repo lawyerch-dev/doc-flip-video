@@ -368,8 +368,14 @@ export async function register(method, urlPath, req, res, params) {
       systemPrompt = "生成 3 个副标题（≤20字）。只返回 JSON 数组。";
       userMsg = `标题：${title}\n当前副标题：${subtitle}\n内容：${articleText}`;
     } else if (field === "paragraphs") {
-      systemPrompt = "为每段生成 2 个替代版本（30-50字，口语化）。highlight 必须是原文片段。只返回 JSON 数组。";
-      userMsg = config.content.paragraphs.map((p, i) => `${i + 1}. ${p.text}`).join("\n");
+      const paraIdx = config._paraIndex;
+      if (paraIdx != null && config.content.paragraphs[paraIdx]) {
+        systemPrompt = "生成 2 个替代版本（30-50字，口语化）。highlight 必须是原文片段。只返回 JSON 数组。";
+        userMsg = config.content.paragraphs[paraIdx].text;
+      } else {
+        systemPrompt = "为每段生成 2 个替代版本（30-50字，口语化）。highlight 必须是原文片段。只返回 JSON 数组。";
+        userMsg = config.content.paragraphs.map((p, i) => `${i + 1}. ${p.text}`).join("\n");
+      }
     } else {
       systemPrompt = `生成优化选项。封面标题3个，内容标题3个，副标题3个，段落各2个替代版本（30-50字口语化）。highlight必须是原文片段。返回JSON：{"headlineOptions":[],"titleOptions":[],"subtitleOptions":[],"paragraphOptions":[{"options":[{"text":"","highlight":""}]}]}`;
       userMsg = `封面：${headline}\n标题：${title}\n副标题：${subtitle}\n\n段落：\n${articleText}`;

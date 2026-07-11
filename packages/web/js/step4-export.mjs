@@ -23,7 +23,7 @@ export async function doBuild() {
   buildLog.textContent = '';
   buildTimer.textContent = '';
   // Restore spinner and cancel button (may have been hidden by showNoVideo)
-  document.querySelectorAll('#buildStatus .spinner').forEach(s => s.style.display = '');
+  document.getElementById('buildSpinner').style.display = '';
   document.getElementById('cancelBuildBtn').style.display = '';
   if (buildActions) buildActions.style.display = '';
   setStatus('视频生成中...', 'working');

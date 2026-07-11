@@ -98,8 +98,7 @@ export function goStep(n) {
       document.getElementById('buildTimer').textContent = msg;
       document.getElementById('buildLog').textContent = '';
       // Hide spinner + cancel button — nothing is building
-      const spinners = document.querySelectorAll('#buildStatus .spinner');
-      spinners.forEach(s => s.style.display = 'none');
+      document.getElementById('buildSpinner').style.display = 'none';
       document.getElementById('buildActions').style.display = 'none';
       document.getElementById('cancelBuildBtn').style.display = 'none';
       document.getElementById('videoResult').style.display = 'none';

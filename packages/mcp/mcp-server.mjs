@@ -13,7 +13,7 @@ import { randomUUID } from "crypto";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "../..");
 const OUTPUT_DIR = path.join(ROOT, "data", "output");
-const TEMPLATE_PATH = path.join(ROOT, "packages", "pipeline", "templates", "default.json");
+const TEMPLATE_PATH = path.join(ROOT, "packages", "engine", "templates", "default.json");
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 

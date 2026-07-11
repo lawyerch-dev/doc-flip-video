@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { ROOT, json, parseJson } from "../shared.mjs";
-import { WORKFLOW_TEMP } from "../../config/paths.mjs";
+import { WORKFLOW_TEMP } from "../../../config/paths.mjs";
 
 export async function register(method, urlPath, req, res, params) {
   // POST /api/workflow/save — 保存工作流 JSON

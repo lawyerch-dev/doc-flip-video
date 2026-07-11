@@ -12,7 +12,7 @@ import {
   CONFIGS_DIR,
   DIRNAME,
 } from "../shared.mjs";
-import { ENGINE_ENTRY } from "../../config/paths.mjs";
+import { ENGINE_ENTRY } from "../../../config/paths.mjs";
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }

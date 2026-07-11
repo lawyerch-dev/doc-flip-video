@@ -74,7 +74,7 @@
           <div class="step-panel active" id="panel1">
             <div class="step-content">
               <div class="card">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px">
                   <h2 style="margin: 0"><span class="num">1</span> 抓取文章</h2>
                   <div id="sortBar" style="display: flex; gap: 6px; align-items: center">
                     <button class="btn small" id="sortOriginal" onclick="window._sortArticles('original')">
@@ -126,56 +126,242 @@
           <!-- Step 2: Edit -->
           <div class="step-panel" id="panel2">
             <div class="step-content">
-              <!-- Basic info bar -->
-              <div class="edit-info-bar">
-                <span>第 <span id="d_issueNum">-</span> 期</span>
-                <span id="d_date">-</span>
-                <select id="f_template" class="edit-template-select" onchange="state.dirty = true">
-                  <option value="default">🔴 红头文件</option>
-                </select>
-              </div>
-
-              <!-- Headline card (covers both cover and content title) -->
-              <div class="edit-card">
-                <div class="edit-card-header">
-                  <span class="edit-card-label">标题</span>
-                  <button class="btn small secondary" onclick="aiOptimize('headline')">AI 优化</button>
+              <div class="coze-panel">
+                <!-- Meta section -->
+                <div class="coze-section">
+                  <div class="coze-section-header">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    <span>基本信息</span>
+                  </div>
+                  <div class="coze-section-body">
+                    <div class="coze-field">
+                      <div class="coze-field-row">
+                        <div class="coze-field-group" style="flex: 0 0 140px">
+                          <label class="coze-field-label">期号</label>
+                          <input
+                            type="number"
+                            id="f_issueNum"
+                            min="1"
+                            oninput="state.dirty = true"
+                            placeholder="自动生成"
+                            class="coze-input"
+                          />
+                        </div>
+                        <div class="coze-field-group" style="flex: 1">
+                          <label class="coze-field-label">日期</label>
+                          <div class="coze-date-row">
+                            <input
+                              type="number"
+                              id="f_year"
+                              min="2020"
+                              max="2030"
+                              oninput="state.dirty = true"
+                              placeholder="年"
+                              class="coze-input"
+                            />
+                            <span class="coze-date-sep">/</span>
+                            <input
+                              type="number"
+                              id="f_month"
+                              min="1"
+                              max="12"
+                              oninput="state.dirty = true"
+                              placeholder="月"
+                              class="coze-input"
+                            />
+                            <span class="coze-date-sep">/</span>
+                            <input
+                              type="number"
+                              id="f_day"
+                              min="1"
+                              max="31"
+                              oninput="state.dirty = true"
+                              placeholder="日"
+                              class="coze-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="coze-field">
+                      <label class="coze-field-label">描述文字</label>
+                      <input
+                        type="text"
+                        id="f_description"
+                        oninput="state.dirty = true"
+                        placeholder="法理明如镜，务知天下事！"
+                        class="coze-input"
+                      />
+                    </div>
+                    <div class="coze-field">
+                      <label class="coze-field-label">模板风格</label>
+                      <select id="f_template" class="coze-input" onchange="state.dirty = true">
+                        <option value="default">🔴 红头文件（默认）</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div class="edit-card-value" id="v_headline" data-field="f_headline"></div>
-                <div class="tag-list" id="tags_headline"></div>
-                <input type="hidden" id="f_headline" />
-                <input type="hidden" id="f_title" />
-              </div>
 
-              <!-- Subtitle -->
-              <div class="edit-card">
-                <div class="edit-card-header">
-                  <span class="edit-card-label">副标题</span>
-                  <button class="btn small secondary" onclick="aiOptimize('subtitle')">AI 优化</button>
+                <!-- Cover section -->
+                <div class="coze-section">
+                  <div class="coze-section-header">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span>封面设置</span>
+                  </div>
+                  <div class="coze-section-body">
+                    <div class="coze-field">
+                      <label class="coze-field-label">标题 <span class="coze-limit">≤20字</span></label>
+                      <input
+                        type="text"
+                        id="f_headline"
+                        oninput="
+                          updateCC(this, 20);
+                          document.getElementById('f_title').value = this.value;
+                          state.dirty = true;
+                        "
+                        placeholder="吸引观众的第一句话"
+                        class="coze-input"
+                      />
+                      <div class="char-count" id="cc_headline"></div>
+                    </div>
+                    <div class="coze-field">
+                      <label class="coze-field-label">来源 <span class="coze-limit">≤25字</span></label>
+                      <input
+                        type="text"
+                        id="f_coverSource"
+                        oninput="
+                          updateCC(this, 25);
+                          state.dirty = true;
+                        "
+                        placeholder="来源：XX（日期）"
+                        class="coze-input"
+                      />
+                      <div class="char-count" id="cc_coverSource"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="edit-card-value" id="v_subtitle" data-field="f_subtitle"></div>
-                <div class="tag-list" id="tags_subtitle"></div>
-                <input type="hidden" id="f_subtitle" />
-              </div>
 
-              <!-- Paragraphs -->
-              <div id="paragraphs"></div>
-
-              <!-- Bottom source -->
-              <div class="edit-card edit-card-compact">
-                <div class="edit-card-header">
-                  <span class="edit-card-label">底部来源</span>
+                <!-- Content section -->
+                <div class="coze-section">
+                  <div class="coze-section-header">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    <span>正文编辑</span>
+                  </div>
+                  <div class="coze-section-body">
+                    <div class="coze-field-row">
+                      <div class="coze-field" style="flex: 1; display: none">
+                        <label class="coze-field-label">内容标题 <span class="coze-limit">≤20字</span></label>
+                        <input
+                          type="text"
+                          id="f_title"
+                          oninput="
+                            updateCC(this, 20);
+                            state.dirty = true;
+                          "
+                          placeholder="主标题"
+                          class="coze-input"
+                        />
+                        <div class="char-count" id="cc_title"></div>
+                      </div>
+                      <div class="coze-field" style="flex: 1">
+                        <label class="coze-field-label">副标题 <span class="coze-limit">≤20字</span></label>
+                        <input
+                          type="text"
+                          id="f_subtitle"
+                          oninput="
+                            updateCC(this, 20);
+                            state.dirty = true;
+                          "
+                          placeholder="副标题"
+                          class="coze-input"
+                        />
+                        <div class="char-count" id="cc_subtitle"></div>
+                      </div>
+                    </div>
+                    <div class="coze-field">
+                      <label class="coze-field-label">段落内容</label>
+                      <div id="paragraphs"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="edit-card-value" id="v_source" data-field="f_source"></div>
-                <input type="hidden" id="f_source" />
-              </div>
 
-              <!-- Hidden meta inputs -->
-              <input type="hidden" id="f_issueNum" />
-              <input type="hidden" id="f_year" />
-              <input type="hidden" id="f_month" />
-              <input type="hidden" id="f_day" />
-              <input type="hidden" id="f_description" />
+                <!-- Source section -->
+                <div class="coze-section">
+                  <div class="coze-section-header">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <span>来源信息</span>
+                  </div>
+                  <div class="coze-section-body">
+                    <div class="coze-field">
+                      <label class="coze-field-label">来源说明 <span class="coze-limit">≤60字</span></label>
+                      <input
+                        type="text"
+                        id="f_source"
+                        oninput="
+                          updateCC(this, 60);
+                          state.dirty = true;
+                        "
+                        placeholder="显示在正文底部"
+                        class="coze-input"
+                      />
+                      <div class="char-count" id="cc_source"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+              </div>
             </div>
             <div class="step-actions-col">
               <button
@@ -510,7 +696,7 @@
         quickScrape,
         loadDefaultArticleList,
       } from "/js/step1-scrape.mjs";
-      import { populateForm, readForm, loadTemplates, aiOptimize } from "/js/step2-edit.mjs";
+      import { populateForm, readForm, loadTemplates } from "/js/step2-edit.mjs";
       import { doPreview, switchTab, doChat, addMsg, loadExamplePreview } from "/js/step3-preview.mjs";
       import {
         doBuild,

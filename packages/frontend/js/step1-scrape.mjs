@@ -1,4 +1,4 @@
-import { api, apiStream } from './api.mjs';
+import { api } from './api.mjs';
 import { state, setStatus, goStep, toast } from './app.mjs';
 import { populateForm } from './step2-edit.mjs';
 import { loadHistory } from './history.mjs';
@@ -105,20 +105,12 @@ export async function doAiGenerate() {
   const btn = document.querySelector('#panel1Actions .btn:not(.secondary)');
   document.getElementById('aiGenSpinner').style.display = '';
   if (btn) btn.disabled = true;
-  setStatus('AI 正在生成...', 'working');
+  setStatus('AI 正在生成内容...', 'working');
   try {
-    let tokenCount = 0;
-    for await (const msg of apiStream('/api/generate-config-stream', {
+    state.config = await api('/api/generate-config', {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || '',
-    })) {
-      if (msg.type === 'token') {
-        tokenCount++;
-        if (tokenCount % 5 === 0) setStatus(`AI 正在生成... (已接收 ${tokenCount} 字)`, 'working');
-      } else if (msg.type === 'result') {
-        state.config = msg.config;
-      }
-    }
+    });
     populateForm();
     setStatus('内容已生成', 'done');
     goStep(2);
@@ -138,18 +130,10 @@ export async function doRegenerate() {
   btn.textContent = '生成中...';
   setStatus('AI 正在重新生成内容...', 'working');
   try {
-    let tokenCount = 0;
-    for await (const msg of apiStream('/api/generate-config-stream', {
+    state.config = await api('/api/generate-config', {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || '',
-    })) {
-      if (msg.type === 'token') {
-        tokenCount++;
-        if (tokenCount % 5 === 0) setStatus(`AI 重新生成中... (已接收 ${tokenCount} 字)`, 'working');
-      } else if (msg.type === 'result') {
-        state.config = msg.config;
-      }
-    }
+    });
     populateForm();
     setStatus('内容已重新生成', 'done');
     toast('内容已重新生成', 'success');

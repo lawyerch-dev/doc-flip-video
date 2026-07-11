@@ -14,7 +14,6 @@ function getClient() {
 
 export let maxRetries = 2;
 
-// ── Non-streaming (used by publish-info and other non-interactive calls) ──
 export async function aiChat(messages, temperature = 0.7) {
   const { aiModel } = getSettings();
   const client = getClient();
@@ -38,19 +37,4 @@ export async function aiChat(messages, temperature = 0.7) {
     }
   }
   throw lastErr || new Error("AI API request failed after retries");
-}
-
-// ── Streaming (used by interactive calls like generate-config, refine) ──
-export async function* aiChatStream(messages, temperature = 0.7) {
-  const { aiModel } = getSettings();
-  const client = getClient();
-
-  const stream = await client.chat.completions.create({
-    model: aiModel, messages, temperature, stream: true,
-  });
-
-  for await (const chunk of stream) {
-    const content = chunk.choices[0]?.delta?.content || "";
-    if (content) yield content;
-  }
 }

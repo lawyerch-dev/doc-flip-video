@@ -1,4 +1,4 @@
-import { api, apiStream } from './api.mjs';
+import { api } from './api.mjs';
 import { state, setStatus, goStep, toast } from './app.mjs';
 import { readForm, populateForm } from './step2-edit.mjs';
 import { loadHistory } from './history.mjs';
@@ -56,33 +56,26 @@ export async function doChat() {
   state.chatHistory.push({ role:'user', content:msg });
   if (!state.config) { addMsg('请先完成前面的步骤。', 'ai'); return; }
   setStatus('AI 处理中...', 'working');
-  const aiMsg = addMsg('', 'ai');
+  const thinkingEl = addMsg('正在思考...', 'ai thinking');
   try {
-    let full = '';
-    let refined = null;
-    for await (const evt of apiStream('/api/refine-stream', { config: state.config, message:msg, history:state.chatHistory.slice(-6) })) {
-      if (evt.type === 'token') {
-        full += evt.text;
-        aiMsg.textContent = full;
-      } else if (evt.type === 'result') {
-        refined = evt.config;
-      }
-    }
+    const refined = await api('/api/refine', { config: state.config, message:msg, history:state.chatHistory.slice(-6) });
+    thinkingEl.remove();
     if (refined && refined.cover && refined.content) {
       state.config = { ...state.config, ...refined };
       populateForm();
       state.chatHistory.push({ role:'assistant', content:'已更新' });
-      aiMsg.textContent += '\n\n✅ 已更新内容，刷新预览中...';
+      addMsg('已更新内容，正在刷新预览...', 'ai');
       state.dirty = true;
       toast('内容已更新', 'success');
       // Auto-preview
       doPreview();
     } else {
-      aiMsg.textContent = '⚠️ AI 返回的内容格式不正确，请重试或换种说法。';
+      addMsg('AI 返回的内容格式不正确，请重试或换种说法。', 'ai');
       setStatus('内容有误', 'error');
     }
   } catch(e) {
-    aiMsg.textContent = '❌ AI 出错了: '+e.message;
+    thinkingEl.remove();
+    addMsg('AI 出错了: '+e.message, 'ai');
     setStatus('AI 出错', 'error');
   }
 }

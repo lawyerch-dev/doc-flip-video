@@ -170,6 +170,8 @@ async function handlePreview(req, res) {
   }
   const issueNum = config.meta.issueNumber || nextIssueNumber();
   config.meta.issueNumber = issueNum;
+  // Resolve template before generating images — matches handleBuild behavior
+  resolveTemplate(config.meta?.template);
   const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   generateImages(configPath);
@@ -269,7 +271,7 @@ function handleStatus(params, res) {
     issueNum,
     ready: exists && !buildFailed,
     size: stat?.size || 0,
-    videoUrl: exists ? `/data/output/法务视频-${padded}期.mp4` : null,
+    videoUrl: exists ? `/data/output/${encodeURIComponent(`法务视频-${padded}期.mp4`)}` : null,
     progress,
     queueJob: queueJob
       ? {

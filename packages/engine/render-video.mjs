@@ -135,10 +135,11 @@ if (hasCustom) {
   );
 }
 
-// Overlay glow strip: moves left→right during sweep phase
-// x = -glowStripW (hidden left) → outW (hidden right), linear over sweepDur
+// Overlay glow strip: moves left→right during sweep phase with cubic-in-out easing
+// to match the wiperight xfade easing curve
 videoFilters.push(
-  `[s3][glow]overlay=x='if(between(t,${sweepOffset},${sweepOffset + sweepDur}),(t-${sweepOffset})/${sweepDur}*${outW}-${glowStripW / 2},-${glowStripW})':y=0:format=auto[s4]`,
+  `[s3][glow]overlay=x='if(between(t,${sweepOffset},${sweepOffset + sweepDur}),` +
+    `(if(lt((t-${sweepOffset})/${sweepDur},0.5),4*pow((t-${sweepOffset})/${sweepDur},3),1-pow(-2*(t-${sweepOffset})/${sweepDur}+2,3)/2))*${outW}-${glowStripW / 2},-${glowStripW})':y=0:format=auto[s4]`,
   `[s4]fade=t=out:st=${fadeOutStart}:d=${finalDur},trim=duration=${totalDur},setpts=PTS-STARTPTS[vout]`,
 );
 const filterComplex = videoFilters.join(";");
@@ -314,38 +315,37 @@ try {
   );
   // Concat: poster frame + original video starting from 0.3s (skip settle start)
   // First frame is poster (macOS thumbnail), video starts from mid-settle
-  execFileSync(
-    systemFFmpeg,
-    [
-      "-y",
-      "-i",
-      posterClip,
-      "-ss",
-      "0.3",
-      "-i",
-      outFile,
-      "-filter_complex",
-      "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
-      "-map",
-      "[outv]",
-      "-map",
-      "1:a",
-      "-c:v",
-      "libx264",
-      "-preset",
-      "slow",
-      "-crf",
-      "14",
-      "-pix_fmt",
-      "yuv420p",
-      "-movflags",
-      "+faststart",
-      "-c:a",
-      "copy",
-      posterOut,
-    ],
-    { stdio: "pipe", timeout: 30000 },
-  );
+  // Build args dynamically — only include audio mapping if video has audio
+  const concatArgs = [
+    "-y",
+    "-i",
+    posterClip,
+    "-ss",
+    "0.3",
+    "-i",
+    outFile,
+    "-filter_complex",
+    "[0:v]setpts=PTS-STARTPTS[poster];[1:v]setpts=PTS-STARTPTS+0.033/TB[video];[poster][video]concat=n=2:v=1:a=0[outv]",
+    "-map",
+    "[outv]",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "slow",
+    "-crf",
+    "14",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+  ];
+  // Only add audio mapping if music is present
+  if (musicFile) {
+    concatArgs.push("-map", "1:a", "-c:a", "copy");
+  }
+  concatArgs.push(posterOut);
+
+  execFileSync(systemFFmpeg, concatArgs, { stdio: "pipe", timeout: 30000 });
   fs.renameSync(posterOut, outFile);
   fs.unlinkSync(posterClip);
   console.log(`🖼️  海报已置为视频首帧 (${posterTime.toFixed(2)}s 帧)`);

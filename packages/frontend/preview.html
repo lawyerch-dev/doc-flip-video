@@ -378,7 +378,9 @@ void main(){vec2 pfr,pto=vec2(-1.0);float size=mix(1.0,depth,progress);float per
                 renderSweep(easeInOut(localP));
                 break;
               case "blend":
-                renderBlend(localP);
+                // Always show highlighted content at full blend (not localP 0→1)
+                // After sweep finishes on hl, hold and final must stay on hl
+                renderBlend(1);
                 break;
             }
             return;

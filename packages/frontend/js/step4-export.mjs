@@ -65,13 +65,13 @@ export async function doBuild() {
         pending = false;
       }
 
-      if (status.ready) {
+      if (status.ready && (!status.queueJob || status.queueJob.status === "done")) {
         clearInterval(timerInterval);
         const padded = String(status.issueNum || issueNum).padStart(3, "0");
         // Set videoPlayer.src — this IS the state
         const vp = document.getElementById("videoPlayer");
         vp.src = status.videoUrl;
-        vp.poster = `/data/output/法务视频-${padded}期-poster.png`;
+        vp.poster = `/data/output/${encodeURIComponent(`法务视频-${padded}期-poster.png`)}`;
         // Show video result
         document.getElementById("buildStatus").style.display = "none";
         document.getElementById("videoResult").style.display = "";
@@ -108,7 +108,7 @@ export async function cancelBuild() {
 // ── View existing video from history ──
 export async function viewVideo(issueNum) {
   const padded = String(issueNum).padStart(3, "0");
-  const videoUrl = `/data/output/法务视频-${padded}期.mp4`;
+  const videoUrl = `/data/output/${encodeURIComponent(`法务视频-${padded}期.mp4`)}`;
 
   // Load config + set scrapedData so step 1/2 gating passes
   state.scrapedData = { text: "", title: `第 ${padded} 期`, source: "", date: "" };
@@ -129,7 +129,7 @@ export async function viewVideo(issueNum) {
   // Set videoPlayer.src — goStep(4) reads this
   const vp = document.getElementById("videoPlayer");
   vp.src = videoUrl;
-  vp.poster = `/data/output/法务视频-${padded}期-poster.png`;
+  vp.poster = `/data/output/${encodeURIComponent(`法务视频-${padded}期-poster.png`)}`;
 
   goStep(4);
   setStatus(`第 ${padded} 期视频`, "done");

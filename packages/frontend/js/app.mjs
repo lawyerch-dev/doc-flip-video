@@ -129,8 +129,8 @@ export function goStep(n) {
       showVideo(document.getElementById("videoPlayer").src);
     } else if (state.config?.meta?.issueNumber) {
       const padded = String(state.config.meta.issueNumber).padStart(3, "0");
-      const videoUrl = `/data/output/法务视频-${padded}期.mp4`;
-      const posterUrl = `/data/output/法务视频-${padded}期-poster.png`;
+      const videoUrl = `/data/output/${encodeURIComponent(`法务视频-${padded}期.mp4`)}`;
+      const posterUrl = `/data/output/${encodeURIComponent(`法务视频-${padded}期-poster.png`)}`;
       fetch(videoUrl, { method: "HEAD" })
         .then((r) => {
           if (!state._autoDetectVideo) return;

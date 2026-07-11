@@ -130,7 +130,7 @@ export function readForm() {
   c.meta.template = document.getElementById("f_template").value || "default";
   c.cover.headline = document.getElementById("f_headline").value;
   c.cover.source = document.getElementById("f_coverSource").value;
-  c.content.title = c.cover.headline;
+  c.content.title = document.getElementById("f_title").value;
   c.content.subtitle = document.getElementById("f_subtitle").value;
   c.content.source = c.content.source || "";
   c.content.paragraphs = (c.content.paragraphs || []).map((_, i) => ({

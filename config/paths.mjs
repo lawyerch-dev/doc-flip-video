@@ -15,10 +15,11 @@ export const SERVER_DIR = path.join(ROOT, "packages", "server");
 export const MCP_DIR = path.join(ROOT, "packages", "mcp");
 export const WORKFLOW_ENGINE_DIR = path.join(ROOT, "packages", "workflow-engine");
 
-// ── 数据目录 ──
-export const ARTICLES_DIR = path.join(ROOT, "data", "articles");
-export const TEMP_DIR = path.join(ROOT, "data", "temp");
-export const OUTPUT_DIR = path.join(ROOT, "data", "output");
+// ── 数据目录（可通过 DATA_DIR 环境变量覆盖）──
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, "data");
+export const ARTICLES_DIR = path.join(DATA_DIR, "articles");
+export const TEMP_DIR = path.join(DATA_DIR, "temp");
+export const OUTPUT_DIR = path.join(DATA_DIR, "output");
 
 // ── 模板 ──
 export const TEMPLATES_DIR = path.join(ENGINE_DIR, "templates");

@@ -78,7 +78,7 @@ export async function doBuild() {
         document.getElementById("panel4Actions").style.display = "";
         if (buildActions) buildActions.style.display = "none";
         setStatus(`视频已完成 (${Math.round((Date.now() - startTime) / 1000)}s)`, "done");
-        populatePublishInfo();
+        regeneratePublishInfo(null);
         pending = false;
       }
     }
@@ -133,7 +133,7 @@ export async function viewVideo(issueNum) {
 
   goStep(4);
   setStatus(`第 ${padded} 期视频`, "done");
-  populatePublishInfo();
+  regeneratePublishInfo(null);
 }
 
 // ── Download ──
@@ -171,8 +171,10 @@ export async function regeneratePublishInfo(btn) {
     toast("请先加载配置", "error");
     return;
   }
-  btn.disabled = true;
-  btn.textContent = "生成中...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "生成中...";
+  }
   try {
     const padded = String(state.config.meta?.issueNumber || 0).padStart(3, "0");
     const headline = state.config.cover?.headline || "";
@@ -188,7 +190,9 @@ export async function regeneratePublishInfo(btn) {
   } catch (e) {
     toast("生成失败: " + e.message, "error");
   } finally {
-    btn.disabled = false;
-    btn.textContent = "重新生成";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "重新生成";
+    }
   }
 }

@@ -192,9 +192,9 @@ GOOD：
   if (parsed.cover?.headlineHighlight && !parsed.cover.headline?.includes(parsed.cover.headlineHighlight)) {
     delete parsed.cover.headlineHighlight;
   }
-  // Use configured source name
-  const settings = getSettings();
-  parsed.cover.source = settings.sourceName || "中国法院网";
+  // Use configured source name, strip any existing "来源：" prefix
+  const raw = settings.sourceName || "中国法院网";
+  parsed.cover.source = raw.startsWith("来源：") ? raw : `来源：${raw}`;
   if (parsed.content) parsed.content.source = parsed.cover.source;
 
   return {
@@ -327,7 +327,7 @@ export async function register(method, urlPath, req, res, params) {
       [
         {
           role: "system",
-          content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括，末尾加3个话题标签。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}`,
+          content: `你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。\n\n标题要求：20字以内，吸引眼球，有悬念或冲突感。格式示例：「法务视频第001期：孕期请假被开除？」\n\n介绍要求：100字以内，包含核心内容概括。末尾换行后加3个话题标签，标签必须基于视频内容核心关键词，禁止使用通用标签如#法律 #普法。\n\n严格输出JSON，不要输出其他内容：\n{"title":"...","desc":"..."}`,
         },
         { role: "user", content: `期号：${issueNum || "001"}\n\n视频内容：\n${articleText}` },
       ],

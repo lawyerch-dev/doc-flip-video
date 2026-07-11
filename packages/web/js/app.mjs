@@ -83,13 +83,15 @@ export function goStep(n) {
   if (n === 4) {
     state._autoDetectVideo = true;
 
-    const showVideo = (url, poster) => {
+    const showVideo = (url, poster, padded) => {
       const vp = document.getElementById('videoPlayer');
       vp.src = url;
       if (poster) vp.poster = poster;
       document.getElementById('buildStatus').style.display = 'none';
       document.getElementById('videoResult').style.display = '';
       document.getElementById('panel4Actions').style.display = '';
+      setStatus(`第 ${padded} 期视频`, 'done');
+      window.populatePublishInfo?.();
     };
 
     const showNoVideo = (msg) => {
@@ -117,8 +119,7 @@ export function goStep(n) {
           if (!state._autoDetectVideo) return;
           state._autoDetectVideo = false;
           if (r.ok) {
-            showVideo(videoUrl, posterUrl);
-            setStatus(`第 ${padded} 期视频`, 'done');
+            showVideo(videoUrl, posterUrl, padded);
           } else {
             showNoVideo('无视频文件，请重新生成');
           }

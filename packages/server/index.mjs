@@ -1,6 +1,7 @@
 import http from "http";
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 
 // ── Catch hidden crashes ──
 process.on('uncaughtException', (e) => { console.error('[uncaughtException]', e); });
@@ -111,7 +112,7 @@ const requestHandler = async (req, res) => {
   }
 };
 
-function startServer(retries = Infinity) {
+function startServer(retries = 10) {
   const server = http.createServer(requestHandler);
   server.listen(PORT, () => {
     const settings = getSettings();
@@ -132,14 +133,15 @@ function startServer(retries = Infinity) {
 
   server.once('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      if (retries !== Infinity && retries <= 0) {
-        console.error(`Port ${PORT} still busy after retries, giving up.`);
+      if (retries <= 0) {
+        console.error(`Port ${PORT} still busy, giving up.`);
         process.exit(1);
       }
-      const msg = retries === Infinity ? 'retrying...' : `retrying (${retries} left)...`;
-      console.log(`Port ${PORT} busy, ${msg}`);
+      // Try to kill the process holding the port
+      try { execSync(`lsof -ti:${PORT} | xargs kill -9 2>/dev/null`); } catch {}
+      console.log(`Port ${PORT} busy, killing old process and retrying (${retries} left)...`);
       server.close();
-      setTimeout(() => startServer(retries - 1), 1000);
+      setTimeout(() => startServer(retries - 1), 500);
     } else {
       console.error('Server error:', e);
       process.exit(1);

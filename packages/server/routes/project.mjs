@@ -145,7 +145,7 @@ export async function register(method, urlPath, req, res, params) {
 
     // Build article list for AI
     const list = articles.map((a, i) => `${i + 1}. ${a.title} | ${a.source}`).join("\n");
-    const msg = `${scoringPrompt}\n\n请为以下文章逐一打分，返回 JSON 数组，每个元素 {id, score, reason}，id 对应序号：\n${list}`;
+    const msg = `${scoringPrompt}\n\n请为以下文章逐一打分。返回 JSON 数组，每个元素 {id, score, reason}，id 对应序号，score 为 1-10 整数，reason 不超过 30 字。\n${list}`;
 
     try {
       const reply = await aiChat([{ role: "user", content: msg }], 0.3);

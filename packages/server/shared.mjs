@@ -26,6 +26,7 @@ function loadSettings() {
     defaultDescription: "法理明如镜，务知天下事！",
     coverTagline: "法务视频",
     port: 33011,
+    defaultSource: "https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml",
   };
   try {
     if (fs.existsSync(SETTINGS_PATH)) {
@@ -54,7 +55,8 @@ export function getSettings() {
 }
 
 export function updateSettings(s) {
-  _settings = s;
+  _settings = { ..._settings, ...s };
+  saveSettings(_settings);
 }
 
 const PORT = process.env.PORT || _settings.port || 33011;

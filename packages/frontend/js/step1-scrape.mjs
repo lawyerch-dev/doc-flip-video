@@ -170,11 +170,20 @@ export function loadExample() {
 
 // ── Default article list with localStorage cache ──
 
-const DEFAULT_SOURCE = "https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml";
+let DEFAULT_SOURCE = "https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml";
 const CACHE_KEY = "articleListCache";
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 export async function loadDefaultArticleList() {
+  // Read source URL from settings (server or cache)
+  try {
+    const s = await api("/api/settings");
+    if (s.defaultSource) DEFAULT_SOURCE = s.defaultSource;
+  } catch {}
+
+  // Update URL input placeholder to match current source
+  const urlInput = document.getElementById("urlInput");
+  if (urlInput) urlInput.placeholder = DEFAULT_SOURCE;
   const listEl = document.getElementById("articleList");
   const loadingEl = document.getElementById("articleListLoading");
   const boxEl = document.getElementById("articleListBox");

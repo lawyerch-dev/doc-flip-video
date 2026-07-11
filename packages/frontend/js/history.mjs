@@ -88,6 +88,7 @@ export async function loadSettingsUI() {
     document.getElementById("s_baseUrl").value = s.aiBaseUrl || "";
     document.getElementById("s_model").value = s.aiModel || "";
     document.getElementById("s_description").value = s.defaultDescription || "";
+    document.getElementById("s_defaultSource").value = s.defaultSource || "";
     if (s.aiKeyMasked) {
       document.getElementById("s_apiKey").value = s.aiKeyMasked;
       document.getElementById("s_apiKey").dataset.masked = "1";
@@ -103,6 +104,7 @@ export async function saveSettingsUI() {
     aiBaseUrl: document.getElementById("s_baseUrl").value.trim(),
     aiModel: document.getElementById("s_model").value.trim(),
     defaultDescription: document.getElementById("s_description").value.trim(),
+    defaultSource: document.getElementById("s_defaultSource").value.trim(),
   };
   const keyInput = document.getElementById("s_apiKey");
   const key = keyInput.value.trim();

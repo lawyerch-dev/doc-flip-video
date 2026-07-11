@@ -630,6 +630,16 @@
         <input type="text" id="s_description" placeholder="法理明如镜，务知天下事！" oninput="markSettingsDirty()" />
         <div class="hint">视频中显示的标语</div>
       </div>
+      <div class="settings-group">
+        <label>文章数据源</label>
+        <input
+          type="text"
+          id="s_defaultSource"
+          placeholder="https://www.chinacourt.cn/article/index/id/..."
+          oninput="markSettingsDirty()"
+        />
+        <div class="hint">文章列表页 URL，第一步自动加载</div>
+      </div>
       <div style="display: flex; align-items: center; gap: 10px">
         <button class="btn" onclick="saveSettings()">保存设置</button>
         <span id="settingsUnsaved" style="display: none; font-size: 12px; color: var(--accent); font-weight: 600"

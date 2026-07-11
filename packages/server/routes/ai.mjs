@@ -31,6 +31,7 @@ function parseAIResponse(text) {
 async function generateConfig(articleText, sourceInfo) {
   const { year, month, day } = today();
   const issueNum = nextIssueNumber();
+  const settings = getSettings();
 
   const systemPrompt = `你是一个法律短视频内容编辑专家。你的任务是从法律文章中提炼出**让普通人想停下来看**的短视频内容。
 
@@ -166,9 +167,13 @@ GOOD：
 {"text": "试用期也必须交社保！入职就该交，不交可以要求公司补缴。", "highlight": "试用期也必须交社保"}
 → 冲击感（很多人以为试用期没有），高亮是纠正认知的关键句`;
 
+  // Use contentPrompt from settings if configured
+  const _settings = getSettings();
+  const _finalPrompt = _settings.contentPrompt || systemPrompt;
+
   const result = await aiChat(
     [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: _finalPrompt },
       {
         role: "user",
         content: `请从以下文章中提炼短视频内容。\n\n要求：\n1. 先通读全文，找出最让普通人吃惊或最有用的那个点\n2. 第1段用具体场景讲故事（必须有数字），第2段给看完就能用的建议\n3. 高亮选观众会转述给别人的话，不要选法律术语\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
@@ -193,7 +198,6 @@ GOOD：
     delete parsed.cover.headlineHighlight;
   }
   // Use configured source name, strip any existing "来源：" prefix
-  const settings = getSettings();
   const raw = settings.sourceName || "中国法院网";
   parsed.cover.source = raw.startsWith("来源：") ? raw : `来源：${raw}`;
   if (parsed.content) parsed.content.source = parsed.cover.source;

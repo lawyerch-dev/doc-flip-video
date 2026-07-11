@@ -9,6 +9,28 @@ import { register as buildRoutes } from "./routes/build.mjs";
 import { register as projectRoutes } from "./routes/project.mjs";
 import { register as workflowRoutes } from "./routes/workflow.mjs";
 
+const STUDIO_PORT = 5173;
+
+// ── Proxy to Studio dev server ──
+function proxyToStudio(req, res) {
+  const url = req.url;
+  const proxyReq = http.request({
+    hostname: "localhost",
+    port: STUDIO_PORT,
+    path: url,
+    method: req.method,
+    headers: req.headers,
+  }, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+  proxyReq.on("error", () => {
+    res.writeHead(502, { "Content-Type": "text/plain" });
+    res.end("Studio 未启动，请运行: pnpm studio:flow");
+  });
+  req.pipe(proxyReq);
+}
+
 // ── Static file server ──
 function serveStatic(req, res) {
   let urlPath = req.url.split("?")[0];
@@ -71,6 +93,10 @@ const server = http.createServer(async (req, res) => {
 
   try {
     // Route dispatching — first match wins
+    if (urlPath.startsWith("/workflow")) {
+      proxyToStudio(req, res);
+      return;
+    }
     if (await scrapeRoutes(method, urlPath, req, res, params)) return;
     if (await aiRoutes(method, urlPath, req, res, params)) return;
     if (await buildRoutes(method, urlPath, req, res, params)) return;

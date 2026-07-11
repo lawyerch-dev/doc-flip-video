@@ -6,11 +6,11 @@
     "build": "node packages/pipeline/build.mjs",
     "workflow": "pnpm --filter @doc-flip/workflow-engine workflow",
     "build:wf": "node packages/pipeline/build.mjs --workflow",
-    "studio:flow": "pnpm --filter @doc-flip/studio dev",
+    "studio:flow": "pnpm --filter @doc-flip/workflow-studio dev",
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node packages/server/index.mjs",
     "studio": "node packages/server/index.mjs",
-    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; concurrently -n backend,flowgram 'nodemon --watch packages/server --watch packages/web -e mjs,html,js,css --delay 1 packages/server/index.mjs' 'pnpm --filter @doc-flip/studio dev'",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5173 | xargs kill -9 2>/dev/null; concurrently -n server,studio 'nodemon --watch packages/server --watch packages/web -e mjs,html,js,css --delay 1 packages/server/index.mjs' 'pnpm --filter @doc-flip/workflow-studio dev' & sleep 2 && open http://localhost:33011",
     "mcp": "node packages/mcp/mcp-server.mjs",
     "fonts": "bash scripts/download-fonts.sh"
   },

@@ -1,5 +1,5 @@
 {
-  "name": "@doc-flip/studio",
+  "name": "@doc-flip/workflow-studio",
   "version": "1.0.4",
   "type": "module",
   "description": "",
@@ -67,7 +67,7 @@
     "build:prod": "cross-env MODE=app NODE_ENV=production rsbuild build",
     "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
     "clean": "rimraf dist",
-    "dev": "cross-env MODE=app NODE_ENV=development rsbuild dev --open",
+    "dev": "cross-env MODE=app NODE_ENV=development rsbuild dev",
     "lint": "eslint ./src --cache",
     "lint:fix": "eslint ./src --fix",
     "ts-check": "tsc --noEmit",

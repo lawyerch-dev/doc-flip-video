@@ -9,12 +9,16 @@ export default defineConfig({
     decorators: { version: 'legacy' },
   },
   html: { title: '视频工作流编辑器' },
+  dev: {
+    assetPrefix: '/workflow/',
+  },
   server: {
     port: 5173,
+    open: false,
     proxy: {
-      '/workflows': { target: 'http://localhost:33011', changeOrigin: true },
-      '/api': { target: 'http://localhost:33011', changeOrigin: true },
-      '/data': { target: 'http://localhost:33011', changeOrigin: true },
+      '/workflow/workflows': { target: 'http://localhost:33011', changeOrigin: true },
+      '/workflow/api': { target: 'http://localhost:33011', changeOrigin: true },
+      '/workflow/data': { target: 'http://localhost:33011', changeOrigin: true },
     },
   },
   tools: {

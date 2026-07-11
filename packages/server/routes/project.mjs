@@ -53,20 +53,25 @@ export async function register(method, urlPath, req, res, params) {
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith(".json"))
       .sort();
+    const LABELS = {
+      default: "🔴 红头文件（默认）",
+      corporate: "🏢 企业商务",
+      "government-blue": "🏛️ 政务蓝",
+    };
     const templates = files.map((f) => {
       const name = f.replace(/\.json$/, "");
-      const isDefault = name === "template";
+      const isDefault = name === "default" || name === "template";
       // Read description from the template's top.logo.text if available
       try {
         const data = JSON.parse(fs.readFileSync(path.join(TEMPLATES_DIR, f), "utf-8"));
         return {
-          id: name,
-          name: isDefault ? "默认（红色头部）" : name,
+          id: isDefault ? "default" : name,
+          name: LABELS[name] || name,
           logo: data.top?.logo?.text || "",
           default: isDefault,
         };
       } catch {
-        return { id: name, name, logo: "", default: isDefault };
+        return { id: name, name: LABELS[name] || name, logo: "", default: isDefault };
       }
     });
     json(res, templates);

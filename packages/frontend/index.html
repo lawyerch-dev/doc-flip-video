@@ -272,7 +272,7 @@
               </div>
             </div>
             <div id="videoResult" style="display:none">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
                 <!-- Left: Publish info -->
                 <div>
                   <div style="margin-bottom:12px">
@@ -289,7 +289,7 @@
                       <button class="btn small secondary" onclick="copyText('publishDesc')"><i data-lucide="copy" class="icon"></i> 复制</button>
                       <button class="btn small secondary" onclick="regeneratePublishInfo(this)"><i data-lucide="refresh-cw" class="icon"></i> 重新生成</button>
                     </div>
-                    <textarea id="publishDesc" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6"></textarea>
+                    <textarea id="publishDesc" rows="8" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:none;line-height:1.6;min-height:200px"></textarea>
                   </div>
                 </div>
                 <!-- Right: Video preview -->

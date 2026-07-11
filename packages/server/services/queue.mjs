@@ -226,7 +226,7 @@ function _processNext() {
     if (job.status !== "cancelled") {
       if (code === 0 && ready) {
         job.status = "done";
-        job.videoUrl = `/output/${encodeURIComponent(videoFilename)}`;
+        job.videoUrl = `/data/output/${encodeURIComponent(videoFilename)}`;
         job.progress.push("[build complete]");
       } else {
         job.status = "failed";

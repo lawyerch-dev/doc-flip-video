@@ -293,7 +293,7 @@ function handleStatus(params, res) {
     ready: exists && !buildFailed,
     size: stat?.size || 0,
     videoUrl: exists
-      ? `/output/法务视频-${padded}期.mp4`
+      ? `/data/output/法务视频-${padded}期.mp4`
       : null,
     progress,
     queueJob: queueJob

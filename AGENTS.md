@@ -13,12 +13,12 @@ Generate flip-page animation videos from JSON configurations for legal documents
 ```
 doc-flip-video/
 ├── packages/
-│   ├── studio/           # React 可视化编辑器
-│   ├── server/           # API 服务器
+│   ├── engine/           # 视频生成核心（图片渲染 + FFmpeg 合成）
+│   ├── server/           # HTTP API + 静态文件托管
+│   ├── frontend/         # 浏览器 UI（纯静态页面）
 │   ├── workflow-engine/  # 工作流引擎
-│   ├── web/              # 旧版 Web UI
-│   ├── pipeline/         # 构建脚本
-│   └── mcp/              # MCP 服务器
+│   ├── workflow-studio/  # 可视化工作流编辑器
+│   └── mcp/              # MCP 服务（AI 编辑器集成）
 ├── vendor/
 │   ├── flowgram.ai/      # flowgram 源码（参考）
 │   └── xfade-easing/     # ffmpeg 效果库

@@ -135,36 +135,25 @@
                 </select>
               </div>
 
-              <!-- Headline card -->
+              <!-- Headline card (covers both cover and content title) -->
               <div class="edit-card">
                 <div class="edit-card-header">
-                  <span class="edit-card-label">封面标题</span>
+                  <span class="edit-card-label">标题</span>
                   <button class="btn small secondary" onclick="aiOptimize('headline')">AI 优化</button>
                 </div>
                 <div class="edit-card-value" id="v_headline" data-field="f_headline"></div>
                 <div class="tag-list" id="tags_headline"></div>
                 <input type="hidden" id="f_headline" />
+                <input type="hidden" id="f_title" />
               </div>
 
-              <!-- Source -->
-              <div class="edit-card edit-card-compact">
-                <div class="edit-card-header">
-                  <span class="edit-card-label">来源</span>
-                </div>
-                <div class="edit-card-value" id="v_coverSource" data-field="f_coverSource"></div>
-                <input type="hidden" id="f_coverSource" />
-              </div>
-
-              <!-- Title + Subtitle -->
+              <!-- Subtitle -->
               <div class="edit-card">
                 <div class="edit-card-header">
-                  <span class="edit-card-label">正文标题</span>
-                  <button class="btn small secondary" onclick="aiOptimize('all')">AI 优化全部</button>
+                  <span class="edit-card-label">副标题</span>
+                  <button class="btn small secondary" onclick="aiOptimize('subtitle')">AI 优化</button>
                 </div>
-                <div class="edit-card-value" id="v_title" data-field="f_title"></div>
-                <div class="tag-list" id="tags_title"></div>
-                <input type="hidden" id="f_title" />
-                <div class="edit-card-value edit-card-sub" id="v_subtitle" data-field="f_subtitle"></div>
+                <div class="edit-card-value" id="v_subtitle" data-field="f_subtitle"></div>
                 <div class="tag-list" id="tags_subtitle"></div>
                 <input type="hidden" id="f_subtitle" />
               </div>

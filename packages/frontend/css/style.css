@@ -1579,24 +1579,24 @@ select.coze-input {
   align-items: center;
   gap: 16px;
   padding: 10px 16px;
-  background: var(--card-bg, #f8f9fa);
+  background: var(--bg-subtle);
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 .edit-template-select {
   margin-left: auto;
   padding: 4px 8px;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
-  background: var(--bg, #fff);
+  background: var(--card);
   color: var(--text);
 }
 .edit-card {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e5e7eb);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 12px;
@@ -1612,7 +1612,7 @@ select.coze-input {
 .edit-card-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted, #999);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1627,7 +1627,7 @@ select.coze-input {
 }
 .edit-card-value:focus {
   outline: none;
-  background: var(--card-hover, #f0f7ff);
+  background: var(--card-hover);
   border-radius: 4px;
   padding: 6px 8px;
   margin: 0 -8px;
@@ -1635,8 +1635,8 @@ select.coze-input {
 .edit-card-sub {
   font-size: 14px;
   font-weight: 400;
-  color: var(--text-muted, #888);
-  border-top: 1px solid var(--border, #eee);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
   margin-top: 6px;
   padding-top: 8px;
 }

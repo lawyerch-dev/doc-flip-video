@@ -4,17 +4,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { execFileSync, execFile, execSync, spawn } from "child_process";
 import { randomUUID } from "crypto";
+import { ROOT, FRONTEND_DIR as WEB_DIR, ARTICLES_DIR as CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, TEMPLATES_DIR, TEMPLATE_PATH, SETTINGS_PATH } from "../../config/paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, "../..");
-const WEB_DIR = path.join(ROOT, "packages", "frontend");
-const CONFIGS_DIR = path.join(ROOT, "data", "articles");
-const TEMP_DIR = path.join(ROOT, "data", "temp");
-const OUTPUT_DIR = path.join(ROOT, "data", "output");
-const TEMPLATES_DIR = path.join(ROOT, "packages", "engine", "templates");
-const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
-
-const SETTINGS_PATH = path.join(ROOT, "config", "settings.json");
 
 // ── Settings: load from file, fallback to env vars ──
 function loadSettings() {

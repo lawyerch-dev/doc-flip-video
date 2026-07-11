@@ -7,7 +7,8 @@
 import { createCanvas } from "canvas";
 import fs from "fs";
 import path from "path";
-import { Plugin, ROOT, mergeParams } from "../../plugin.mjs";
+import { Plugin, mergeParams } from "../../plugin.mjs";
+import { TEMP_DIR } from "../../../../config/paths.mjs";
 
 export default class GlowStripPlugin extends Plugin {
   static meta = {
@@ -39,7 +40,7 @@ export default class GlowStripPlugin extends Plugin {
     const stripW = Math.round(W * stripWidthRatio);
 
     // 确定输出路径
-    const outDir = outputDir || path.join(ROOT, "data", "temp", "glow");
+    const outDir = outputDir || path.join(TEMP_DIR, "glow");
     fs.mkdirSync(outDir, { recursive: true });
     const outFile = path.join(outDir, "glow-strip.png");
 

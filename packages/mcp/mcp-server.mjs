@@ -6,14 +6,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { randomUUID } from "crypto";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, "../..");
-const OUTPUT_DIR = path.join(ROOT, "data", "output");
-const TEMPLATE_PATH = path.join(ROOT, "packages", "engine", "templates", "default.json");
+import { ROOT, OUTPUT_DIR, TEMPLATE_PATH, ENGINE_ENTRY } from "../../config/paths.mjs";
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
@@ -32,15 +27,15 @@ function generateVideo(content) {
 
   try {
     execFileSync("node", [
-      path.join(__dirname, "engine", "index.mjs"),
+      ENGINE_ENTRY,
       articlePath,
     ], {
-      cwd: path.join(__dirname, ".."),
+      cwd: path.join(ROOT, "packages"),
       stdio: "pipe",
       timeout: 120000,
     });
 
-    const generatedPath = path.join(__dirname, "..", "data", "output", "output.mp4");
+    const generatedPath = path.join(OUTPUT_DIR, "output.mp4");
     const outputPath = path.join(jobDir, "output.mp4");
     
     if (fs.existsSync(generatedPath)) {

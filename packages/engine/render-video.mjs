@@ -6,10 +6,7 @@ import { execFileSync, spawn } from "child_process";
 import { createCanvas } from "canvas";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, "../..");
+import { ROOT, TEMP_DIR, OUTPUT_DIR } from "../../config/paths.mjs";
 
 // ── Find FFmpeg binaries ──
 function findFFmpeg() {
@@ -51,8 +48,8 @@ const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 const tm = cfg.timing || {};
 
 const issueNum = String(cfg.meta.issueNumber).padStart(3, "0");
-const imgDir = path.join(ROOT, "data", "temp", `issue-${issueNum}`);
-const outDir = path.join(ROOT, "data", "output");
+const imgDir = path.join(TEMP_DIR, `issue-${issueNum}`);
+const outDir = OUTPUT_DIR;
 fs.mkdirSync(outDir, { recursive: true });
 const outFile = path.join(outDir, `法务视频-${issueNum}期.mp4`);
 

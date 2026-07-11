@@ -6,7 +6,8 @@
  */
 
 import path from "path";
-import { Plugin, ROOT, mergeParams } from "../../plugin.mjs";
+import { Plugin, mergeParams } from "../../plugin.mjs";
+import { OUTPUT_DIR } from "../../../../config/paths.mjs";
 
 export default class MP4OutputPlugin extends Plugin {
   static meta = {
@@ -37,7 +38,7 @@ export default class MP4OutputPlugin extends Plugin {
     const audio = inputs.audio;
 
     const issueStr = String(issueNumber).padStart(3, "0");
-    const outDir = outputDir || path.join(ROOT, "data", "output");
+    const outDir = outputDir || OUTPUT_DIR;
     const outFile =
       filename ||
       path.join(outDir, `法务视频-${issueStr}期.mp4`);

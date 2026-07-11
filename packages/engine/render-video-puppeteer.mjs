@@ -3,17 +3,15 @@ import { spawn } from "child_process";
 import http from "http";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { ROOT, TEMP_DIR, OUTPUT_DIR, ENGINE_DIR, TEMPLATE_PATH } from "../../config/paths.mjs";
 const FPS = 60;
 
 // Load template + config
-const templatePath = path.join(__dirname, 'templates', 'default.json');
+const templatePath = TEMPLATE_PATH;
 const tmpl = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
 const W = tmpl.style.width, H = tmpl.style.height;
 
-const configPath = process.argv[2] || path.join(__dirname, '..', 'article.json');
+const configPath = process.argv[2] || path.join(ENGINE_DIR, '..', 'article.json');
 const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 const tm = cfg.timing || {};
 
@@ -66,7 +64,7 @@ function startServer(dir, port) {
 
 async function main() {
   const port = 18765;
-  const srv = await startServer(path.join(__dirname, "../.."), port);
+  const srv = await startServer(ROOT, port);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -94,14 +92,14 @@ async function main() {
   await page.waitForFunction(() => window.__ready === true, { timeout: 15000 });
   console.log(`${TOTAL_FRAMES} frames (${TOTAL_SEC}s)...`);
 
-  fs.mkdirSync(path.join(__dirname, "../..", "data", "output"), { recursive: true });
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   const issueNum = String(cfg.meta.issueNumber).padStart(3, "0");
-  const outFile = path.join(__dirname, "../..", "data", "output", `法务视频-${issueNum}期.mp4`);
-  const progressPath = path.join(__dirname, "../..", "data", "temp", `issue-${issueNum}`, "progress.json");
+  const outFile = path.join(OUTPUT_DIR, `法务视频-${issueNum}期.mp4`);
+  const progressPath = path.join(TEMP_DIR, `issue-${issueNum}`, "progress.json");
   fs.mkdirSync(path.dirname(progressPath), { recursive: true });
 
   // Pick random background music
-  const musicDir = path.join(__dirname, '../..', 'assets', 'music');
+  const musicDir = path.join(ROOT, 'assets', 'music');
   const musicFiles = fs.readdirSync(musicDir).filter(f => f.match(/\.(mp3|wav|ogg|m4a)$/i));
   const musicFile = musicFiles.length > 0 ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]) : null;
   if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
@@ -169,7 +167,7 @@ async function main() {
 
   // Embed cover image as video poster
   const issueNum2 = String(cfg.meta.issueNumber).padStart(3, "0");
-  const coverPng = path.join(__dirname, '../..', 'data', 'temp', `issue-${issueNum2}`, 'cover.png');
+  const coverPng = path.join(TEMP_DIR, `issue-${issueNum2}`, 'cover.png');
   if (fs.existsSync(coverPng)) {
     const tmpOut = outFile + '.tmp.mp4';
     const posterArgs = ['-y', '-i', outFile, '-i', coverPng,

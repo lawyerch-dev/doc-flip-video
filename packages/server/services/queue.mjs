@@ -12,8 +12,7 @@ import {
   CONFIGS_DIR,
   DIRNAME,
 } from "../shared.mjs";
-
-const BUILD_SCRIPT = path.join(ROOT, "packages", "engine", "index.mjs");
+import { ENGINE_ENTRY } from "../../config/paths.mjs";
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }
@@ -178,7 +177,7 @@ function _processNext() {
 
   const child = spawn(
     "node",
-    [BUILD_SCRIPT, configPath],
+    [ENGINE_ENTRY, configPath],
     { cwd: ROOT, timeout: 120000 }
   );
 

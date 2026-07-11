@@ -14,11 +14,7 @@
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, "../..");
-
+import { ROOT, TEMP_DIR, RENDER_IMAGES_SCRIPT } from "../../config/paths.mjs";
 import { WorkflowEngine } from "./engine.mjs";
 import { BUILTIN_PLUGINS } from "./plugins/index.mjs";
 
@@ -51,11 +47,11 @@ async function main() {
   if (configPath && fs.existsSync(configPath)) {
     const article = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     const issueNum = String(article.meta?.issueNumber || 0).padStart(3, "0");
-    const imgDir = path.join(ROOT, "data", "temp", `issue-${issueNum}`);
+    const imgDir = path.join(TEMP_DIR, `issue-${issueNum}`);
     const coverPath = path.join(imgDir, "cover.png");
     if (!fs.existsSync(coverPath)) {
       console.log("─── Generating images ───");
-      const genPages = path.join(ROOT, "packages", "engine", "render-images.mjs");
+      const genPages = RENDER_IMAGES_SCRIPT;
       execFileSync("node", [genPages, configPath], { stdio: "inherit" });
     } else {
       console.log("  图片已存在，跳过渲染");

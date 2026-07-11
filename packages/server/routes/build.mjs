@@ -17,12 +17,13 @@ import {
   defaultTemplate,
   DIRNAME,
 } from "../shared.mjs";
+import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY } from "../../config/paths.mjs";
 
 import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
-  execFileSync("node", [path.join(ROOT, "packages", "engine", "render-images.mjs"), configPath], {
+  execFileSync("node", [RENDER_IMAGES_SCRIPT, configPath], {
     cwd: ROOT,
     stdio: "pipe",
     timeout: 15000,
@@ -34,7 +35,7 @@ function generateVideoAsync(configPath, issueNum) {
   return new Promise((resolve, reject) => {
     execFile(
       "node",
-      [path.join(ROOT, "packages", "engine", "index.mjs"), configPath],
+      [ENGINE_ENTRY, configPath],
       { cwd: ROOT, timeout: 120000 },
       (err, stdout, stderr) => {
         if (err) reject(new Error(stderr || err.message));
@@ -61,7 +62,7 @@ function generateVideo(content) {
   try {
     execFileSync(
       "node",
-      [path.join(ROOT, "packages", "engine", "index.mjs"), articlePath],
+      [ENGINE_ENTRY, articlePath],
       { cwd: ROOT, stdio: "pipe", timeout: 120000 }
     );
 

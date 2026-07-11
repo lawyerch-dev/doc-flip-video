@@ -8,7 +8,8 @@
 
 import fs from "fs";
 import path from "path";
-import { Plugin, ROOT, mergeParams } from "../../plugin.mjs";
+import { Plugin, mergeParams } from "../../plugin.mjs";
+import { TEMP_DIR } from "../../../../config/paths.mjs";
 
 export default class PageRendererPlugin extends Plugin {
   static meta = {
@@ -40,7 +41,7 @@ export default class PageRendererPlugin extends Plugin {
       issueNum = String(article.meta?.issueNumber || 0).padStart(3, "0");
     }
 
-    const imgDir = path.join(ROOT, "data", "temp", `issue-${issueNum}`);
+    const imgDir = path.join(TEMP_DIR, `issue-${issueNum}`);
 
     // 确定文件名
     let filename;

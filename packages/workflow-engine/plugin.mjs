@@ -5,11 +5,8 @@
  * build() 返回 filter 描述符，引擎将其编译为 FFmpeg filter_complex。
  */
 
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const ROOT = path.join(__dirname, "../..");
+import { ROOT } from "../../config/paths.mjs";
+export { ROOT };
 
 /**
  * 参数校验 & 合并默认值

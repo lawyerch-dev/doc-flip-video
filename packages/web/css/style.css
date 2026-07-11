@@ -374,14 +374,9 @@ header h1 span { -webkit-text-fill-color: inherit; }
 }
 .step-actions-col .btn,
 .step-actions-col .coze-btn { width: 100%; justify-content: center; }
-#panel3 .step-content,
-#panel4 .step-content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-#panel3 .step-content .card,
-#panel4 .step-content .card { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+#panel3 .step-content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+#panel3 .step-content .card { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 #panel3 .preview-grid { display: grid; grid-template-columns: 2fr 3fr; gap: var(--space-4); flex: 1; min-height: 0; }
-#panel4 #videoResult,
-#panel4 #buildStatus { flex: 1; min-height: 0; }
-#panel4 #videoResult { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 #panel3 .preview-col { display: flex; flex-direction: column; min-height: 0; }
 .preview-col-header {
   display: flex;
@@ -403,6 +398,7 @@ header h1 span { -webkit-text-fill-color: inherit; }
 #panel3 .anim-wrap {
   flex: 1;
   min-height: 0;
+  max-height: 420px;
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
   background: var(--bg-subtle);

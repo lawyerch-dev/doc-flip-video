@@ -32,7 +32,6 @@ export {
   NodeHeader,
   renderCanvasFace,
   renderOutputsSummary,
-  renderSidebarForm,
   buildFormMeta,
 } from './render';
 

@@ -15,7 +15,7 @@ import {
 
 import { nodeRegistries } from '../../nodes';
 import type { FlowNodeRegistry } from '../../typings';
-import { getNodeName, getNodeColor, getNodeCategory, getNodeIcon } from '../../nodes-shared';
+import { getNodeName, getNodeCategory, getNodeIcon } from '../../nodes-shared';
 
 // ─── Styles ───
 
@@ -73,9 +73,23 @@ const SearchInput = styled.input`
 `;
 
 const ScrollArea = styled.div`
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 4px 0;
+
+  /* ensure scroll works in all browsers */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--g-stroke-default, #d5d6db);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 `;
 
 const CategoryLabel = styled.div<{ $color: string }>`

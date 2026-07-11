@@ -17,7 +17,6 @@ import {
   IconChevronLeft,
   IconSave,
   IconPlayCircle,
-  IconSetting,
   IconPlus,
 } from '@douyinfe/semi-icons';
 
@@ -29,11 +28,10 @@ import { nodeRegistries, fetchDefaultWorkflow, toEngineJSON } from './nodes';
 import { initialData } from './initial-data';
 import type { FlowDocumentJSON } from './typings';
 import { useEditorProps } from './hooks';
-import { IconDownload } from './assets/icons';
 import { NodeToolbox } from './components/node-toolbox';
 import { DemoTools } from './components/tools';
 import { ToolboxContext, useToolbox } from './context';
-import { useProblemPanel } from './plugins/panel-manager-plugin/hooks';
+import { ProblemsView, ProblemsButton } from './components/problems-view';
 
 interface EditorProps {
   workflowId: string;
@@ -41,13 +39,12 @@ interface EditorProps {
 }
 
 /** Coze-style top bar — spans full width above toolbox + canvas */
-function TopBar({ onBack }: { onBack: () => void }) {
+function TopBar({ onBack, problemsVisible, onToggleProblems }: { onBack: () => void; problemsVisible: boolean; onToggleProblems: () => void }) {
   const doc = useService(WorkflowDocument);
   const tools = usePlaygroundTools();
   const [saving, setSaving] = useState(false);
   const [workflowName, setWorkflowName] = useState('未命名工作流');
   const toolbox = useToolbox();
-  const { open: openProblemPanel } = useProblemPanel();
 
   const handleSave = useCallback(() => {
     setSaving(true);
@@ -177,17 +174,6 @@ function TopBar({ onBack }: { onBack: () => void }) {
           保存
         </Button>
       </Tooltip>
-      <Tooltip content="下载配置">
-        <Button
-          size="small"
-          theme="borderless"
-          type="tertiary"
-          icon={<IconDownload size={14} color="currentColor" />}
-          style={{ fontSize: 12 }}
-        >
-          导出
-        </Button>
-      </Tooltip>
       <div
         style={{
           width: 1,
@@ -208,14 +194,7 @@ function TopBar({ onBack }: { onBack: () => void }) {
         </Button>
       </Tooltip>
       <Tooltip content="问题检查">
-        <Button
-          size="small"
-          theme="borderless"
-          type="tertiary"
-          icon={<IconSetting size="small" />}
-          onClick={openProblemPanel}
-          style={{ fontSize: 12, color: 'var(--g-fg-secondary, #666)' }}
-        />
+        <ProblemsButton onClick={onToggleProblems} />
       </Tooltip>
     </div>
   );
@@ -225,6 +204,7 @@ export const Editor = ({ workflowId, onBack }: EditorProps) => {
   const editorProps = useEditorProps(initialData, nodeRegistries);
 
   const [toolboxVisible, setToolboxVisible] = useState(true);
+  const [problemsVisible, setProblemsVisible] = useState(true);
 
   return (
     <div
@@ -248,7 +228,7 @@ export const Editor = ({ workflowId, onBack }: EditorProps) => {
                 position: 'relative',
               }}
             >
-              <TopBar onBack={onBack} />
+              <TopBar onBack={onBack} problemsVisible={problemsVisible} onToggleProblems={() => setProblemsVisible((v) => !v)} />
               <div
                 style={{
                   flex: 1,
@@ -264,6 +244,13 @@ export const Editor = ({ workflowId, onBack }: EditorProps) => {
                 <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
                   <EditorRenderer className="demo-editor" />
                 </div>
+
+                {/* Right: Problems Panel */}
+                {problemsVisible && (
+                  <div style={{ width: 320, minWidth: 320, height: '100%', padding: 8 }}>
+                    <ProblemsView />
+                  </div>
+                )}
               </div>
             </div>
           </DockedPanelLayer>

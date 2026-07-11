@@ -18,9 +18,10 @@ import { PanelType } from './constants';
 
 const nodeFormPanelFactory: PanelFactory<NodeFormPanelProps> = {
   key: PanelType.NodeFormPanel,
-  defaultSize: 500,
-  maxSize: 800,
-  minSize: 300,
+  position: 'docked-right',
+  defaultSize: 360,
+  maxSize: 520,
+  minSize: 280,
   render: (props: NodeFormPanelProps) => <NodeFormPanel {...props} />,
 };
 

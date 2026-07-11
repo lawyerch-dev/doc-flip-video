@@ -98,9 +98,7 @@ export const NodeFormPanel: React.FC<NodeFormPanelProps> = ({ nodeId }) => {
   return (
     <IsSidebarContext.Provider value={true}>
       <PlaygroundEntityContext.Provider key={node.id} value={node}>
-        <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <SidebarNodeRenderer node={node} />
-        </div>
+        <SidebarNodeRenderer node={node} />
       </PlaygroundEntityContext.Provider>
     </IsSidebarContext.Provider>
   );

@@ -1,319 +1,162 @@
-# 开发文档
-
-## 项目概述
-
-Doc Flip Video 是一个从 JSON 配置生成红头文件风格翻页动画视频的工具。项目采用 monorepo 架构，包含可视化工作流编辑器（Studio）、API 服务器、工作流引擎等模块。
+# 开发规范
 
 ## 技术栈
 
-- **前端**: React 18 + flowgram.ai + Semi UI
-- **后端**: Node.js + 原生 HTTP
-- **视频**: FFmpeg + WebGL + Puppeteer
-- **构建**: pnpm workspace + rsbuild
-- **包管理**: pnpm
+- **后端**: Node.js 原生 HTTP（无框架）
+- **前端**: 纯 HTML/CSS/JS + WebGL（无构建步骤）
+- **视频**: FFmpeg xfade + WebGL
+- **包管理**: pnpm workspace
+- **代码质量**: ESLint + Prettier + Husky
 
 ## 项目结构
 
 ```
 doc-flip-video/
-├── packages/
-│   ├── studio/           # React 可视化编辑器
-│   ├── server/           # API 服务器
-│   ├── workflow-engine/  # 工作流引擎
-│   ├── web/              # 旧版 Web UI
-│   ├── pipeline/         # 构建脚本
-│   └── mcp/              # MCP 服务器
-├── vendor/
-│   ├── flowgram.ai/      # flowgram 源码（参考）
-│   └── xfade-easing/     # ffmpeg 效果库
+├── config/
+│   ├── paths.mjs        # 集中路径配置（改目录只改这里）
+│   └── settings.json    # 应用设置（gitignored）
+├── assets/              # 字体、背景音乐、二维码
 ├── data/
-│   ├── output/           # 输出视频
-│   ├── temp/             # 临时文件
-│   └── workflows/        # 工作流定义
-├── docs/                 # 文档
-├── scripts/              # 脚本
-├── config/               # 配置
-├── build/                # 构建输出
-├── pnpm-workspace.yaml
-└── package.json
+│   ├── articles/        # 文章配置 JSON
+│   ├── temp/            # 渲染中间图片
+│   └── output/          # 最终视频
+├── packages/
+│   ├── engine/          # 视频生成核心（图片渲染 + FFmpeg 合成）
+│   ├── server/          # HTTP API + 静态文件托管
+│   ├── frontend/        # 浏览器 UI
+│   ├── workflow-engine/ # 工作流引擎
+│   ├── workflow-studio/ # 可视化工作流编辑器
+│   └── mcp/             # MCP 服务（AI 编辑器集成）
+├── eslint.config.mjs    # ESLint 配置
+├── .prettierrc          # Prettier 配置
+├── .lintstagedrc.json   # pre-commit 检查配置
+├── .prettierignore      # 格式化排除
+└── docs/
+    └── DEVELOPMENT.md
 ```
 
-## 开发环境
+## 代码质量
 
-### 环境要求
+### ESLint
 
-- Node.js ≥ 18
-- pnpm ≥ 8
-- FFmpeg
-- 中文字体
+基于 `@eslint/js` 的推荐规则，针对项目特点做了调整：
 
-### 安装依赖
+- `no-undef` — 关闭（前端跨模块全局变量通过 `window` 注入）
+- `no-unused-vars` — 关闭（现有代码较多，逐步修复）
+- `no-console` — 关闭（允许日志输出）
+- `no-empty` / `no-useless-escape` / `no-control-regex` — 关闭
+
+```bash
+npm run lint       # 检查所有包（排除 workflow-studio / vendor）
+```
+
+### Prettier
+
+```bash
+npm run format     # 格式化代码
+npm run format:check  # 检查格式（CI 用）
+```
+
+配置参数：
+
+- 分号、双引号、尾逗号
+- 每行 120 字符
+- `arrowParens: "always"`
+
+### Pre-commit 检查（Husky + lint-staged）
+
+每次 `git commit` 自动执行：
+
+| 文件类型                          | 检查                          |
+| --------------------------------- | ----------------------------- |
+| `packages/engine/**/*.{mjs,js}`   | ESLint 修复 + Prettier 格式化 |
+| `packages/server/**/*.{mjs,js}`   | ESLint 修复 + Prettier 格式化 |
+| `packages/frontend/**/*.{mjs,js}` | ESLint 修复 + Prettier 格式化 |
+| `packages/mcp/**/*.{mjs,js}`      | ESLint 修复 + Prettier 格式化 |
+| `*.json, *.css, *.html, *.md`     | Prettier 格式化               |
+
+```bash
+npm run check      # 手动运行 lint + format:check
+```
+
+**规则**：
+
+- pre-commit 检查不通过则提交失败，修复后重试
+- 用 `git commit --no-verify` 跳过检查（仅在紧急情况）
+
+## 关键约定
+
+### 路径管理
+
+所有路径集中定义在 `config/paths.mjs`，**不要**在代码中硬编码路径：
+
+```js
+// ✅ 正确
+import { OUTPUT_DIR } from "../../config/paths.mjs";
+const outFile = path.join(OUTPUT_DIR, "视频.mp4");
+
+// ❌ 错误
+const outFile = path.join(__dirname, "../..", "data", "output", "视频.mp4");
+```
+
+### 数据目录
+
+`data/` 目录可以通过 `DATA_DIR` 环境变量覆盖（用于容器化部署）：
+
+```bash
+DATA_DIR=/mnt/data npm run server
+```
+
+## 包职责
+
+| 包                | 入口             | 职责                       | 依赖                   |
+| ----------------- | ---------------- | -------------------------- | ---------------------- |
+| `engine`          | `index.mjs`      | 渲染图片 + FFmpeg 合成视频 | node-canvas, jsbarcode |
+| `server`          | `index.mjs`      | HTTP API + 静态托管        | openai                 |
+| `frontend`        | `index.html`     | 浏览器 UI（纯静态）        | 无（CDN lucide）       |
+| `workflow-engine` | `run.mjs`        | 工作流执行                 | —                      |
+| `workflow-studio` | —                | 可视化编辑器（独立）       | React, Semi UI         |
+| `mcp`             | `mcp-server.mjs` | AI 编辑器集成              | —                      |
+
+## 开发流程
+
+### 本地启动
 
 ```bash
 pnpm install
+npm run dev        # server(33011) + studio(5173)
 ```
 
-### 启动开发服务器
+### 提交
 
 ```bash
-# 同时启动 API 服务器和 Studio
-pnpm dev
-
-# 仅启动 API 服务器
-pnpm server
-
-# 仅启动 Studio
-pnpm studio:flow
+git add <files>
+git commit         # lint-staged 自动检查
+npm run check      # 提交前手动检查
+git push
 ```
 
-## 包说明
-
-### @doc-flip/studio
-
-React 可视化工作流编辑器，基于 flowgram.ai 构建。
-
-**技术栈**: React 18, TypeScript, Semi UI, styled-components
-
-**主要功能**:
-- 拖拽式工作流编辑
-- 模板节点系统
-- 实时预览
-- 导出工作流 JSON
-
-**开发命令**:
-```bash
-cd packages/studio
-npm run dev      # 开发模式
-npm run build    # 构建
-npm run lint     # 代码检查
-```
-
-### @doc-flip/server
-
-API 服务器，提供视频生成、AI 配置等功能。
-
-**技术栈**: Node.js, 原生 HTTP
-
-**主要功能**:
-- 文章抓取
-- AI 配置生成
-- 视频生成
-- 工作流管理
-
-**开发命令**:
-```bash
-cd packages/server
-node index.mjs   # 启动服务器
-```
-
-### @doc-flip/workflow-engine
-
-工作流引擎，执行视频生成流程。
-
-**技术栈**: Node.js, FFmpeg, Puppeteer
-
-**主要功能**:
-- 拓扑排序执行节点
-- 调用 FFmpeg 生成视频
-- 支持模板节点展开
-
-**开发命令**:
-```bash
-cd packages/workflow-engine
-node run.mjs                    # 运行默认工作流
-node run.mjs workflow.json      # 运行指定工作流
-```
-
-### @doc-flip/pipeline
-
-构建脚本，用于生成图片和渲染视频。
-
-**技术栈**: Node.js, Canvas, Puppeteer, WebGL
-
-**主要功能**:
-- 生成封面和正文图片
-- WebGL 渲染翻页效果
-- FFmpeg 视频编码
-
-**开发命令**:
-```bash
-cd packages/engine
-node index.mjs                  # 运行构建
-node render-video-puppeteer.mjs # 运行截图
-node render-images.mjs          # 生成页面
-```
-
-### @doc-flip/mcp
-
-MCP 服务器，用于 AI 工具集成。
-
-**技术栈**: Node.js, MCP SDK
-
-**开发命令**:
-```bash
-cd packages/mcp
-node mcp-server.mjs             # 启动 MCP 服务器
-```
-
-### @doc-flip/web
-
-旧版 Web UI（静态文件）。
-
-**技术栈**: HTML, CSS, JavaScript
-
-## 工作流系统
-
-### 概述
-
-工作流系统允许用户通过可视化编辑器设计视频生成流程。每个节点代表一个处理步骤，节点之间通过连线形成有向无环图（DAG）。
-
-### 节点类型
-
-#### 模板节点
-
-预配置的内容+效果组合，用户只需替换素材内容。
-
-| 模板 | 内容类型 | 效果 |
-|------|----------|------|
-| 文字淡入 | 文字 | 淡入 2s |
-| 文字淡出 | 文字 | 淡出 2s |
-| 文字停留 | 文字 | 停留 3s |
-| 文字高亮扫描 | 文字 | 高亮扫描 3s |
-| 图片淡入 | 图片 | 淡入 1.5s |
-| 图片停留 | 图片 | 停留 4s |
-| 图片高亮扫描 | 图片 | 高亮扫描 3s |
-| 视频淡入 | 视频 | 淡入 1.5s |
-| 视频淡出 | 视频 | 淡出 2s |
-| 音频淡入 | 音频 | 淡入 2s |
-| 音频淡出 | 音频 | 淡出 3s |
-
-#### 工具节点
-
-通用处理节点。
-
-| 节点 | 功能 |
-|------|------|
-| AI 生成 | 使用 AI 生成文字/图片 |
-| 代码执行 | 执行 JavaScript 代码 |
-| 循环 | 重复执行子流程 |
-| 条件分支 | 条件判断 |
-
-### 模板展开
-
-模板节点在执行时会被展开为标准节点：
+## 视频生成流程
 
 ```
-模板节点 → source 节点 + effect 节点
+config.json → render-images.mjs → 图片（cover/plain/hl）
+                                  ↓
+                            render-video.mjs
+                                  ↓
+                            FFmpeg xfade 合成
+                            settle → cover → curl → sweep → fade
+                            + 背景音乐 + 海报帧
+                                  ↓
+                            data/output/法务视频-NNN期.mp4
 ```
 
-例如："文字淡入" 模板会展开为：
-- `source:page-renderer` — 渲染文字为图片
-- `effect:fade-in` — 应用淡入效果
+## 环境变量
 
-### 工作流 JSON 格式
-
-```json
-{
-  "version": 1,
-  "name": "未命名工作流",
-  "variables": {
-    "width": 1080,
-    "height": 1840,
-    "fps": 30
-  },
-  "nodes": [
-    {
-      "id": "node_1",
-      "type": "template",
-      "params": {
-        "templateId": "text-fade-in",
-        "contentType": "text",
-        "content": "在此输入文字",
-        "duration": 2.0,
-        "effectJson": "{\"type\":\"fade-in\",\"duration\":2.0}"
-      },
-      "inputs": {},
-      "position": [100, 100]
-    }
-  ]
-}
-```
-
-## FFmpeg 效果
-
-项目使用 xfade-easing 库提供丰富的视频效果。
-
-### 转场效果
-
-支持 40+ 种转场效果，包括：
-- `fade` — 淡入淡出
-- `wipeleft` / `wiperight` — 左右擦除
-- `slideleft` / `slideright` — 左右滑动
-- `circleclose` / `circleopen` — 圆形关闭/打开
-- `dissolve` — 溶解
-- `pixelize` — 像素化
-
-### 缓动函数
-
-支持 10+ 种缓动函数，包括：
-- `cubic` — 三次方缓动
-- `elastic` — 弹性缓动
-- `bounce` — 弹跳缓动
-- `back` — 回退缓动
-
-## 配置
-
-### 环境变量
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AI_API_KEY` | （必填） | OpenAI 兼容 API Key |
-| `AI_BASE_URL` | `https://api.openai.com/v1` | API 基础 URL |
-| `AI_MODEL` | `deepseek-v4-flash` | 模型名称 |
-| `PORT` | `3000` | 服务器端口 |
-
-### 配置文件
-
-- `config/settings.json` — 应用配置
-- `packages/engine/templates/*.json` — 视频模板
-
-## 测试
-
-```bash
-# 运行所有测试
-pnpm test
-
-# 运行 Studio 测试
-cd packages/studio
-npm test
-```
-
-## 部署
-
-### Docker
-
-```bash
-docker-compose up -d
-```
-
-### 手动部署
-
-```bash
-# 构建
-pnpm build
-
-# 启动
-pnpm server
-```
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/xxx`)
-3. 提交更改 (`git commit -m 'Add feature xxx'`)
-4. 推送到分支 (`git push origin feature/xxx`)
-5. 创建 Pull Request
-
-## 许可证
-
-MIT
+| 变量          | 默认值                        | 说明                         |
+| ------------- | ----------------------------- | ---------------------------- |
+| `AI_API_KEY`  | —                             | OpenAI 兼容 API key          |
+| `AI_BASE_URL` | `https://api.deepseek.com/v1` | API 地址                     |
+| `AI_MODEL`    | `deepseek-v4-flash`           | 模型名                       |
+| `PORT`        | `33011`                       | 服务端口                     |
+| `DATA_DIR`    | `data/`                       | 数据目录（容器化）           |
+| `CAPTURE`     | `""`                          | `puppeteer` 时启用浏览器渲染 |

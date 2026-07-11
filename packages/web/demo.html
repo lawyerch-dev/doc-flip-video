@@ -265,27 +265,42 @@ slider.oninput = () => {
   renderAtTime(currentSec); updateUI();
 };
 
-function tick(ts) {
+function tick(ts, looping) {
   if (!playing) return;
   if (!startTime) startTime = ts;
   currentSec = (ts - startTime) / 1000;
-  if (currentSec >= TOTAL_SEC) { currentSec = TOTAL_SEC; playing = false; }
+  if (currentSec >= TOTAL_SEC) {
+    if (looping) {
+      startTime = ts;
+      currentSec = 0;
+    } else {
+      currentSec = TOTAL_SEC;
+      playing = false;
+    }
+  }
   renderAtTime(currentSec); updateUI();
-  if (playing) rafId = requestAnimationFrame(tick);
+  if (playing) rafId = requestAnimationFrame(ts2 => tick(ts2, looping));
 }
 
-function play() {
+function play(looping) {
   playing = false; if (rafId) cancelAnimationFrame(rafId);
   startTime = 0;
   currentSec = 0;
   playing = true;
-  rafId = requestAnimationFrame(tick);
+  rafId = requestAnimationFrame(ts => tick(ts, looping || false));
 }
 
-// ── Autoplay on ?autoplay=1 ──
+// ── Autoplay on ?autoplay=1 (always loops) ──
 if (params.get('autoplay')) {
-  window.addEventListener('imagesReady', () => { setTimeout(play, 300); }, { once: true });
+  window.addEventListener('imagesReady', () => { setTimeout(() => play(true), 300); }, { once: true });
 }
+
+// ── Listen for replay via postMessage ──
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'replay') {
+    play(e.data.loop !== false);
+  }
+});
 
 // ── Embed mode ──
 if (params.get('embed')) {

@@ -27,9 +27,9 @@
         </div>
         <div class="header-actions">
           <span class="ai-badge" id="aiStatus">检查中...</span>
-          <button class="theme-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i></button>
-          <a href="/workflow/" class="nav-link" target="_blank" title="Flowgram 工作流编辑器" style="color:var(--accent);text-decoration:none;font-size:13px;padding:4px 10px;border:1px solid var(--accent);border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:4px"><i data-lucide="git-branch" style="width:14px;height:14px"></i> 工作流</a>
-          <button class="gear-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i></button>
+          <a href="/workflow/" class="header-btn" target="_blank" title="工作流编辑器"><i data-lucide="git-branch"></i> 工作流</a>
+          <button class="header-btn" onclick="toggleTheme()" title="切换主题"><i data-lucide="sun-moon"></i> 主题</button>
+          <button class="header-btn" onclick="toggleSettings()" title="设置"><i data-lucide="settings"></i> 设置</button>
         </div>
       </header>
 
@@ -69,7 +69,7 @@
             <h2><span class="num">1</span> 抓取文章</h2>
             <div class="url-bar">
               <input type="text" id="urlInput" placeholder="粘贴文章链接或文章列表页链接，自动识别..." onkeydown="if(event.key==='Enter')doScrape()" />
-              <button class="btn" id="scrapeBtn" onclick="doScrape()">抓取</button>
+              <button class="btn" id="scrapeBtn" onclick="doScrape()">获取</button>
               <button class="btn secondary small" onclick="loadExample()" style="white-space:nowrap"><i data-lucide="clipboard-list" class="icon"></i> 示例</button>
             </div>
             <div class="scrape-hint">支持文章详情页（直接抓取）和列表页（展示文章列表供选择）</div>
@@ -222,7 +222,9 @@
             <div class="preview-grid">
               <!-- Left: AI Chat -->
               <div class="preview-col">
-                <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">💬 AI 助手</label>
+                <div class="preview-col-header">
+                  <span class="preview-col-title">💬 AI 助手</span>
+                </div>
                 <div class="chat-box">
                   <div class="chat-messages" id="chatMessages">
                     <div class="chat-msg ai">可以让我调整内容，比如：<br>• "标题更吸引人"<br>• "第一段太长了"<br>• "把关键词改成..."</div>
@@ -235,7 +237,11 @@
               </div>
               <!-- Right: Animation Preview -->
               <div class="preview-col">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><label style="font-size:13px;font-weight:600;color:var(--text)"><i data-lucide="play" class="icon"></i> 动画预览</label><button class="btn small secondary" onclick="loadExamplePreview()" style="font-size:11px">示例</button></div>
+                <div class="preview-col-header">
+                  <span class="preview-col-title"><i data-lucide="play" class="icon"></i> 动画预览</span>
+                  <button class="btn small secondary" onclick="loadExamplePreview()">示例</button>
+                  <button class="btn small" onclick="replayPreview()"><i data-lucide="play" class="icon"></i> 播放</button>
+                </div>
                 <div class="anim-wrap">
                   <iframe id="animFrame" src="about:blank"></iframe>
                 </div>
@@ -269,7 +275,6 @@
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
                 <!-- Left: Publish info -->
                 <div>
-                  <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="share-2" class="icon"></i> 发布信息</h3>
                   <div style="margin-bottom:12px">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                       <label style="font-size:12px;font-weight:600">视频标题</label>
@@ -356,7 +361,6 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const collapsed = sidebar.classList.toggle('collapsed');
   localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '');
-  // Swap icon
   const icon = sidebar.querySelector('.sidebar-toggle .icon');
   if (icon) {
     icon.setAttribute('data-lucide', collapsed ? 'panel-left-open' : 'panel-left-close');

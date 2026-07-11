@@ -94,7 +94,7 @@ export async function quickScrape(btn) {
     setStatus('抓取失败: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = '抓取';
+    btn.textContent = '获取';
   }
 }
 
@@ -234,7 +234,7 @@ function renderArticleList(articles, container) {
         <span class="article-item-num">${i + 1}</span>
         <span class="article-item-title">${escapeHtml(a.title)}</span>
       </div>
-      <button class="btn small article-scrape-btn" onclick="quickScrape(this)">抓取</button>
+      <button class="btn small article-scrape-btn" onclick="quickScrape(this)">获取</button>
     </div>
   `).join('');
 }

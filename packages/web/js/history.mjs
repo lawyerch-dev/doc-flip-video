@@ -158,6 +158,11 @@ export async function editConfig(issueNum) {
     const list = await api('/api/configs');
     const entry = list.find(e => e.issueNum === issueNum);
     state.scrapedData = { text: '', title: entry?.headline || '', source: '', date: entry?.date || '' };
+    state.previewImages = {
+      cover: `data/temp/issue-${padded}/cover.png`,
+      plain: `data/temp/issue-${padded}/content-plain.png`,
+      hl: `data/temp/issue-${padded}/content-hl.png`,
+    };
     populateForm();
     toast(`已加载第 ${issueNum} 期`, 'success');
     goStep(2);

@@ -55,7 +55,7 @@ async function main() {
     const coverPath = path.join(imgDir, "cover.png");
     if (!fs.existsSync(coverPath)) {
       console.log("─── Generating images ───");
-      const genPages = path.join(ROOT, "src", "pipeline", "gen-pages.mjs");
+      const genPages = path.join(ROOT, "packages", "pipeline", "gen-pages.mjs");
       execFileSync("node", [genPages, configPath], { stdio: "inherit" });
     } else {
       console.log("  图片已存在，跳过渲染");

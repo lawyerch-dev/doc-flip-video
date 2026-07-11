@@ -111,7 +111,7 @@ const requestHandler = async (req, res) => {
   }
 };
 
-function startServer(retries = 5) {
+function startServer(retries = Infinity) {
   const server = http.createServer(requestHandler);
   server.listen(PORT, () => {
     const settings = getSettings();
@@ -132,11 +132,12 @@ function startServer(retries = 5) {
 
   server.once('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      if (retries <= 0) {
+      if (retries !== Infinity && retries <= 0) {
         console.error(`Port ${PORT} still busy after retries, giving up.`);
         process.exit(1);
       }
-      console.log(`Port ${PORT} busy, retrying (${retries} left)...`);
+      const msg = retries === Infinity ? 'retrying...' : `retrying (${retries} left)...`;
+      console.log(`Port ${PORT} busy, ${msg}`);
       server.close();
       setTimeout(() => startServer(retries - 1), 1000);
     } else {

@@ -10,16 +10,34 @@ const FONTS_DIR = path.join(ASSETS, "fonts");
 fs.mkdirSync(ASSETS, { recursive: true });
 
 // Register fonts from assets/fonts directory
+// Map filenames (e.g. NotoSansSC-Regular.otf) to proper CSS family names with weights
+const FONT_FAMILY_MAP = {
+  'NotoSansSC': 'Noto Sans SC',
+  'NotoSansCJKSC': 'Noto Sans CJK SC',
+  'MaShanZheng': 'Ma Shan Zheng',
+};
+const FONT_WEIGHT_MAP = { 'Regular': 400, 'Bold': 700, 'Light': 300 };
+
 if (fs.existsSync(FONTS_DIR)) {
   const fontFiles = fs.readdirSync(FONTS_DIR);
   for (const file of fontFiles) {
-    if (file.endsWith('.ttf') || file.endsWith('.otf') || file.endsWith('.ttc')) {
-      const fontPath = path.join(FONTS_DIR, file);
-      try {
-        registerFont(fontPath, { family: file.replace(/\.(ttf|otf|ttc)$/, '').replace(/Regular|Bold|Light/, '').trim() });
-      } catch (e) {
-        // Ignore registration errors
+    if (!file.endsWith('.ttf') && !file.endsWith('.otf') && !file.endsWith('.ttc')) continue;
+    const fontPath = path.join(FONTS_DIR, file);
+    try {
+      const baseName = file.replace(/\.(ttf|otf|ttc)$/, '');
+      let familyKey = baseName;
+      let weight = 400;
+      for (const [suffix, w] of Object.entries(FONT_WEIGHT_MAP)) {
+        if (baseName.endsWith(suffix)) {
+          familyKey = baseName.slice(0, -suffix.length).trim();
+          weight = w;
+          break;
+        }
       }
+      const cssFamily = FONT_FAMILY_MAP[familyKey] || familyKey;
+      registerFont(fontPath, { family: cssFamily, weight });
+    } catch (e) {
+      // Ignore registration errors
     }
   }
 }

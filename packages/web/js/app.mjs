@@ -5,9 +5,7 @@ export const state = {
   previewImages: {},
   chatHistory: [],
   dirty: false,
-  polling: null,
   currentStep: 1,
-  currentVideoUrl: '',
 };
 
 // ── Status ──
@@ -22,11 +20,7 @@ export function toast(msg, type) {
   el.className = 'toast ' + type;
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.3s';
-    setTimeout(() => el.remove(), 300);
-  }, 3000);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
 // ── Character count ──
@@ -42,11 +36,20 @@ export function updateCC(input, limit) {
 export function isStepReady(n) {
   if (n === 1) return !!state.scrapedData;
   if (n === 2) return !!state.config;
-  if (n === 3) return !!state.previewImages.cover;
+  if (n === 3) return !!state.config;
+  if (n === 4) {
+    const vp = document.getElementById('videoPlayer');
+    return !!(vp?.src && !vp.src.includes('about:blank') && vp.src !== location.href);
+  }
   return false;
 }
 
 export function goStep(n) {
+  // Going forward: previous step must be ready
+  if (n > 1 && !isStepReady(n - 1)) {
+    return toast(`请先完成步骤 ${n - 1}`, 'error');
+  }
+
   document.querySelectorAll('.step-item').forEach(el => {
     const s = parseInt(el.dataset.step);
     el.classList.remove('active', 'done');
@@ -58,7 +61,8 @@ export function goStep(n) {
   });
   state.currentStep = n;
   window.dispatchEvent(new CustomEvent('stepchange', { detail: { step: n } }));
-  // Auto-preview when entering Step 3
+
+  // Step 3: auto-preview
   if (n === 3 && state.config) {
     setTimeout(() => {
       if (state.previewImages.cover) {
@@ -66,13 +70,21 @@ export function goStep(n) {
         if (issueNum) {
           const dir = `data/temp/issue-${String(issueNum).padStart(3,'0')}`;
           const tm = state.config.timing || {};
-          const qs = new URLSearchParams({ img: dir, w: 1080, h: 1840, settle: tm.settle||1.2, cover: tm.cover||2, curl: tm.curl||2.5, sweep: tm.sweep||2, hold: tm.hold||1, final: tm.final||2, autoplay: 1, embed: 1 });
+          const qs = new URLSearchParams({ img: dir, w: 1080, h: 1840, settle: tm.settle||1.2, cover: tm.cover||2, curl: tm.curl||2.5, sweep: tm.sweep||2, hold: tm.hold||1, final: tm.final||2, autoplay: 1, loop: 1, embed: 1 });
           document.getElementById('animFrame').src = `/demo.html?${qs}`;
         }
       } else if (typeof doPreview === 'function') {
         doPreview();
       }
     }, 100);
+  }
+
+  // Step 4: show video or build UI
+  if (n === 4) {
+    const hasVideo = isStepReady(4);
+    document.getElementById('buildStatus').style.display = hasVideo ? 'none' : '';
+    document.getElementById('videoResult').style.display = hasVideo ? '' : 'none';
+    document.getElementById('panel4Actions').style.display = hasVideo ? '' : 'none';
   }
 }
 
@@ -83,26 +95,18 @@ export function toggleTheme() {
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
-  // Update icon
-  const icon = document.querySelector('.theme-btn i');
-  if (icon) icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun-moon');
-  if (window.lucide) lucide.createIcons();
 }
 
 // ── Modal ──
 export function showModal(src) {
+  const overlay = document.getElementById('modal');
   document.getElementById('modalImg').src = src;
-  document.getElementById('modal').classList.add('show');
+  overlay.classList.add('show');
 }
 
 // ── Clipboard ──
 export function copyText(id) {
   const el = document.getElementById(id);
-  navigator.clipboard.writeText(el.value || el.textContent)
-    .then(() => toast('已复制', 'success'))
-    .catch(() => {
-      el.select();
-      document.execCommand('copy');
-      toast('已复制', 'success');
-    });
+  if (!el) return;
+  navigator.clipboard.writeText(el.value || el.textContent).then(() => toast('已复制', 'success'));
 }

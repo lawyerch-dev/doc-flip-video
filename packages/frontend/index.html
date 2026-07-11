@@ -642,26 +642,6 @@
           </label>
           <div class="hint">开启后文章列表显示推荐分数，支持按分数排序</div>
         </div>
-        <div class="settings-group">
-          <label>评分提示词</label>
-          <textarea
-            id="s_scoringPrompt"
-            rows="5"
-            oninput="markSettingsDirty()"
-            style="width: 100%; font-size: 13px; font-family: monospace"
-          ></textarea>
-          <div class="hint">AI 评分依据，只需写评分要求，返回格式已固定</div>
-        </div>
-        <div class="settings-group">
-          <label>标题生成提示词</label>
-          <textarea
-            id="s_headlinePrompt"
-            rows="3"
-            oninput="markSettingsDirty()"
-            style="width: 100%; font-size: 13px; font-family: monospace"
-          ></textarea>
-          <div class="hint">AI 生成标题的依据，只需写要求，返回格式已固定</div>
-        </div>
       </div>
       <!-- end basic tab -->
       <div id="settingsTabPrompts" style="display: none">
@@ -684,6 +664,26 @@
             style="width: 100%; font-size: 13px; font-family: monospace"
           ></textarea>
           <div class="hint">AI 生成视频标题和介绍的提示词</div>
+        </div>
+        <div class="settings-group">
+          <label>标题生成提示词</label>
+          <textarea
+            id="s_headlinePrompt"
+            rows="3"
+            oninput="markSettingsDirty()"
+            style="width: 100%; font-size: 13px; font-family: monospace"
+          ></textarea>
+          <div class="hint">AI 生成标题的依据，只需写要求，返回格式已固定</div>
+        </div>
+        <div class="settings-group">
+          <label>评分提示词</label>
+          <textarea
+            id="s_scoringPrompt"
+            rows="5"
+            oninput="markSettingsDirty()"
+            style="width: 100%; font-size: 13px; font-family: monospace"
+          ></textarea>
+          <div class="hint">AI 评分依据，只需写评分要求，返回格式已固定</div>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px">

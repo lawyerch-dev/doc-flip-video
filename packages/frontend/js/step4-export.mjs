@@ -82,6 +82,8 @@ export async function doBuild() {
         if (buildActions) buildActions.style.display = "none";
         setStatus(`视频已完成 (${Math.round((Date.now() - startTime) / 1000)}s)`, "done");
         populatePublishInfo();
+        // Refresh sidebar — build saves config to server
+        import("./history.mjs").then((m) => m.loadHistory());
         pending = false;
       }
     }

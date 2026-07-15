@@ -35,6 +35,8 @@ export async function doPreview() {
     document.getElementById("animFrame").src = `/preview.html?${qs}`;
     state.dirty = false;
     setStatus("预览已生成", "done");
+    // Refresh sidebar — preview already saved config to server
+    import("./history.mjs").then((m) => m.loadHistory());
   } catch (e) {
     setStatus("预览失败: " + e.message, "error");
   }

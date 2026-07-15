@@ -810,7 +810,6 @@
           state.config = readForm();
           if (!state.config) return toast("请先完成内容生成", "error");
           try {
-            // Include original scraped text so AI can regenerate later
             const payload = { ...state.config };
             if (state.scrapedData?.text) payload._scraped = state.scrapedData;
             const r = await api("/api/save", payload);
@@ -822,6 +821,21 @@
             toast("保存失败: " + e.message, "error");
             setStatus("保存失败", "error");
           }
+        },
+        // Auto-save: saves current form state to server + refreshes sidebar
+        autoSave: async (silent) => {
+          if (!state.config) return;
+          const cfg = readForm();
+          if (!cfg) return;
+          state.config = cfg;
+          try {
+            const payload = { ...cfg };
+            if (state.scrapedData?.text) payload._scraped = state.scrapedData;
+            const r = await api("/api/save", payload);
+            state.config.meta.issueNumber = r.issueNum;
+            loadHistory();
+            if (!silent) toast(`已自动保存为第 ${r.issueNum} 期`, "success");
+          } catch {}
         },
         doChatKey: (e) => {
           if (e.key === "Enter" && !e.shiftKey) {

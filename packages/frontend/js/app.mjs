@@ -65,9 +65,14 @@ export function goStep(n) {
   state.currentStep = n;
   window.dispatchEvent(new CustomEvent("stepchange", { detail: { step: n } }));
 
-  // Step 3: auto-preview (always regenerate fresh from current form)
-  if (n === 3 && state.config && typeof doPreview === "function") {
-    setTimeout(() => doPreview(), 100);
+  // Auto-save when entering step 2 (after AI generation) or leaving it
+  if (n === 2 && state.config) {
+    setTimeout(() => window.autoSave?.(true), 500);
+  }
+  if (n === 3 && state.config) {
+    setTimeout(() => window.autoSave?.(true), 50);
+    // Then trigger preview
+    if (typeof doPreview === "function") setTimeout(() => doPreview(), 300);
   }
 
   // Step 4: show video or build UI

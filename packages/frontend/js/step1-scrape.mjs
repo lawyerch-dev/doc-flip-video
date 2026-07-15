@@ -171,10 +171,11 @@ export async function doAiGenerate() {
       state.config.cover.headline = state.scrapedData.title;
     }
     populateForm();
-    // Fetch AI headline options and publish info in parallel
     fetchHeadlineOptions();
     fetchPublishInfo();
     setStatus("内容已生成", "done");
+    // Auto-save so project appears in sidebar immediately
+    window.autoSave?.(true);
     goStep(2);
   } catch (e) {
     setStatus("AI 生成失败: " + e.message, "error");
@@ -204,6 +205,7 @@ export async function doRegenerate() {
     fetchPublishInfo();
     setStatus("内容已重新生成", "done");
     toast("内容已重新生成", "success");
+    window.autoSave?.(true);
   } catch (e) {
     setStatus("重新生成失败: " + e.message, "error");
   } finally {

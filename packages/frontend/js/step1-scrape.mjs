@@ -3,6 +3,17 @@ import { state, setStatus, goStep, toast, updateCC } from "./app.mjs";
 import { populateForm } from "./step2-edit.mjs";
 import { loadHistory } from "./history.mjs";
 
+// Strip common site-name suffixes from scraped article titles
+function cleanTitle(title) {
+  if (!title) return title;
+  return title
+    .replace(
+      /[\s\-—_·]+(中国法院网|人民法院报|央视网|新华网|人民网|澎湃新闻|新浪|搜狐|网易|腾讯|头条|百家号|凤凰网|法治网|光明网|央广网|中国青年网|中国经济网|中国新闻网)[\s\-—_·]*$/i,
+      "",
+    )
+    .trim();
+}
+
 // ── Core scrape: calls unified /api/scrape, auto-handles article vs list ──
 
 export async function doScrape(url) {
@@ -64,6 +75,8 @@ function hideScrapedBox() {
 }
 
 function showScrapedResult(data) {
+  // Strip site-name suffixes from scraped title (e.g. "标题 - 中国法院网" → "标题")
+  data.title = cleanTitle(data.title);
   state.scrapedData = data;
   document.getElementById("scrapedTitle").textContent = data.title || "(无标题)";
   document.getElementById("scrapedText").value = data.text || "";
@@ -165,10 +178,10 @@ export async function doAiGenerate() {
       text: state.scrapedData.text,
       sourceInfo: state.scrapedData.source || state.scrapedData.date || "",
     });
-    // Keep AI headline as suggestion, default to scraped title
+    // Keep AI headline as suggestion, default to scraped title (cleaned of site suffix)
     state._aiHeadline = state.config.cover.headline;
     if (state.scrapedData.title) {
-      state.config.cover.headline = state.scrapedData.title;
+      state.config.cover.headline = cleanTitle(state.scrapedData.title);
     }
     populateForm();
     fetchHeadlineOptions();
@@ -198,7 +211,7 @@ export async function doRegenerate() {
       sourceInfo: state.scrapedData.source || state.scrapedData.date || "",
     });
     if (state.scrapedData.title) {
-      state.config.cover.headline = state.scrapedData.title;
+      state.config.cover.headline = cleanTitle(state.scrapedData.title);
     }
     populateForm();
     fetchHeadlineOptions();

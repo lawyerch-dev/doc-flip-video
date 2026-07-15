@@ -1,7 +1,6 @@
 node_modules/
 data/output/
 data/temp/
-/data/articles/article-9*.json
 config/settings.json
 
 gl-transitions/

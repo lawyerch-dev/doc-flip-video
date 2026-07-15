@@ -100,6 +100,27 @@ export async function quickScrape(btn) {
   }
 }
 
+// ── Fetch AI publish info (title + desc with hashtags) ──
+async function fetchPublishInfo() {
+  try {
+    const cfg = state.config;
+    if (!cfg) return;
+    const padded = String(cfg.meta?.issueNumber || 0).padStart(3, "0");
+    const headline = cfg.cover?.headline || "";
+    const paras = (cfg.content?.paragraphs || []).map((p) => p.text).filter(Boolean);
+    const source = cfg.content?.source || "";
+    const result = await api("/api/generate-publish-info", {
+      articleText: `${headline}\n${paras.join("\n")}\n${source}`,
+      issueNum: padded,
+    });
+    if (result && state.config === cfg) {
+      state.config._publish = result;
+    }
+  } catch (e) {
+    console.warn("Publish info generation failed:", e);
+  }
+}
+
 // ── Fetch AI headline options as tags ──
 async function fetchHeadlineOptions() {
   try {
@@ -150,8 +171,9 @@ export async function doAiGenerate() {
       state.config.cover.headline = state.scrapedData.title;
     }
     populateForm();
-    // Fetch AI headline options as tags
+    // Fetch AI headline options and publish info in parallel
     fetchHeadlineOptions();
+    fetchPublishInfo();
     setStatus("内容已生成", "done");
     goStep(2);
   } catch (e) {
@@ -179,6 +201,7 @@ export async function doRegenerate() {
     }
     populateForm();
     fetchHeadlineOptions();
+    fetchPublishInfo();
     setStatus("内容已重新生成", "done");
     toast("内容已重新生成", "success");
   } catch (e) {

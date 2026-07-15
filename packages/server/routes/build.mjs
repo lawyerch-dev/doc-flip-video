@@ -168,10 +168,20 @@ async function handleGenerate(req, res) {
 }
 
 async function handlePreview(req, res) {
-  const config = await parseJson(req);
+  const body = await parseJson(req);
+  // Separate config from scrapedData, preserve _scraped in saved file
+  const { _scraped, ...config } = body;
   if (!config.meta) {
     errorResponse(res, "Invalid config", 400);
     return true;
+  }
+  if (_scraped?.text) config._scraped = _scraped;
+  // Validate highlights are actual substrings of paragraph text
+  if (config.content?.paragraphs) {
+    config.content.paragraphs = config.content.paragraphs.map((p) => ({
+      ...p,
+      highlight: p.highlight && p.text?.includes(p.highlight) ? p.highlight : undefined,
+    }));
   }
   const issueNum = config.meta.issueNumber || nextIssueNumber();
   config.meta.issueNumber = issueNum;

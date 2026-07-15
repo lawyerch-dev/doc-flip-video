@@ -114,15 +114,19 @@ export async function register(method, urlPath, req, res, params) {
     return true;
   }
 
-  // ── POST /api/save — save config to file ──
+  // ── POST /api/save — save config + scraped data to file ──
   if (method === "POST" && urlPath === "/api/save") {
-    const config = await parseJson(req);
+    const body = await parseJson(req);
+    // Separate config from scrapedData
+    const { _scraped, ...config } = body;
     if (!config.meta) {
       errorResponse(res, "Invalid config", 400);
       return true;
     }
     const issueNum = config.meta.issueNumber || nextIssueNumber();
     config.meta.issueNumber = issueNum;
+    // Embed scraped data into saved config so it survives reload
+    if (_scraped?.text) config._scraped = _scraped;
     const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     json(res, { issueNum, path: configPath });

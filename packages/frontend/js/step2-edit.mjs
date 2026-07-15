@@ -2,6 +2,28 @@ import { state, setStatus } from "./app.mjs";
 import { updateCC } from "./app.mjs";
 import { api } from "./api.mjs";
 
+// ── Auto-generate highlight when paragraph text changes ──
+const _hlTimers = {};
+window.autoHighlight = function (idx) {
+  clearTimeout(_hlTimers[idx]);
+  _hlTimers[idx] = setTimeout(async () => {
+    const textarea = document.getElementById(`f_para_${idx}`);
+    const hlInput = document.getElementById(`f_hl_${idx}`);
+    if (!textarea || !hlInput) return;
+    const text = textarea.value.trim();
+    if (!text || text.length < 10) return;
+    try {
+      const result = await api("/api/generate-highlight", { text });
+      if (result?.highlight && text.includes(result.highlight)) {
+        hlInput.value = result.highlight;
+        state.dirty = true;
+      }
+    } catch (e) {
+      // silently ignore — user can still manually set highlight
+    }
+  }, 1500);
+};
+
 // ── Step 2: Edit ──
 
 // ── Regenerate single paragraph via AI ──
@@ -32,7 +54,7 @@ window.regeneratePara = async function (idx, btn) {
       tag.onclick = () => {
         document.getElementById(`f_para_${idx}`).value = opt.text;
         document.getElementById(`f_hl_${idx}`).value = opt.highlight || "";
-        updateCC(document.getElementById(`f_para_${idx}`), 50);
+        updateCC(document.getElementById(`f_para_${idx}`), 80);
         state.dirty = true;
         container.querySelectorAll(".tag").forEach((t) => t.classList.remove("selected"));
         tag.classList.add("selected");
@@ -101,10 +123,10 @@ export function populateForm() {
     d.innerHTML = `<div class="coze-para-header">
         <span class="coze-para-num">${i + 1}</span>
         <span class="coze-para-label">段落 ${i + 1}</span>
-        <span class="coze-para-limit">30-50字</span>
+        <span class="coze-para-limit">50-80字</span>
         <button class="btn small secondary" onclick="window.regeneratePara(${i},this)" style="margin-left:auto;font-size:11px;padding:2px 8px">AI 重新生成</button>
       </div>
-      <textarea id="f_para_${i}" class="coze-para-input" oninput="updateCC(this,50);state.dirty=true" placeholder="输入段落内容...">${p.text || ""}</textarea>
+      <textarea id="f_para_${i}" class="coze-para-input" oninput="updateCC(this,80);state.dirty=true;autoHighlight(${i})" placeholder="输入段落内容...">${p.text || ""}</textarea>
       <div class="char-count" id="cc_para_${i}"></div>
       <div class="tag-list" id="paraOptions_${i}" style="margin-top:4px"></div>
       <div class="coze-para-tools">
@@ -114,7 +136,11 @@ export function populateForm() {
         </div>
       </div>`;
     c.appendChild(d);
-    updateCC(document.getElementById(`f_para_${i}`), 50);
+    updateCC(document.getElementById(`f_para_${i}`), 80);
+    // Auto-generate highlight for paragraphs missing one
+    if (p.text && p.text.length >= 10 && !p.highlight) {
+      setTimeout(() => autoHighlight(i), 500 + i * 1500);
+    }
   });
 }
 
@@ -133,9 +159,13 @@ export function readForm() {
   c.content.title = document.getElementById("f_title").value;
   c.content.subtitle = document.getElementById("f_subtitle").value;
   c.content.source = c.content.source || "";
-  c.content.paragraphs = (c.content.paragraphs || []).map((_, i) => ({
-    text: document.getElementById(`f_para_${i}`)?.value || "",
-    highlight: document.getElementById(`f_hl_${i}`)?.value || undefined,
-  }));
+  c.content.paragraphs = (c.content.paragraphs || []).map((_, i) => {
+    const text = document.getElementById(`f_para_${i}`)?.value || "";
+    const hl = document.getElementById(`f_hl_${i}`)?.value || "";
+    return {
+      text,
+      highlight: hl && text.includes(hl) ? hl : undefined,
+    };
+  });
   return c;
 }

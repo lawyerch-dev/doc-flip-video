@@ -37,7 +37,10 @@ export async function doBuild() {
   }, 1000);
 
   try {
-    const { jobId, issueNum } = await api("/api/build", state.config);
+    // Include original article text so server can save it
+    const payload = { ...state.config };
+    if (state.scrapedData?.text) payload._scraped = state.scrapedData;
+    const { jobId, issueNum } = await api("/api/build", payload);
     currentJobId = jobId;
     buildLog.textContent += `任务已提交 (第 ${issueNum} 期)\n`;
     state.config.meta.issueNumber = issueNum;
@@ -78,7 +81,7 @@ export async function doBuild() {
         document.getElementById("panel4Actions").style.display = "";
         if (buildActions) buildActions.style.display = "none";
         setStatus(`视频已完成 (${Math.round((Date.now() - startTime) / 1000)}s)`, "done");
-        regeneratePublishInfo(null);
+        populatePublishInfo();
         pending = false;
       }
     }
@@ -115,7 +118,11 @@ export async function viewVideo(issueNum) {
   try {
     const resp = await fetch(`/data/articles/article-${padded}.json`);
     if (resp.ok && (resp.headers.get("content-type") || "").includes("json")) {
-      state.config = await resp.json();
+      const cfg = await resp.json();
+      // Restore original article text from saved _scraped metadata
+      if (cfg._scraped?.text) state.scrapedData = cfg._scraped;
+      delete cfg._scraped;
+      state.config = cfg;
       populateForm();
     }
   } catch {}
@@ -158,12 +165,26 @@ export function populatePublishInfo() {
   if (!state.config) return;
   const padded = String(state.config.meta?.issueNumber || 0).padStart(3, "0");
   const headline = state.config.cover?.headline || "";
-  const title = `法务视频第${padded}期：${headline}`;
-  const paras = (state.config.content?.paragraphs || []).map((p) => p.text).filter(Boolean);
-  const source = state.config.content?.source || "";
-  document.getElementById("publishTitle").value = title;
-  document.getElementById("publishDesc").value =
-    `${headline}\n\n${paras.join("\n\n")}${source ? "\n\n" + source : ""}\n\n#法律 #普法 #法务视频`;
+
+  // Use AI-generated publish info if available (generated in Step 2)
+  const pub = state.config._publish;
+  // Default title uses cover headline (consistent with Step 2)
+  document.getElementById("publishTitle").value = `法务视频第${padded}期：${headline}`;
+  const pubDesc = pub?.desc;
+  if (pubDesc) {
+    let desc = pubDesc;
+    const tagIdx = desc.indexOf("#");
+    if (tagIdx > 0) {
+      const before = desc.substring(0, tagIdx).replace(/\n+$/, "");
+      desc = before + "\n\n" + desc.substring(tagIdx);
+    }
+    document.getElementById("publishDesc").value = desc;
+  } else {
+    const paras = (state.config.content?.paragraphs || []).map((p) => p.text).filter(Boolean);
+    const source = state.config.content?.source || "";
+    document.getElementById("publishDesc").value =
+      `${headline}\n\n${paras.join("\n\n")}${source ? "\n\n" + source : ""}`;
+  }
 }
 
 export async function regeneratePublishInfo(btn) {

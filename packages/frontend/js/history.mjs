@@ -22,6 +22,7 @@ export function saveToHistory(config) {
     headline: config.cover?.headline || "",
     date: `${config.meta.year}-${String(config.meta.month).padStart(2, "0")}-${String(config.meta.day).padStart(2, "0")}`,
     config: config,
+    scrapedData: state.scrapedData,
     timestamp: Date.now(),
   };
   const idx = list.findIndex((e) => e.issueNum === entry.issueNum);
@@ -35,7 +36,8 @@ export function loadFromHistory(issueNum) {
   const entry = list.find((e) => e.issueNum === issueNum);
   if (entry) {
     state.config = entry.config;
-    state.scrapedData = { text: "", title: entry.headline, source: "", date: entry.date };
+    // Restore original article text (if saved)
+    state.scrapedData = entry.scrapedData || { text: "", title: entry.headline, source: "", date: entry.date };
     populateForm();
     toast(`已加载第 ${issueNum} 期`, "success");
     goStep(2);
@@ -94,6 +96,7 @@ export async function loadSettingsUI() {
     const s = await api("/api/settings");
     document.getElementById("s_baseUrl").value = s.aiBaseUrl || "";
     document.getElementById("s_model").value = s.aiModel || "";
+    document.getElementById("s_temperature").value = s.aiTemperature ?? 0.3;
     document.getElementById("s_description").value = s.defaultDescription || "";
     document.getElementById("s_defaultSource").value = s.defaultSource || "";
     document.getElementById("s_enableScoring").checked = !!s.enableScoring;
@@ -117,6 +120,7 @@ export async function saveSettingsUI() {
   const up = {
     aiBaseUrl: document.getElementById("s_baseUrl").value.trim(),
     aiModel: document.getElementById("s_model").value.trim(),
+    aiTemperature: parseFloat(document.getElementById("s_temperature").value) || 0.3,
     defaultDescription: document.getElementById("s_description").value.trim(),
     defaultSource: document.getElementById("s_defaultSource").value.trim(),
     enableScoring: document.getElementById("s_enableScoring").checked,
@@ -204,10 +208,11 @@ export async function editConfig(issueNum) {
     if (!resp.ok) throw new Error(`配置文件不存在 (HTTP ${resp.status})`);
     const contentType = resp.headers.get("content-type") || "";
     if (!contentType.includes("json")) throw new Error("配置文件不存在，返回了非 JSON 内容");
-    state.config = await resp.json();
-    const list = await api("/api/configs");
-    const entry = list.find((e) => e.issueNum === issueNum);
-    state.scrapedData = { text: "", title: entry?.headline || "", source: "", date: entry?.date || "" };
+    const cfg = await resp.json();
+    // Extract original article text from saved _scraped metadata
+    state.scrapedData = cfg._scraped || { text: "", title: cfg.cover?.headline || "", source: "", date: "" };
+    delete cfg._scraped;
+    state.config = cfg;
     state.previewImages = {
       cover: `data/temp/issue-${padded}/cover.png`,
       plain: `data/temp/issue-${padded}/content-plain.png`,

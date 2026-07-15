@@ -9,7 +9,10 @@ export async function doPreview() {
   if (!state.config) return setStatus("没有可预览的内容", "error");
   setStatus("正在生成预览...", "working");
   try {
-    const r = await api("/api/preview", state.config);
+    // Include original scraped text so server saves it for future use
+    const payload = { ...state.config };
+    if (state.scrapedData?.text) payload._scraped = state.scrapedData;
+    const r = await api("/api/preview", payload);
     state.previewImages = r.images;
     state.config.meta.issueNumber = r.issueNum;
     const dir = `data/temp/issue-${String(r.issueNum).padStart(3, "0")}`;

@@ -433,7 +433,9 @@
                   <div class="preview-col">
                     <div class="preview-col-header">
                       <span class="preview-col-title"><i data-lucide="play" class="icon"></i> 动画预览</span>
-                      <button class="btn small secondary" onclick="loadExamplePreview()">示例</button>
+                      <button class="btn small secondary" onclick="doPreview()">
+                        <i data-lucide="refresh-cw" class="icon" style="width: 12px; height: 12px"></i> 重新生成
+                      </button>
                       <button class="btn small" onclick="replayPreview()">
                         <i data-lucide="play" class="icon"></i> 播放
                       </button>
@@ -447,6 +449,9 @@
             </div>
             <div class="step-actions-col">
               <button class="btn secondary" onclick="goStep(2)">← 返回编辑</button>
+              <button class="btn secondary" onclick="doPreview()">
+                <i data-lucide="refresh-cw" class="icon"></i> 重新生成
+              </button>
               <button class="btn green" onclick="doBuild()"><i data-lucide="video" class="icon"></i> 生成视频 →</button>
             </div>
           </div>
@@ -620,6 +625,20 @@
           <input type="text" id="s_model" placeholder="deepseek-v4-flash" oninput="markSettingsDirty()" />
         </div>
         <div class="settings-group">
+          <label>AI 生成温度</label>
+          <input
+            type="number"
+            id="s_temperature"
+            min="0"
+            max="2"
+            step="0.05"
+            value="0.3"
+            oninput="markSettingsDirty()"
+            style="width: 100px"
+          />
+          <div class="hint">0=精确稳定，1=有创意，2=随机。生成高亮建议 0.3 以下</div>
+        </div>
+        <div class="settings-group">
           <label>描述文字</label>
           <input type="text" id="s_description" placeholder="法理明如镜，务知天下事！" oninput="markSettingsDirty()" />
           <div class="hint">视频中显示的标语</div>
@@ -791,7 +810,10 @@
           state.config = readForm();
           if (!state.config) return toast("请先完成内容生成", "error");
           try {
-            const r = await api("/api/save", state.config);
+            // Include original scraped text so AI can regenerate later
+            const payload = { ...state.config };
+            if (state.scrapedData?.text) payload._scraped = state.scrapedData;
+            const r = await api("/api/save", payload);
             state.config.meta.issueNumber = r.issueNum;
             toast(`已保存为第 ${r.issueNum} 期`, "success");
             setStatus(`已保存为第 ${r.issueNum} 期`, "done");

@@ -1,19 +1,14 @@
 node_modules/
 data/output/
 data/temp/
+/data/articles/article-9*.json
 config/settings.json
-
 
 gl-transitions/
 build/
 
-# 开发日志内部版（不公开）
-dev_docs/articles/internal/
-dev_docs/.drafts/
-gl-transitions/
+# 开发日志（不公开）
+dev_docs/
 
 # 学习资料（大型外部仓库，不纳入版本控制）
 vendor/flowgram.ai/
-
-dev_docs
-

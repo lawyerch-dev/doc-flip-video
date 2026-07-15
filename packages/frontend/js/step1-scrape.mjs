@@ -3,15 +3,13 @@ import { state, setStatus, goStep, toast, updateCC } from "./app.mjs";
 import { populateForm } from "./step2-edit.mjs";
 import { loadHistory } from "./history.mjs";
 
-// Strip common site-name suffixes from scraped article titles
+// Strip site-name suffixes: "标题 - 中国法院网" → "标题"
+// Matches any 2-8 Chinese chars + 网/报/台/新闻 etc.
+const SITE_SUFFIX_RE =
+  /[\s\-—_·]+[\u4e00-\u9fff]{2,8}(?:网|报|台|新闻|资讯|频道|平台|发布|杂志|周刊|日报|晚报|快报|客户端)\s*$/i;
 function cleanTitle(title) {
   if (!title) return title;
-  return title
-    .replace(
-      /[\s\-—_·]+(中国法院网|人民法院报|央视网|新华网|人民网|澎湃新闻|新浪|搜狐|网易|腾讯|头条|百家号|凤凰网|法治网|光明网|央广网|中国青年网|中国经济网|中国新闻网)[\s\-—_·]*$/i,
-      "",
-    )
-    .trim();
+  return title.replace(SITE_SUFFIX_RE, "").trim();
 }
 
 // ── Core scrape: calls unified /api/scrape, auto-handles article vs list ──

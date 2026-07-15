@@ -126,6 +126,8 @@ async function fetchPublishInfo() {
     });
     if (result && state.config === cfg) {
       state.config._publish = result;
+      // Save _publish to disk so it survives page reload
+      window.autoSave?.(true);
     }
   } catch (e) {
     console.warn("Publish info generation failed:", e);

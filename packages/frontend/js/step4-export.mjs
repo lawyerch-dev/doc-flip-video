@@ -170,7 +170,8 @@ export function populatePublishInfo() {
   const pub = state.config._publish;
   // Default title uses cover headline (consistent with Step 2)
   document.getElementById("publishTitle").value = `法务视频第${padded}期：${headline}`;
-  const pubDesc = pub?.desc;
+  // _publish.description 兼容旧数据（schema 归一化之前的存档）
+  const pubDesc = pub?.desc || pub?.description;
   if (pubDesc) {
     let desc = pubDesc;
     const tagIdx = desc.indexOf("#");

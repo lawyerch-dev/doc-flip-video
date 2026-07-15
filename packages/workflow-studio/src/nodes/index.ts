@@ -12,8 +12,8 @@ export { WorkflowNodeType } from './constants';
 
 export { VideoNodeType } from '../nodes-video/constants';
 export { BUILTIN_PLUGINS, type PluginManifest } from '../nodes-video/plugin-manifest';
-export { fromEngineJSON, toEngineJSON, toWorkflowV2JSON, fetchDefaultWorkflow } from '../nodes-video';
-export type { EngineWorkflowJSON, EngineNodeJSON, WorkflowV2JSON } from '../nodes-video';
+export { toWorkflowJSON, fetchDefaultWorkflow } from '../nodes-video';
+export type { WorkflowJSON } from '../nodes-video';
 
 /** 合并所有节点注册（视频 + 通用节点） */
 export const nodeRegistries: import('../typings').FlowNodeRegistry[] = [

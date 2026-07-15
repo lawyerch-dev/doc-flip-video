@@ -7,7 +7,7 @@
 import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "fs";
 import path from "path";
-import { ROOT, TEMP_DIR, FRONTEND_ASSETS } from "../../../config/paths.mjs";
+import { ROOT, TEMP_DIR, FRONTEND_ASSETS } from "../../config/paths.mjs";
 
 const FONTS_DIR = path.join(FRONTEND_ASSETS, "fonts");
 

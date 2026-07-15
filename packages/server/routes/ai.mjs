@@ -1,30 +1,67 @@
 import { getSettings, json, errorResponse, parseJson, nextIssueNumber, today } from "../shared.mjs";
 import { aiChat } from "../services/ai.mjs";
 
-// ── SSE helper ──
-async function handleSSE(req, res, callback) {
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-    "Access-Control-Allow-Origin": "*",
-  });
-  try {
-    await callback((data) => {
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
-    });
-  } catch (e) {
-    res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
-  }
-  res.write("data: [DONE]\n\n");
-  res.end();
-}
-
 // ── Parse JSON from AI response ──
+// Handles markdown fences, thinking/reasoning tags, and properly skips
+// string-embedded braces when recovering the outermost valid JSON.
 function parseAIResponse(text) {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("AI did not return valid JSON");
-  return JSON.parse(match[0]);
+  if (!text || !text.trim()) throw new Error("AI 返回为空");
+
+  // Strip markdown code fences
+  let cleaned = text.replace(/```(?:json)?\s*\n?/gi, "").replace(/```/g, "");
+  // Strip common thinking/reasoning/chain-of-thought tags (they often contain {})
+  cleaned = cleaned.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "");
+  cleaned = cleaned.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, "");
+  cleaned = cleaned.replace(/\`*\*\*?\s*Thinking[\s\S]*?\*\*?\`*/gi, "");
+  cleaned = cleaned.trim();
+
+  // Find the first '{' or '[' that starts a JSON value
+  const startIdx = cleaned.search(/[\[\{]/);
+  if (startIdx === -1) {
+    console.error("[parseAIResponse] No JSON start in response:", text.slice(0, 500));
+    throw new Error("模型未返回有效格式，请重试");
+  }
+
+  // Walk with brace/racket counting, skipping strings
+  let depth = 0;
+  const isArray = cleaned[startIdx] === "[";
+  const open = isArray ? "[" : "{";
+  const close = isArray ? "]" : "}";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = startIdx; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\" && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === open) depth++;
+    if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        const json = cleaned.slice(startIdx, i + 1);
+        try {
+          return JSON.parse(json);
+        } catch (e) {
+          console.error("[parseAIResponse] JSON parse failed:", e.message, "| excerpt:", json.slice(0, 300));
+          throw new Error("模型返回的格式有误，请重试", { cause: e });
+        }
+      }
+    }
+  }
+
+  console.error("[parseAIResponse] Unbalanced braces in response:", text.slice(0, 500));
+  throw new Error("模型返回的格式不完整，请重试");
 }
 
 // ── AI: Generate article config from scraped content ──
@@ -109,7 +146,7 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，一个�
 - content.source: ≤60字符
 
 ## 输出格式
-严格输出JSON，不要输出其他内容：
+严格按照 JSON 格式输出，不要输出其他内容：
 {
   "cover": { "headline": "...", "source": "..." },
   "content": {
@@ -171,36 +208,69 @@ GOOD：
   const _settings = getSettings();
   const _finalPrompt = _settings.contentPrompt || systemPrompt;
 
-  const result = await aiChat(
-    [
+  async function doGenerate(repairMsg) {
+    const msgs = [
       { role: "system", content: _finalPrompt },
+      ...(repairMsg ? [{ role: "user", content: repairMsg }] : []),
       {
         role: "user",
-        content: `请从以下文章中提炼短视频内容。\n\n要求：\n1. 先通读全文，找出最让普通人吃惊或最有用的那个点\n2. 第1段用具体场景讲故事（必须有数字），第2段给看完就能用的建议\n3. 高亮选观众会转述给别人的话，不要选法律术语\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
+        content: repairMsg
+          ? `请严格按照上述 schema 重新输出。文章全文：\n${articleText}`
+          : `请从以下文章中提炼短视频内容。\n\n要求：\n1. 先通读全文，找出最让普通人吃惊或最有用的那个点\n2. 第1段用具体场景讲故事（必须有数字），第2段给看完就能用的建议\n3. 高亮选观众会转述给别人的话，不要选法律术语\n\n来源信息：${sourceInfo}\n\n文章全文：\n${articleText}`,
       },
-    ],
-    0.5,
-  );
+    ];
+    return parseAIResponse(await aiChat(msgs, 0.5, true));
+  }
 
-  const jsonMatch = result.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("AI did not return valid JSON");
-  const parsed = JSON.parse(jsonMatch[0]);
+  let parsed = await doGenerate();
 
-  if (parsed.content?.paragraphs) {
-    for (const para of parsed.content.paragraphs) {
-      if (para.highlight && !para.text.includes(para.highlight)) {
-        console.warn(`⚠ Highlight "${para.highlight}" not found in text, stripping.`);
-        delete para.highlight;
-      }
+  // Validate required structure — auto-repair once if schema wrong
+  const check = (p) => {
+    const missing = [];
+    if (!p.cover?.headline) missing.push("cover.headline");
+    if (!p.content?.title) missing.push("content.title");
+    if (!p.content?.subtitle) missing.push("content.subtitle");
+    if (!p.content?.paragraphs || p.content.paragraphs.length < 2) missing.push("content.paragraphs (至少2段)");
+    if (p.content?.paragraphs?.some((pp) => typeof pp?.text !== "string" || !pp.text.trim()))
+      missing.push("paragraphs[].text (存在空段落)");
+    return missing;
+  };
+
+  let missing = check(parsed);
+  if (missing.length) {
+    console.warn("[generateConfig] Repair attempt — missing:", missing);
+    const repair = await doGenerate(
+      `你上次输出缺少以下必要字段：${missing.join("、")}。请严格按系统提示中的 schema 重写完整 JSON，必须包含 cover.headline、content.title、content.subtitle 以及 content.paragraphs（至少2段，每段 text 非空）。`,
+    );
+    missing = check(repair);
+    if (!missing.length) {
+      parsed = repair;
+    } else {
+      console.error(
+        "[generateConfig] Repair failed — still missing:",
+        missing,
+        "|",
+        JSON.stringify(repair).slice(0, 500),
+      );
+      throw new Error(`模型未返回完整配置，缺少：${missing.join("、")}，请重试`);
+    }
+  }
+
+  // Strip highlights not found in their paragraph text
+  for (const para of parsed.content.paragraphs) {
+    if (para.highlight && !para.text.includes(para.highlight)) {
+      console.warn(`⚠ Highlight "${para.highlight}" not found in text, stripping.`);
+      delete para.highlight;
     }
   }
   if (parsed.cover?.headlineHighlight && !parsed.cover.headline?.includes(parsed.cover.headlineHighlight)) {
     delete parsed.cover.headlineHighlight;
   }
-  // Use configured source name, strip any existing "来源：" prefix
+
+  // Apply configured source name
   const raw = settings.sourceName || "中国法院网";
   parsed.cover.source = raw.startsWith("来源：") ? raw : `来源：${raw}`;
-  if (parsed.content) parsed.content.source = parsed.cover.source;
+  parsed.content.source = parsed.cover.source;
 
   return {
     meta: { year, month, day, issueNumber: issueNum, description: "法理明如镜，务知天下事！" },
@@ -236,14 +306,12 @@ highlight 是视觉焦点，必须标在**观众会转述给别人的话**上。
 ## 最重要的规则：高亮必须是正文原文
 highlight 字段必须是 paragraph text 中的**原文连续片段**，一个字都不能改。如果高亮短语不在正文中，整行高亮会失效。
 
-修改后严格输出完整的JSON对象（和输入格式一样），不要输出其他内容。`;
+修改后严格输出完整的 JSON 对象（和输入格式一样），不要输出其他内容。`;
 
   const messages = [{ role: "system", content: systemPrompt }, ...chatHistory, { role: "user", content: userMessage }];
 
-  const result = await aiChat(messages, 0.5);
-  const jsonMatch = result.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("AI did not return valid JSON");
-  return JSON.parse(jsonMatch[0]);
+  const result = await aiChat(messages, 0.5, true);
+  return parseAIResponse(result);
 }
 
 /**
@@ -255,50 +323,7 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，一个�
  * @returns {Promise<boolean>} true if this route handled the request
  */
 export async function register(method, urlPath, req, res, params) {
-  // ── SSE streaming: generate config ──
-  if (method === "POST" && urlPath === "/api/generate-config-stream") {
-    const { text, sourceInfo } = await parseJson(req);
-    if (!text) {
-      errorResponse(res, "Missing text", 400);
-      return true;
-    }
-    await handleSSE(req, res, async (send) => {
-      send({ type: "status", text: "正在分析文章..." });
-      let full = "";
-      for await (const chunk of aiChatStream(buildGenerateMessages(text, sourceInfo || ""), 0.5)) {
-        full += chunk;
-        send({ type: "token", text: chunk });
-      }
-      const parsed = parseAIResponse(full);
-      const { year, month, day } = today();
-      const config = {
-        meta: { year, month, day, issueNumber: nextIssueNumber(), description: "法理明如镜，务知天下事！" },
-        timing: { settle: 1.2, cover: 2.0, curl: 2.5, sweep: 2.0, hold: 1.0, final: 2.0 },
-        ...parsed,
-      };
-      send({ type: "result", config });
-    });
-    return true;
-  }
-
-  // ── SSE streaming: refine config ──
-  if (method === "POST" && urlPath === "/api/refine-stream") {
-    const { config, message, history } = await parseJson(req);
-    if (!config || !message) {
-      errorResponse(res, "Missing config or message", 400);
-      return true;
-    }
-    await handleSSE(req, res, async (send) => {
-      send({ type: "status", text: "正在调整..." });
-      let full = "";
-      for await (const chunk of aiChatStream(buildRefineMessages(config, message, history || []), 0.5)) {
-        full += chunk;
-        send({ type: "token", text: chunk });
-      }
-      send({ type: "result", config: parseAIResponse(full) });
-    });
-    return true;
-  }
+  // ── POST /api/generate-config (non-streaming) ──
 
   if (method === "POST" && urlPath === "/api/generate-config") {
     const { text, sourceInfo } = await parseJson(req);
@@ -331,20 +356,20 @@ export async function register(method, urlPath, req, res, params) {
     const _pubSettings = getSettings();
     const _pubPrompt =
       _pubSettings.publishPrompt ||
-      "你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。标题要求：20字以内，吸引眼球。介绍要求：100字以内，末尾空一行后加5个以上话题标签。严格输出JSON。";
+      "你是一个短视频发布助手。根据法律短视频的内容，生成发布用的标题和介绍。标题要求：20字以内，吸引眼球。介绍要求：100字以内，末尾空一行后加5个以上话题标签。严格按照 JSON 格式输出。";
     const result = await aiChat(
       [
         { role: "system", content: _pubPrompt },
         { role: "user", content: `期号：${issueNum || "001"}\n\n视频内容：\n${articleText}` },
       ],
       0.5,
+      true,
     );
-    const jsonMatch = result.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      errorResponse(res, "AI did not return valid JSON", 500);
-      return true;
+    try {
+      json(res, parseAIResponse(result));
+    } catch (e) {
+      errorResponse(res, e.message, 500);
     }
-    json(res, JSON.parse(jsonMatch[0]));
     return true;
   }
 
@@ -395,12 +420,11 @@ export async function register(method, urlPath, req, res, params) {
       ],
       0.7,
     );
-    const jsonMatch = result.match(/[{[][\s\S]*[}\]]$/);
-    if (!jsonMatch) {
-      errorResponse(res, "AI did not return valid JSON", 500);
-      return true;
+    try {
+      json(res, parseAIResponse(result));
+    } catch (e) {
+      errorResponse(res, e.message, 500);
     }
-    json(res, JSON.parse(jsonMatch[0]));
     return true;
   }
 

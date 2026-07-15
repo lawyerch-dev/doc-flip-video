@@ -8,7 +8,7 @@
 
 import fs from "fs";
 import path from "path";
-import { ROOT } from "../../../config/paths.mjs";
+import { ROOT } from "../../config/paths.mjs";
 
 // ── 转场注册表 ──
 

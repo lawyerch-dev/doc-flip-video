@@ -24,7 +24,7 @@ const TOAST_CONFIG = { top: 80, duration: 3 };
 
 import '@flowgram.ai/free-layout-editor/index.css';
 import './styles/index.css';
-import { nodeRegistries, fetchDefaultWorkflow, toEngineJSON, toWorkflowV2JSON } from './nodes';
+import { nodeRegistries, fetchDefaultWorkflow, toWorkflowJSON } from './nodes';
 import { initialData } from './initial-data';
 import type { FlowDocumentJSON } from './typings';
 import { useEditorProps } from './hooks';
@@ -49,7 +49,7 @@ function TopBar({ onBack }: { onBack: () => void }) {
   const handleSave = useCallback(() => {
     setSaving(true);
     try {
-      const wf = toEngineJSON(doc.toJSON() as FlowDocumentJSON);
+      const wf = toWorkflowJSON(doc.toJSON() as FlowDocumentJSON);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(
         new Blob([JSON.stringify(wf, null, 2)], { type: 'application/json' }),
@@ -63,7 +63,7 @@ function TopBar({ onBack }: { onBack: () => void }) {
   }, [doc]);
 
   const handleRun = useCallback(async () => {
-    const wf = toWorkflowV2JSON(doc.toJSON() as FlowDocumentJSON);
+    const wf = toWorkflowJSON(doc.toJSON() as FlowDocumentJSON);
     try {
       // 1. 保存工作流
       const saveRes = await fetch('/api/workflow/save', {

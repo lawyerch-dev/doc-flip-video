@@ -208,6 +208,6 @@ export const nodeRegistries: FlowNodeRegistry[] = [
 // 向后兼容 re-exports
 export { VideoNodeType } from './constants';
 export { type PluginManifest } from './plugin-manifest';
-export { fromEngineJSON, toEngineJSON, toWorkflowV2JSON, fetchDefaultWorkflow } from './convert';
-export type { EngineWorkflowJSON, EngineNodeJSON, WorkflowV2JSON } from './convert';
+export { toWorkflowJSON, fetchDefaultWorkflow } from './convert';
+export type { WorkflowJSON } from './convert';
 export { VIDEO_TEMPLATES, type VideoTemplate } from './templates';

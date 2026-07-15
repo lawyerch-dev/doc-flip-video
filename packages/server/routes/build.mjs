@@ -120,7 +120,7 @@ export function register(method, urlPath, req, res, params) {
     return handleBuild(req, res);
   }
 
-  // ── Enqueue workflow build (v2) ──
+  // ── Enqueue workflow build ──
   if (method === "POST" && urlPath === "/api/workflow/build") {
     return handleWorkflowBuild(req, res);
   }

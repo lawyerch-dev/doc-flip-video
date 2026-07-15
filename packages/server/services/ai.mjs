@@ -14,7 +14,7 @@ function getClient() {
 
 export let maxRetries = 2;
 
-export async function aiChat(messages, temperature = 0.7) {
+export async function aiChat(messages, temperature = 0.7, responseFormat = false) {
   const { aiModel } = getSettings();
   const client = getClient();
 
@@ -22,12 +22,30 @@ export async function aiChat(messages, temperature = 0.7) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
     try {
-      const resp = await client.chat.completions.create({
+      // Prepend JSON mode system instruction as the first message to satisfy
+      // DeepSeek's 'json' keyword requirement for response_format.
+      // The actual schema comes from the caller's messages that follow.
+      const msgs = responseFormat
+        ? [
+            {
+              role: "system",
+              content:
+                "You must respond in valid JSON only. Output ONLY a raw JSON object — no markdown, no code fences, no explanation.",
+            },
+            ...messages,
+          ]
+        : messages;
+      const body = {
         model: aiModel,
-        messages,
+        messages: msgs,
         temperature,
         stream: false,
-      });
+      };
+      if (responseFormat) {
+        body.response_format = { type: "json_object" };
+        body.max_tokens = 4096;
+      }
+      const resp = await client.chat.completions.create(body);
       return resp.choices[0].message.content;
     } catch (e) {
       if (e.status === 429 || (e.status >= 500 && e.status < 600)) {

@@ -34,7 +34,6 @@ export const FRONTEND_ASSETS = path.join(ROOT, "assets");
 
 // ── 工作流 ──
 export const WORKFLOW_RUNNER = path.join(WORKFLOW_ENGINE_DIR, "run.mjs");
-export const WORKFLOW_V2_RUNNER = path.join(WORKFLOW_ENGINE_DIR, "v2", "run.mjs");
 export const WORKFLOW_TEMP = path.join(TEMP_DIR, "workflow-to-run.json");
 
 // ── 配置 ──

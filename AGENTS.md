@@ -55,9 +55,9 @@ pnpm build
 # 启动 MCP 服务器
 pnpm mcp
 
-# 运行简化工作流引擎 v2
-node packages/workflow-engine/v2/run.mjs --demo --config data/articles/article-001.json
-node packages/workflow-engine/v2/run.mjs data/workflows/demo-v2.json
+# 运行工作流引擎
+node packages/workflow-engine/run.mjs --demo --config data/articles/article-001.json
+node packages/workflow-engine/run.mjs data/workflows/demo-v2.json
 ```
 
 ## 工作流系统

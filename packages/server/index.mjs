@@ -17,7 +17,7 @@ import { register as aiRoutes } from "./routes/ai.mjs";
 import { register as buildRoutes } from "./routes/build.mjs";
 import { register as projectRoutes } from "./routes/project.mjs";
 import { register as projectRoutesV2 } from "./routes/projects.mjs";
-import { register as templateEditorRoutes } from "./routes/template-editor.mjs";
+import { register as templateRenderRoutes } from "./routes/template-render.mjs";
 
 // ── Static file server ──
 function serveStatic(req, res) {
@@ -80,7 +80,7 @@ const requestHandler = async (req, res) => {
 
   try {
     if (await projectRoutesV2(method, urlPath, req, res, params)) return;
-    if (await templateEditorRoutes(method, urlPath, req, res)) return;
+    if (await templateRenderRoutes(method, urlPath, req, res)) return;
     if (await scrapeRoutes(method, urlPath, req, res, params)) return;
     if (await aiRoutes(method, urlPath, req, res, params)) return;
     if (await buildRoutes(method, urlPath, req, res, params)) return;

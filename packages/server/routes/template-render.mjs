@@ -25,6 +25,23 @@ const TEMPLATES_DIR = path.join(ROOT, "packages/template-render/templates");
 const ARTICLES_DIR = path.join(ROOT, "data/articles");
 
 export async function register(method, urlPath, req, res) {
+  // ── GET /api/templates-list ──
+  if (method === "GET" && urlPath === "/api/templates-list") {
+    try {
+      const dir = path.join(ROOT, "packages/template-render/templates");
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json"));
+      const list = files.map((f) => {
+        const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8"));
+        return { id: f.replace(/\.json$/, ""), name: data._name || f.replace(/\.json$/, "") };
+      });
+      json(res, list);
+    } catch {
+      json(res, []);
+    }
+    return true;
+  }
+
+  // ── POST /api/render-template ──
   if (method !== "POST" || urlPath !== "/api/render-template") return false;
 
   try {

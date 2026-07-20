@@ -1,5 +1,6 @@
 {
   "version": "6.0.0",
+  "_name": "默认红头",
   "id": "cover-default",
   "background": "#ffffff",
   "width": 1080,

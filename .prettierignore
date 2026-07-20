@@ -1,4 +1,4 @@
 packages/workflow-studio/
 vendor/
-build/
+packages/engine/build/
 node_modules/

@@ -22,17 +22,23 @@ doc-flip-video/
 │   └── output/          # 最终视频
 ├── packages/
 │   ├── engine/          # 视频生成核心（图片渲染 + FFmpeg 合成）
+│   │   ├── generate.mjs # ★ 简化 API 入口（推荐）
+│   │   ├── index.mjs    # CLI 入口
+│   │   ├── render-images.mjs
+│   │   ├── render-video.mjs
+│   │   └── templates/
 │   ├── server/          # HTTP API + 静态文件托管
 │   ├── frontend/        # 浏览器 UI
-│   ├── workflow-engine/ # 工作流引擎
-│   ├── workflow-studio/ # 可视化工作流编辑器
 │   └── mcp/             # MCP 服务（AI 编辑器集成）
+├── examples/
+│   └── generate-video.mjs  # API 使用示例
 ├── eslint.config.mjs    # ESLint 配置
 ├── .prettierrc          # Prettier 配置
 ├── .lintstagedrc.json   # pre-commit 检查配置
 ├── .prettierignore      # 格式化排除
 └── docs/
-    └── DEVELOPMENT.md
+    ├── DEVELOPMENT.md
+    └── PORTING.md       # 移植指南
 ```
 
 ## 代码质量
@@ -47,7 +53,7 @@ doc-flip-video/
 - `no-empty` / `no-useless-escape` / `no-control-regex` — 关闭
 
 ```bash
-npm run lint       # 检查所有包（排除 workflow-studio / vendor）
+npm run lint       # 检查所有包（排除 vendor）
 ```
 
 ### Prettier
@@ -109,22 +115,21 @@ DATA_DIR=/mnt/data npm run server
 
 ## 包职责
 
-| 包                | 入口             | 职责                       | 依赖                   |
-| ----------------- | ---------------- | -------------------------- | ---------------------- |
-| `engine`          | `index.mjs`      | 渲染图片 + FFmpeg 合成视频 | node-canvas, jsbarcode |
-| `server`          | `index.mjs`      | HTTP API + 静态托管        | openai                 |
-| `frontend`        | `index.html`     | 浏览器 UI（纯静态）        | 无（CDN lucide）       |
-| `workflow-engine` | `run.mjs`        | 工作流执行                 | —                      |
-| `workflow-studio` | —                | 可视化编辑器（独立）       | React, Semi UI         |
-| `mcp`             | `mcp-server.mjs` | AI 编辑器集成              | —                      |
+| 包         | 入口             | 职责                          | 依赖                   |
+| ---------- | ---------------- | ----------------------------- | ---------------------- |
+| `engine`   | `generate.mjs`   | 简化 API：输入文章 → 输出视频 | node-canvas, jsbarcode |
+| `engine`   | `index.mjs`      | CLI 入口，协调渲染和合成      | node-canvas, jsbarcode |
+| `server`   | `index.mjs`      | HTTP API + 静态托管           | openai                 |
+| `frontend` | `index.html`     | 浏览器 UI（纯静态）           | 无（CDN lucide）       |
+| `mcp`      | `mcp-server.mjs` | AI 编辑器集成                 | —                      |
 
 ## 开发流程
 
 ### 本地启动
 
 ```bash
-pnpm install
-npm run dev        # server(33011) + studio(5173)
+npm install
+npm run dev        # server(33011) + 静态前端
 ```
 
 ### 提交

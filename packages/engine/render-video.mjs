@@ -6,13 +6,22 @@ import { execFileSync, spawn } from "child_process";
 import { createCanvas } from "canvas";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { ROOT, TEMP_DIR, OUTPUT_DIR } from "../../config/paths.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Find FFmpeg binaries ──
 function findFFmpeg() {
-  const custom = path.join(ROOT, "build", "ffmpeg-custom");
-  const hasCustom = fs.existsSync(custom);
-  return { custom, system: "ffmpeg", hasCustom };
+  const platform = `${process.platform}-${process.arch}`.replace("win32", "windows");
+  const platformBin = path.join(__dirname, "build", `ffmpeg-${platform}`);
+  const genericBin = path.join(__dirname, "build", "ffmpeg-custom");
+  if (fs.existsSync(platformBin)) return platformBin;
+  if (fs.existsSync(genericBin)) return genericBin;
+  console.error(`\n❌ 缺少自定义 FFmpeg: ${platformBin}`);
+  console.error(`   运行: bash scripts/build-ffmpeg-xfade.sh`);
+  console.error(`   或从 GitHub Releases 下载对应平台二进制到 packages/engine/build/\n`);
+  process.exit(1);
 }
 
 // ── Generate glow strip PNG (matching video-renderer.html SWEEP shader) ──
@@ -78,13 +87,8 @@ const musicFile =
 if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
 
 // ── Find FFmpeg ──
-const { custom: customFFmpeg, system: systemFFmpeg, hasCustom } = findFFmpeg();
-if (hasCustom) {
-  console.log(`🔧 自定义 FFmpeg: gl_swap + gl_InvertedPageCurl + sweep-glow`);
-} else {
-  console.log(`🔧 系统 FFmpeg: fadeblack + dissolve + sweep-glow`);
-  console.log(`   💡 运行 bash scripts/build-ffmpeg-xfade.sh 可获得 curl 翻页效果`);
-}
+const customFFmpeg = findFFmpeg();
+console.log(`🔧 自定义 FFmpeg: gl_swap + gl_InvertedPageCurl + sweep-glow`);
 
 // ── Verify images ──
 const coverImg = path.join(imgDir, "cover.png");
@@ -121,19 +125,11 @@ const videoFilters = [
 
 // Glow strip input [4:v]
 videoFilters.push(`[4:v]format=rgba[glow]`);
-if (hasCustom) {
-  videoFilters.push(
-    `[v0][v1]xfade=${easing}transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${settleDur}:offset=0[s1]`,
-    `[s1][v2]xfade=${easing}transition=gl_InvertedPageCurl:duration=${curlDur}:offset=${curlOffset}[s2]`,
-    `[s2][v3]xfade=${easing}transition=wiperight:duration=${sweepDur}:offset=${sweepOffset}[s3]`,
-  );
-} else {
-  videoFilters.push(
-    `[v0][v1]xfade=transition=fadeblack:duration=${settleDur}:offset=0[s1]`,
-    `[s1][v2]xfade=transition=dissolve:duration=${curlDur}:offset=${curlOffset}[s2]`,
-    `[s2][v3]xfade=transition=wiperight:duration=${sweepDur}:offset=${sweepOffset}[s3]`,
-  );
-}
+videoFilters.push(
+  `[v0][v1]xfade=${easing}transition='gl_swap(reflection=0.4,perspective=0.2,depth=3)':duration=${settleDur}:offset=0[s1]`,
+  `[s1][v2]xfade=${easing}transition=gl_InvertedPageCurl:duration=${curlDur}:offset=${curlOffset}[s2]`,
+  `[s2][v3]xfade=${easing}transition=wiperight:duration=${sweepDur}:offset=${sweepOffset}[s3]`,
+);
 
 // Overlay glow strip: moves left→right during sweep phase with cubic-in-out easing
 // to match the wiperight xfade easing curve
@@ -150,126 +146,68 @@ console.log(`   ${outW}×${outH}, ~${totalDur.toFixed(1)}s`);
 
 const start = Date.now();
 
-if (hasCustom) {
-  const customArgs = [
-    "-y",
-    "-f",
-    "lavfi",
-    "-i",
-    `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    coverImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    plainImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    hlImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur),
-    "-i",
-    glowStripPath,
-    "-filter_complex",
-    filterComplex,
-    "-map",
-    "[vout]",
-    "-c:v",
-    "rawvideo",
-    "-pix_fmt",
-    "yuv420p",
-    "-f",
-    "yuv4mpegpipe",
-    "-",
-  ];
+const customArgs = [
+  "-y",
+  "-f",
+  "lavfi",
+  "-i",
+  `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
+  "-loop",
+  "1",
+  "-t",
+  String(totalDur + 1),
+  "-i",
+  coverImg,
+  "-loop",
+  "1",
+  "-t",
+  String(totalDur + 1),
+  "-i",
+  plainImg,
+  "-loop",
+  "1",
+  "-t",
+  String(totalDur + 1),
+  "-i",
+  hlImg,
+  "-loop",
+  "1",
+  "-t",
+  String(totalDur),
+  "-i",
+  glowStripPath,
+  "-filter_complex",
+  filterComplex,
+  "-map",
+  "[vout]",
+  "-c:v",
+  "rawvideo",
+  "-pix_fmt",
+  "yuv420p",
+  "-f",
+  "yuv4mpegpipe",
+  "-",
+];
 
-  const encodeArgs = ["-y", "-i", "pipe:0"];
-  if (musicFile) encodeArgs.push("-i", musicFile);
-  encodeArgs.push("-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", "-movflags", "+faststart");
-  if (musicFile) encodeArgs.push("-c:a", "aac", "-b:a", "128k", "-shortest");
-  encodeArgs.push(outFile);
+const encodeArgs = ["-y", "-i", "pipe:0"];
+if (musicFile) encodeArgs.push("-i", musicFile);
+encodeArgs.push("-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", "-movflags", "+faststart");
+if (musicFile) encodeArgs.push("-c:a", "aac", "-b:a", "128k", "-shortest");
+encodeArgs.push(outFile);
 
-  try {
-    const customProc = spawn(customFFmpeg, customArgs, { stdio: ["ignore", "pipe", "inherit"] });
-    const encodeProc = spawn(systemFFmpeg, encodeArgs, { stdio: [customProc.stdout, "inherit", "inherit"] });
-    await new Promise((resolve, reject) => {
-      encodeProc.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`encode exit ${code}`))));
-      customProc.on("close", (code) => {
-        if (code !== 0) reject(new Error(`xfade exit ${code}`));
-      });
+try {
+  const customProc = spawn(customFFmpeg, customArgs, { stdio: ["ignore", "pipe", "inherit"] });
+  const encodeProc = spawn("ffmpeg", encodeArgs, { stdio: [customProc.stdout, "inherit", "inherit"] });
+  await new Promise((resolve, reject) => {
+    encodeProc.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`encode exit ${code}`))));
+    customProc.on("close", (code) => {
+      if (code !== 0) reject(new Error(`xfade exit ${code}`));
     });
-    console.log(`\n✅ 完成 (${((Date.now() - start) / 1000).toFixed(1)}s): ${outFile}`);
-  } catch (e) {
-    console.error(`\n❌ 失败: ${e.message}`);
-    process.exit(1);
-  }
-} else {
-  const args = [
-    "-y",
-    "-f",
-    "lavfi",
-    "-i",
-    `color=white:s=${outW}x${outH}:r=${fps}:d=${settleDur}`,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    coverImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    plainImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur + 1),
-    "-i",
-    hlImg,
-    "-loop",
-    "1",
-    "-t",
-    String(totalDur),
-    "-i",
-    glowStripPath,
-    "-filter_complex",
-    filterComplex,
-    "-map",
-    "[vout]",
-    "-c:v",
-    "libx264",
-    "-preset",
-    "slow",
-    "-crf",
-    "14",
-    "-pix_fmt",
-    "yuv420p",
-    "-movflags",
-    "+faststart",
-  ];
-  if (musicFile) args.push("-i", musicFile, "-c:a", "aac", "-b:a", "128k", "-shortest");
-  args.push(outFile);
-
-  try {
-    execFileSync(systemFFmpeg, args, { stdio: "inherit", timeout: 120000 });
-    console.log(`\n✅ 完成 (${((Date.now() - start) / 1000).toFixed(1)}s): ${outFile}`);
-  } catch (e) {
-    console.error(`\n❌ 失败: ${e.message}`);
-    process.exit(1);
-  }
+  });
+  console.log(`\n✅ 完成 (${((Date.now() - start) / 1000).toFixed(1)}s): ${outFile}`);
+} catch (e) {
+  console.error(`\n❌ 失败: ${e.message}`);
+  process.exit(1);
 }
 
 // ── Embed poster: extract settle midpoint frame and insert as first video frame ──
@@ -283,14 +221,13 @@ try {
   if (fs.existsSync(oldPoster)) fs.unlinkSync(oldPoster);
   const posterFrame = outFile.replace(".mp4", "-poster.png");
   // Extract poster frame from the full video
-  execFileSync(
-    systemFFmpeg,
-    ["-y", "-ss", String(posterTime), "-i", outFile, "-frames:v", "1", "-q:v", "2", posterFrame],
-    { stdio: "pipe", timeout: 10000 },
-  );
+  execFileSync("ffmpeg", ["-y", "-ss", String(posterTime), "-i", outFile, "-frames:v", "1", "-q:v", "2", posterFrame], {
+    stdio: "pipe",
+    timeout: 10000,
+  });
   // Create a 1-frame video clip from poster
   execFileSync(
-    systemFFmpeg,
+    "ffmpeg",
     [
       "-y",
       "-loop",

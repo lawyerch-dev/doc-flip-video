@@ -9,6 +9,6 @@
     "dev": "node index.mjs"
   },
   "dependencies": {
-    "@doc-flip/workflow-engine": "workspace:*"
+    "@doc-flip/engine": "workspace:*"
   }
 }

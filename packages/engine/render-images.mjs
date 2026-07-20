@@ -2,9 +2,9 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import fs from "fs";
 import path from "path";
 import JsBarcode from "jsbarcode";
-import { FRONTEND_ASSETS, ROOT, TEMP_DIR, TEMPLATE_PATH, ARTICLES_DIR } from "../../config/paths.mjs";
+import { ROOT_ASSETS, ROOT, TEMP_DIR, TEMPLATE_PATH, ARTICLES_DIR } from "../../config/paths.mjs";
 
-const ASSETS = FRONTEND_ASSETS;
+const ASSETS = ROOT_ASSETS;
 const FONTS_DIR = path.join(ASSETS, "fonts");
 fs.mkdirSync(ASSETS, { recursive: true });
 

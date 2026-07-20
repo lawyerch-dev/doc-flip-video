@@ -3,7 +3,7 @@
 set -e
 cd "$(dirname "$0")/.."
 
-CUSTOM="./build/ffmpeg-custom"
+CUSTOM="./packages/engine/build/ffmpeg-custom"
 IMG="data/temp/issue-003"
 OUT="data/test"
 mkdir -p "$OUT"

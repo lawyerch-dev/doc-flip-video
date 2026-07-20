@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "name": "默认法务视频工作流",
+  "description": "匹配当前 capture-xfade.mjs 的完整流程：封面入场 → 停留 → 翻页 → 高亮扫描 → 停留 → 淡出",
+  "variables": {
+    "width": 1080,
+    "height": 1840,
+    "fps": 30
+  },
+  "nodes": [
+    {
+      "id": "render-cover",
+      "type": "source:page-renderer",
+      "params": {
+        "page": "cover"
+      }
+    },
+    {
+      "id": "render-content-plain",
+      "type": "source:page-renderer",
+      "params": {
+        "page": "content",
+        "highlight": false
+      }
+    },
+    {
+      "id": "render-content-hl",
+      "type": "source:page-renderer",
+      "params": {
+        "page": "content",
+        "highlight": true
+      }
+    },
+    {
+      "id": "glow-strip",
+      "type": "source:glow-strip",
+      "params": {}
+    },
+    {
+      "id": "fade-in",
+      "type": "effect:fade-in",
+      "inputs": {
+        "source": "render-cover"
+      },
+      "params": {
+        "duration": 1.2
+      }
+    },
+    {
+      "id": "hold-cover",
+      "type": "effect:hold",
+      "inputs": {
+        "source": "fade-in"
+      },
+      "params": {
+        "duration": 2.0
+      }
+    },
+    {
+      "id": "page-curl",
+      "type": "transition:page-curl",
+      "inputs": {
+        "from": "hold-cover",
+        "to": "render-content-plain"
+      },
+      "params": {
+        "duration": 2.5
+      }
+    },
+    {
+      "id": "sweep-glow",
+      "type": "effect:sweep-glow",
+      "inputs": {
+        "source": "page-curl",
+        "target": "render-content-hl",
+        "glowStrip": "glow-strip"
+      },
+      "params": {
+        "duration": 2.0
+      }
+    },
+    {
+      "id": "hold-content",
+      "type": "effect:hold",
+      "inputs": {
+        "source": "sweep-glow"
+      },
+      "params": {
+        "duration": 1.0
+      }
+    },
+    {
+      "id": "fade-out",
+      "type": "effect:fade-out",
+      "inputs": {
+        "source": "hold-content"
+      },
+      "params": {
+        "duration": 2.0
+      }
+    },
+    {
+      "id": "pick-audio",
+      "type": "source:audio-picker",
+      "params": {
+        "dir": "assets/music"
+      }
+    },
+    {
+      "id": "encode",
+      "type": "output:mp4",
+      "inputs": {
+        "video": "fade-out",
+        "audio": "pick-audio"
+      },
+      "params": {}
+    }
+  ]
+}

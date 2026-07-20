@@ -1,9 +1,14 @@
 {
-  "name": "@doc-flip/pipeline",
+  "name": "@doc-flip/engine",
   "version": "1.0.0",
   "type": "module",
-  "description": "Doc Flip Video Build Pipeline",
-  "scripts": {
-    "build": "node index.mjs"
+  "exports": {
+    ".": "./effects.mjs",
+    "./generate": "./generate.mjs",
+    "./effects": "./effects.mjs",
+    "./timeline": "./projects/timeline.mjs",
+    "./catalog": "./projects/catalog.mjs",
+    "./render": "./projects/render.mjs",
+    "./paths": "./projects/paths.mjs"
   }
 }

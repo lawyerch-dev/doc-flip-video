@@ -7,14 +7,15 @@
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node packages/server/index.mjs",
     "studio": "node packages/server/index.mjs",
-    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5174 | xargs kill -9 2>/dev/null; (cd packages/yft-design && pnpm dev &) ; (sleep 2 && open http://localhost:33011) & nodemon --watch packages/server --watch packages/frontend -e mjs,html,js,css --delay 1 packages/server/index.mjs",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:5174 | xargs kill -9 2>/dev/null; (cd packages/vue-fabric-editor && pnpm dev &) ; (sleep 2 && open http://localhost:33011) & nodemon --watch packages/server --watch packages/frontend -e mjs,html,js,css --delay 1 packages/server/index.mjs",
     "mcp": "node packages/mcp/mcp-server.mjs",
-    "lint": "eslint packages/ --ignore-pattern='**/node_modules/**' --ignore-pattern='**/vendor/**' --ignore-pattern='**/workflow-studio/**' --ignore-pattern='**/build/**' --ignore-pattern='**/dist/**' --ignore-pattern='packages/yft-design/**'",
+    "lint": "eslint packages/ --ignore-pattern='**/node_modules/**' --ignore-pattern='**/vendor/**' --ignore-pattern='**/workflow-studio/**' --ignore-pattern='**/build/**' --ignore-pattern='**/dist/**' --ignore-pattern='packages/yft-design/**' --ignore-pattern='packages/vue-fabric-editor/**'",
     "format": "prettier --write 'packages/**/*.{mjs,js,json,css,html}'",
     "format:check": "prettier --check 'packages/**/*.{mjs,js,json,css,html}'",
     "check": "npm run lint && npm run format:check",
     "prepare": "husky",
-    "fonts": "bash scripts/download-fonts.sh"
+    "fonts": "bash scripts/download-fonts.sh",
+    "template": "cd packages/vue-fabric-editor && pnpm dev"
   },
   "dependencies": {
     "canvas": "^3.2.3",

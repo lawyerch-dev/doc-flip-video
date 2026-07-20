@@ -26,6 +26,7 @@ export default [
       "**/dist/**",
       "**/coverage/**",
       "**/workflow-studio/**",
+      "packages/yft-design/**",
     ],
   },
 ];

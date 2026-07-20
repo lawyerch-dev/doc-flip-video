@@ -22,6 +22,7 @@
     "openai": "^6.46.0",
     "puppeteer": "^25.3.0",
     "satori": "^0.28.0",
+    "satori-html": "^0.3.2",
     "sharp": "^0.35.3"
   },
   "devDependencies": {

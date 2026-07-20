@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>模板编辑器</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+      .editor-layout {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .editor-panel {
+        width: 380px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        background: var(--card);
+        border-right: 1px solid var(--border);
+        padding: 20px;
+      }
+      .editor-panel h2 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: var(--text);
+      }
+      .editor-section {
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .editor-section-header {
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--surface);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text);
+        user-select: none;
+      }
+      .editor-section-header:hover {
+        background: var(--card-hover);
+      }
+      .editor-section-body {
+        padding: 12px 14px;
+      }
+      .editor-field {
+        margin-bottom: 10px;
+      }
+      .editor-field:last-child {
+        margin-bottom: 0;
+      }
+      .editor-field label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .editor-field input,
+      .editor-field select {
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 13px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        color: var(--text);
+        font-family: inherit;
+      }
+      .editor-field input:focus,
+      .editor-field select:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+      .editor-field input[type="color"] {
+        height: 32px;
+        padding: 2px 4px;
+        cursor: pointer;
+      }
+      .editor-row {
+        display: flex;
+        gap: 8px;
+      }
+      .editor-row .editor-field {
+        flex: 1;
+      }
+      .editor-preview-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        overflow: auto;
+        padding: 20px;
+      }
+      .editor-preview-area img {
+        max-height: calc(100vh - 100px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+      }
+      .editor-toolbar {
+        padding: 10px 20px;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .editor-toolbar .title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .editor-toolbar .spacer {
+        flex: 1;
+      }
+      .editor-tabs {
+        display: flex;
+        gap: 4px;
+      }
+      .editor-tab {
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .editor-tab.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="editor-layout">
+      <!-- 左侧属性面板 -->
+      <div class="editor-panel" id="editorPanel">
+        <h2>🎨 模板编辑器</h2>
+
+        <!-- 颜色 -->
+        <div class="editor-section">
+          <div
+            class="editor-section-header"
+            onclick="
+              this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'
+            "
+          >
+            🎨 颜色
+          </div>
+          <div class="editor-section-body">
+            <div class="editor-field">
+              <label>主题色 (accent)</label>
+              <input type="color" id="accent" value="#cc0000" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>背景色</label>
+              <input type="color" id="bgColor" value="#ffffff" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>标题颜色</label>
+              <input type="color" id="titleColor" value="#1a1a1a" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>正文颜色</label>
+              <input type="color" id="bodyColor" value="#1a1a1a" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>高亮背景</label>
+              <input type="color" id="hlBg" value="#FFD700" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>高亮文字</label>
+              <input type="color" id="hlColor" value="#cc0000" onchange="updatePreview()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Logo -->
+        <div class="editor-section">
+          <div
+            class="editor-section-header"
+            onclick="
+              this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'
+            "
+          >
+            🏷️ Logo
+          </div>
+          <div class="editor-section-body">
+            <div class="editor-field">
+              <label>Logo 文字</label>
+              <input type="text" id="logoText" value="法务" onchange="updatePreview()" />
+            </div>
+            <div class="editor-row">
+              <div class="editor-field">
+                <label>X</label>
+                <input type="number" id="logoX" value="120" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>Y</label>
+                <input type="number" id="logoY" value="350" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>宽</label>
+                <input type="number" id="logoW" value="380" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>高</label>
+                <input type="number" id="logoH" value="200" onchange="updatePreview()" />
+              </div>
+            </div>
+            <div class="editor-field">
+              <label>字号</label>
+              <input type="number" id="logoSize" value="108" onchange="updatePreview()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 标题 -->
+        <div class="editor-section">
+          <div
+            class="editor-section-header"
+            onclick="
+              this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'
+            "
+          >
+            📝 标题区
+          </div>
+          <div class="editor-section-body">
+            <div class="editor-field">
+              <label>标签文字</label>
+              <input type="text" id="tagText" value="本期内容" onchange="updatePreview()" />
+            </div>
+            <div class="editor-row">
+              <div class="editor-field">
+                <label>标签 X</label>
+                <input type="number" id="tagX" value="80" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>标签 Y</label>
+                <input type="number" id="tagY" value="650" onchange="updatePreview()" />
+              </div>
+            </div>
+            <div class="editor-row">
+              <div class="editor-field">
+                <label>标题 X</label>
+                <input type="number" id="hlX" value="80" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>标题 Y</label>
+                <input type="number" id="hlY" value="750" onchange="updatePreview()" />
+              </div>
+            </div>
+            <div class="editor-field">
+              <label>标题字号</label>
+              <input type="number" id="hlSize" value="50" onchange="updatePreview()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 正文 -->
+        <div class="editor-section">
+          <div
+            class="editor-section-header"
+            onclick="
+              this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'
+            "
+          >
+            📄 正文区
+          </div>
+          <div class="editor-section-body">
+            <div class="editor-field">
+              <label>正文字号</label>
+              <input type="number" id="bodySize" value="32" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>行高</label>
+              <input type="number" id="bodyLineHeight" value="56" onchange="updatePreview()" />
+            </div>
+            <div class="editor-row">
+              <div class="editor-field">
+                <label>正文 X</label>
+                <input type="number" id="bodyX" value="80" onchange="updatePreview()" />
+              </div>
+              <div class="editor-field">
+                <label>正文 Y</label>
+                <input type="number" id="bodyY" value="900" onchange="updatePreview()" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="editor-section">
+          <div
+            class="editor-section-header"
+            onclick="
+              this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'
+            "
+          >
+            📌 底部
+          </div>
+          <div class="editor-section-body">
+            <div class="editor-field">
+              <label>底部文字</label>
+              <input type="text" id="footerText" value="关注我，了解更多法律新鲜事" onchange="updatePreview()" />
+            </div>
+            <div class="editor-field">
+              <label>底部字号</label>
+              <input type="number" id="footerSize" value="58" onchange="updatePreview()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 保存 -->
+        <div style="margin-top: 16px; display: flex; gap: 8px">
+          <button class="btn" onclick="saveTemplate()" style="flex: 1">💾 保存模板</button>
+          <button class="btn secondary" onclick="resetDefaults()" style="flex: 1">↺ 恢复默认</button>
+        </div>
+        <div id="saveStatus" style="margin-top: 8px; font-size: 12px; color: var(--text-muted)"></div>
+      </div>
+
+      <!-- 右侧预览区 -->
+      <div style="flex: 1; display: flex; flex-direction: column">
+        <div class="editor-toolbar">
+          <span class="title">模板预览</span>
+          <div class="editor-tabs">
+            <button class="editor-tab active" onclick="switchView('cover', this)">封面</button>
+            <button class="editor-tab" onclick="switchView('plain', this)">正文</button>
+            <button class="editor-tab" onclick="switchView('hl', this)">高亮</button>
+          </div>
+          <div class="spacer"></div>
+          <span id="renderTime" style="font-size: 11px; color: var(--text-muted)"></span>
+        </div>
+        <div class="editor-preview-area">
+          <img id="previewImg" src="" alt="预览" style="display: none" />
+          <div id="previewPlaceholder" style="color: var(--text-muted); font-size: 14px">点击任意属性实时预览效果</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      let currentView = "cover";
+      let debounceTimer = null;
+
+      // 读取所有编辑器字段
+      function getStyleConfig() {
+        const get = (id) => document.getElementById(id)?.value;
+        const getNum = (id) => Number(document.getElementById(id)?.value) || 0;
+        return {
+          accent: get("accent"),
+          bgColor: get("bgColor"),
+          titleColor: get("titleColor"),
+          bodyColor: get("bodyColor"),
+          hlBg: get("hlBg"),
+          hlColor: get("hlColor"),
+          logo: {
+            text: get("logoText"),
+            x: getNum("logoX"),
+            y: getNum("logoY"),
+            w: getNum("logoW"),
+            h: getNum("logoH"),
+            size: getNum("logoSize"),
+          },
+          tag: { text: get("tagText"), x: getNum("tagX"), y: getNum("tagY") },
+          headline: { x: getNum("hlX"), y: getNum("hlY"), size: getNum("hlSize") },
+          body: {
+            size: getNum("bodySize"),
+            lineHeight: getNum("bodyLineHeight"),
+            x: getNum("bodyX"),
+            y: getNum("bodyY"),
+          },
+          footer: { text: get("footerText"), size: getNum("footerSize") },
+        };
+      }
+
+      // 防抖预览
+      window.updatePreview = function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(doPreview, 300);
+      };
+
+      async function doPreview() {
+        const style = getStyleConfig();
+        const img = document.getElementById("previewImg");
+        const ph = document.getElementById("previewPlaceholder");
+        const timeEl = document.getElementById("renderTime");
+
+        try {
+          const start = Date.now();
+          const resp = await fetch("/api/preview-template", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ view: currentView, style }),
+          });
+          if (!resp.ok) throw new Error(await resp.text());
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+          img.src = url;
+          img.style.display = "block";
+          ph.style.display = "none";
+          timeEl.textContent = `${Date.now() - start}ms`;
+        } catch (e) {
+          timeEl.textContent = "❌ " + e.message;
+        }
+      }
+
+      window.switchView = function (view, btn) {
+        currentView = view;
+        document.querySelectorAll(".editor-tab").forEach((t) => t.classList.remove("active"));
+        btn.classList.add("active");
+        doPreview();
+      };
+
+      window.saveTemplate = async function () {
+        const style = getStyleConfig();
+        try {
+          const r = await fetch("/api/save-template", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: "custom", style }),
+          });
+          const d = await r.json();
+          document.getElementById("saveStatus").textContent = d.ok ? "✅ 已保存" : "❌ " + d.error;
+        } catch (e) {
+          document.getElementById("saveStatus").textContent = "❌ " + e.message;
+        }
+      };
+
+      window.resetDefaults = function () {
+        document.getElementById("accent").value = "#cc0000";
+        document.getElementById("bgColor").value = "#ffffff";
+        document.getElementById("titleColor").value = "#1a1a1a";
+        document.getElementById("bodyColor").value = "#1a1a1a";
+        document.getElementById("hlBg").value = "#FFD700";
+        document.getElementById("hlColor").value = "#cc0000";
+        document.getElementById("logoText").value = "法务";
+        document.getElementById("logoX").value = "120";
+        document.getElementById("logoY").value = "350";
+        document.getElementById("logoW").value = "380";
+        document.getElementById("logoH").value = "200";
+        document.getElementById("logoSize").value = "108";
+        document.getElementById("tagText").value = "本期内容";
+        document.getElementById("tagX").value = "80";
+        document.getElementById("tagY").value = "650";
+        document.getElementById("hlX").value = "80";
+        document.getElementById("hlY").value = "750";
+        document.getElementById("hlSize").value = "50";
+        document.getElementById("bodySize").value = "32";
+        document.getElementById("bodyLineHeight").value = "56";
+        document.getElementById("bodyX").value = "80";
+        document.getElementById("bodyY").value = "900";
+        document.getElementById("footerText").value = "关注我，了解更多法律新鲜事";
+        document.getElementById("footerSize").value = "58";
+        updatePreview();
+      };
+
+      // 初始预览
+      doPreview();
+    </script>
+  </body>
+</html>

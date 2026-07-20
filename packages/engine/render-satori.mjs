@@ -690,8 +690,10 @@ function highlightText(fullText, keyword, fontSize, isBold) {
 // 主流程
 // ══════════════════════════════════════
 async function renderToPng(element, outputPath) {
-  const svg = await satori(element, { width: W, height: H, fonts });
-  await sharp(Buffer.from(svg)).resize(W, H).png().toFile(outputPath);
+  // 2x 超采样再缩放，与 Canvas 方案一致，消除锯齿
+  const SCALE = 2;
+  const svg = await satori(element, { width: W * SCALE, height: H * SCALE, fonts });
+  await sharp(Buffer.from(svg)).resize(W, H, { kernel: "lanczos3" }).png().toFile(outputPath);
 }
 
 async function main() {

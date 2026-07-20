@@ -27,6 +27,7 @@ export const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
 
 // ── 引擎脚本 ──
 export const RENDER_IMAGES_SCRIPT = path.join(ENGINE_DIR, "render-images.mjs");
+export const RENDER_SATORI_SCRIPT = path.join(ENGINE_DIR, "render-satori.mjs");
 export const ENGINE_ENTRY = path.join(ENGINE_DIR, "index.mjs");
 
 // ── 素材 ──

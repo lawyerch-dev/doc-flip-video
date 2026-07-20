@@ -17,13 +17,21 @@ import {
   defaultTemplate,
   DIRNAME,
 } from "../shared.mjs";
-import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY } from "../../../config/paths.mjs";
+import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY, RENDER_SATORI_SCRIPT } from "../../../config/paths.mjs";
 
 import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
 // ── Image generation ──
 function generateImages(configPath) {
   execFileSync("node", [RENDER_IMAGES_SCRIPT, configPath], {
+    cwd: ROOT,
+    stdio: "pipe",
+    timeout: 15000,
+  });
+}
+
+function generateImagesSatori(configPath) {
+  execFileSync("node", [RENDER_SATORI_SCRIPT, configPath], {
     cwd: ROOT,
     stdio: "pipe",
     timeout: 15000,
@@ -184,7 +192,13 @@ async function handlePreview(req, res) {
   resolveTemplate(config.meta?.template);
   const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-  generateImages(configPath);
+  // 支持 ?engine=satori 切换渲染引擎
+  const useSatori = req.url?.includes("engine=satori");
+  if (useSatori) {
+    generateImagesSatori(configPath);
+  } else {
+    generateImages(configPath);
+  }
   const imgDir = `data/temp/issue-${String(issueNum).padStart(3, "0")}`;
   json(res, {
     issueNum,

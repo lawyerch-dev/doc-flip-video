@@ -4,15 +4,17 @@ import { readForm, populateForm } from "./step2-edit.mjs";
 import { loadHistory } from "./history.mjs";
 
 // ── Step 3: Preview ──
-export async function doPreview() {
+export async function doPreview(engine) {
   state.config = readForm();
   if (!state.config) return setStatus("没有可预览的内容", "error");
-  setStatus("正在生成预览...", "working");
+  const engineLabel = engine === "satori" ? "Satori" : "Canvas";
+  setStatus(`正在生成预览 (${engineLabel})...`, "working");
   try {
     // Include original scraped text so server saves it for future use
     const payload = { ...state.config };
     if (state.scrapedData?.text) payload._scraped = state.scrapedData;
-    const r = await api("/api/preview", payload);
+    const url = engine === "satori" ? "/api/preview?engine=satori" : "/api/preview";
+    const r = await api(url, payload);
     state.previewImages = r.images;
     state.config.meta.issueNumber = r.issueNum;
     const dir = `data/temp/issue-${String(r.issueNum).padStart(3, "0")}`;

@@ -1,0 +1,12 @@
+{
+  "name": "@doc-flip/template-render",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "模板渲染引擎 — 加载 yft-design 模板 JSON + 文章数据 → PNG 图片",
+  "main": "index.mjs",
+  "scripts": {
+    "render": "node index.mjs",
+    "test": "node index.mjs ../engine/templates/example-cover.json ../engine/data/articles/article-004.json"
+  },
+  "dependencies": {}
+}

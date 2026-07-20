@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>模板工坊</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css"
+    />
     <style>
       * {
         margin: 0;
@@ -22,6 +27,8 @@
         flex-direction: column;
         height: 100vh;
       }
+
+      /* ── Topbar ── */
       .topbar {
         height: 44px;
         background: #1a1a1a;
@@ -87,6 +94,13 @@
       .btn-sm.primary:hover {
         background: #ea580c;
       }
+      .btn-sm.success {
+        background: #22c55e;
+        border-color: #22c55e;
+        color: #fff;
+      }
+
+      /* ── Main ── */
       .main {
         flex: 1;
         display: flex;
@@ -108,66 +122,128 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         flex-shrink: 0;
+        gap: 8px;
       }
+      .panel-header .tab {
+        padding: 3px 8px;
+        cursor: pointer;
+        border-radius: 3px;
+        color: #666;
+        background: none;
+        border: none;
+        font-family: inherit;
+        font-size: 11px;
+      }
+      .panel-header .tab.active {
+        background: #333;
+        color: #ccc;
+      }
+      .panel-header .hint {
+        margin-left: auto;
+        color: #555;
+        font-size: 10px;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      /* ── Left: Code Editor ── */
       .panel-code {
-        width: 35%;
-        min-width: 300px;
+        width: 32%;
+        min-width: 280px;
         border-right: 1px solid #2a2a2a;
         background: #1e1e1e;
       }
-      .panel-code textarea {
+      .panel-code .CodeMirror {
         flex: 1;
-        width: 100%;
-        background: #1e1e1e;
-        color: #a6e22e;
-        border: none;
-        padding: 12px;
-        font-family: "SF Mono", "Fira Code", monospace;
+        height: auto;
         font-size: 13px;
-        line-height: 1.5;
-        resize: none;
-        outline: none;
-        tab-size: 2;
       }
+
+      /* ── Center: Preview ── */
       .panel-preview {
         flex: 1;
+        background: #151515;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #151515;
         overflow: auto;
         position: relative;
       }
-      .panel-preview img {
-        max-height: calc(100vh - 80px);
-        max-width: 100%;
+      .preview-frame {
+        position: relative;
+        transform-origin: top center;
+      }
+      .preview-frame iframe {
         border: 1px solid #2a2a2a;
-        border-radius: 4px;
+        background: #fff;
+        pointer-events: auto;
       }
-      .panel-preview .empty {
-        color: #444;
-        font-size: 14px;
+      .preview-frame .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
       }
-      .panel-preview .info {
+      .preview-frame .select-box {
+        position: absolute;
+        border: 2px solid #f97316;
+        pointer-events: none;
+        z-index: 20;
+        display: none;
+      }
+      .preview-frame .select-label {
+        position: absolute;
+        top: -20px;
+        left: -2px;
+        background: #f97316;
+        color: #fff;
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 2px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 21;
+        display: none;
+      }
+      .preview-info {
         position: absolute;
         bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
         font-size: 11px;
         color: #555;
         background: #1a1a1a;
         padding: 2px 10px;
         border-radius: 10px;
       }
+
+      /* ── Right: Properties ── */
       .panel-props {
-        width: 300px;
+        width: 280px;
         min-width: 240px;
         border-left: 1px solid #2a2a2a;
         background: #1e1e1e;
         overflow-y: auto;
       }
+      .prop-section {
+        border-bottom: 1px solid #2a2a2a;
+      }
+      .prop-section-title {
+        padding: 8px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a1a;
+      }
+      .prop-body {
+        padding: 8px 12px;
+      }
       .prop-field {
-        padding: 6px 12px;
-        border-bottom: 1px solid #222;
+        margin-bottom: 8px;
       }
       .prop-field label {
         display: block;
@@ -194,6 +270,21 @@
         padding: 2px 4px;
         cursor: pointer;
       }
+      .prop-row {
+        display: flex;
+        gap: 6px;
+      }
+      .prop-row .prop-field {
+        flex: 1;
+      }
+      .prop-empty {
+        padding: 20px;
+        color: #444;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      /* ── Resizer ── */
       .resizer {
         width: 4px;
         cursor: col-resize;
@@ -204,18 +295,44 @@
       .resizer.active {
         background: #f97316;
       }
-      .error {
-        position: absolute;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #7f1d1d;
-        color: #fca5a5;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 12px;
-        max-width: 80%;
-        z-index: 20;
+
+      /* ── Export modal ── */
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.show {
+        display: flex;
+      }
+      .modal-box {
+        background: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+      }
+      .modal-box h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #fff;
+      }
+      .modal-box img {
+        max-width: 100%;
+        border: 1px solid #333;
+        border-radius: 4px;
+        margin: 12px 0;
+      }
+      .modal-box .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 12px;
       }
     </style>
   </head>
@@ -224,380 +341,531 @@
       <div class="topbar">
         <span class="logo">🎨 <em>模板工坊</em></span>
         <div class="sep"></div>
-        <select id="tplSelect" onchange="loadPreset(this.value)">
+        <select id="presetSelect" onchange="loadPreset(this.value)">
           <option value="default">默认红头</option>
           <option value="corporate">企业商务</option>
           <option value="government">政务蓝</option>
         </select>
         <button class="btn-sm" onclick="saveTemplate()">💾 保存</button>
-        <button class="btn-sm" onclick="loadSaved()">📂 加载</button>
+        <button class="btn-sm" onclick="downloadTemplate()">⬇ 导出HTML</button>
+        <div class="sep"></div>
+        <button class="btn-sm success" onclick="exportPng()">📸 导出PNG</button>
         <div class="spacer"></div>
         <span class="status" id="status">就绪</span>
-        <button class="btn-sm primary" onclick="doRender()">▶ 渲染 (Ctrl+Enter)</button>
       </div>
+
       <div class="main">
+        <!-- Left: Code -->
         <div class="panel panel-code" id="panelCode">
-          <div class="panel-header">模板 JSON</div>
-          <textarea id="codeEditor" spellcheck="false"></textarea>
+          <div class="panel-header">
+            <button class="tab active" id="tabHtml" onclick="switchTab('html')">HTML</button>
+            <button class="tab" id="tabCss" onclick="switchTab('css')">CSS</button>
+            <span class="hint">拖拽预览中的元素 → 自动改代码</span>
+          </div>
+          <div id="editorHtml" style="flex: 1; overflow: hidden"></div>
+          <div id="editorCss" style="flex: 1; overflow: hidden; display: none"></div>
         </div>
         <div class="resizer" id="resizer1"></div>
+
+        <!-- Center: Preview -->
         <div class="panel panel-preview" id="panelPreview">
-          <div class="empty" id="placeholder">点击 ▶ 渲染 或 Ctrl+Enter</div>
-          <img id="previewImg" style="display: none" />
-          <div class="error" id="errorEl" style="display: none"></div>
-          <div class="info" id="infoEl"></div>
+          <div class="preview-frame" id="previewFrame">
+            <iframe id="previewIframe" sandbox="allow-same-origin"></iframe>
+            <div class="select-box" id="selectBox"></div>
+            <div class="select-label" id="selectLabel"></div>
+          </div>
+          <div class="preview-info" id="previewInfo">实时预览</div>
         </div>
         <div class="resizer" id="resizer2"></div>
+
+        <!-- Right: Properties -->
         <div class="panel panel-props" id="panelProps">
-          <div class="panel-header">快速编辑</div>
-          <div id="propsBody"></div>
+          <div class="panel-header">属性面板</div>
+          <div id="propsBody">
+            <div class="prop-empty">点击预览中的元素查看属性</div>
+          </div>
         </div>
       </div>
     </div>
-    <script>
-      let debounce = null;
-      const editor = document.getElementById("codeEditor");
 
-      // ── 默认模板 ──
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+      <div class="modal-box">
+        <h3>📸 导出 PNG</h3>
+        <div id="exportStatus">正在渲染...</div>
+        <img id="exportImg" style="display: none" />
+        <div class="actions">
+          <button class="btn-sm" onclick="closeExportModal()">关闭</button>
+          <button class="btn-sm primary" id="exportDownloadBtn" style="display: none" onclick="downloadExport()">
+            下载图片
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closetag.min.js"></script>
+    <script>
+      // ── State ──
+      let selectedEl = null;
+      let dragging = false;
+      let dragStartX, dragStartY, dragOrigLeft, dragOrigTop;
+      let updateTimer = null;
+
+      // ── CodeMirror ──
+      const cmHtml = CodeMirror(document.getElementById("editorHtml"), {
+        mode: "htmlmixed",
+        theme: "material-darker",
+        lineNumbers: true,
+        autoCloseTags: true,
+        tabSize: 2,
+        lineWrapping: true,
+      });
+      const cmCss = CodeMirror(document.getElementById("editorCss"), {
+        mode: "css",
+        theme: "material-darker",
+        lineNumbers: true,
+        tabSize: 2,
+        lineWrapping: true,
+      });
+      cmHtml.on("change", () => scheduleUpdate());
+      cmCss.on("change", () => scheduleUpdate());
+
+      // ── Presets ──
       const PRESETS = {
         default: {
-          _name: "默认红头",
-          _vars: {
-            accent: "#cc0000",
-            bg: "#ffffff",
-            logoText: "法务",
-            headline: "预览标题文字示例",
-            footerText: "关注我，了解更多法律新鲜事",
-          },
-          elements: [
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 1080,
-                height: 1840,
-                background: "{{bg}}",
-                fontFamily: "Noto Sans SC, sans-serif",
-              },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 700,
-                top: 1100,
-                fontSize: 220,
-                fontWeight: 700,
-                color: "rgba(204,0,0,0.04)",
-                transform: "rotate(-10.3deg)",
-                whiteSpace: "nowrap",
-              },
-              text: "No.004",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 40, top: 0, width: 8, height: 1840, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 0, top: 0, width: 1080, height: 490, background: "{{bg}}" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 120,
-                top: 350,
-                width: 380,
-                height: 200,
-                background: "{{accent}}",
-                borderRadius: 6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              },
-              children: [
-                {
-                  tag: "span",
-                  style: { fontFamily: "Ma Shan Zheng, serif", fontSize: 108, fontWeight: 700, color: "#fff" },
-                  text: "{{logoText}}",
-                },
-              ],
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 600, top: 330, display: "flex", alignItems: "center" },
-              children: [
-                { tag: "span", style: { fontSize: 44, fontWeight: 700, color: "#333" }, text: "第" },
-                { tag: "div", style: { width: 8 } },
-                { tag: "span", style: { fontSize: 96, fontWeight: 700, color: "{{accent}}" }, text: "004" },
-                { tag: "div", style: { width: 8 } },
-                { tag: "span", style: { fontSize: 44, fontWeight: 700, color: "#333" }, text: "期" },
-              ],
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 620, top: 440, fontSize: 35, color: "#333" },
-              text: "2026年07月20日",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 550, top: 500, fontSize: 36, fontWeight: 700, color: "#1a1a1a" },
-              text: "法理明如镜，务知天下事！",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 585, width: 920, height: 2, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 592, width: 920, height: 2, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 80,
-                top: 750,
-                width: 920,
-                fontSize: 50,
-                fontWeight: 700,
-                color: "#1a1a1a",
-                lineHeight: "60px",
-              },
-              text: "{{headline}}",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 1000, fontSize: 36, color: "#666" },
-              text: "来源：中国法院网",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 1350, width: 920, height: 2, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 1357, width: 920, height: 2, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 1470,
-                width: 1080,
-                textAlign: "center",
-                fontSize: 58,
-                fontWeight: 700,
-                color: "#000",
-              },
-              text: "{{footerText}}",
-            },
-          ],
+          html: `<!-- 模板工坊：默认红头风格 -->
+<!-- 用 {{变量名}} 定义可配置内容 -->
+<div id="page">
+  <div class="watermark">No.004</div>
+  <div class="leftband"></div>
+  <div class="headerbg"></div>
+  <div class="logo">法务</div>
+  <div class="issuenum">
+    <span class="prefix">第</span>
+    <span class="num">004</span>
+    <span class="suffix">期</span>
+  </div>
+  <div class="dateline">2026年07月20日</div>
+  <div class="desc">法理明如镜，务知天下事！</div>
+  <div class="line1"></div>
+  <div class="line2"></div>
+  <div class="headline">预览标题文字示例</div>
+  <div class="source">来源：中国法院网</div>
+  <div class="line3"></div>
+  <div class="line4"></div>
+  <div class="footer">关注我，了解更多法律新鲜事</div>
+</div>`,
+          css: `/* 模板样式 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+#page {
+  width: 1080px; height: 1840px;
+  position: relative; overflow: hidden;
+  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+  background: #ffffff;
+}
+
+/* 水印 */
+.watermark {
+  position: absolute; left: 700px; top: 1100px;
+  font-size: 220px; font-weight: 700;
+  color: rgba(204,0,0,0.04);
+  transform: rotate(-10deg);
+  white-space: nowrap;
+}
+
+/* 装饰 */
+.leftband {
+  position: absolute; left: 40px; top: 0;
+  width: 8px; height: 100%;
+  background: #cc0000;
+}
+.headerbg {
+  position: absolute; left: 0; top: 0;
+  width: 100%; height: 490px;
+  background: #ffffff;
+}
+
+/* Logo */
+.logo {
+  position: absolute; left: 120px; top: 350px;
+  width: 380px; height: 200px;
+  background: #cc0000; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Ma Shan Zheng", "KaiTi", serif;
+  font-size: 108px; font-weight: 700; color: #ffffff;
+}
+
+/* 期号 */
+.issuenum {
+  position: absolute; left: 600px; top: 330px;
+  display: flex; align-items: center;
+}
+.prefix { font-size: 44px; font-weight: 700; color: #333; }
+.num { font-size: 96px; font-weight: 700; color: #cc0000; margin: 0 8px; }
+.suffix { font-size: 44px; font-weight: 700; color: #333; }
+
+/* 日期和描述 */
+.dateline {
+  position: absolute; left: 620px; top: 440px;
+  font-size: 35px; color: #333;
+}
+.desc {
+  position: absolute; left: 550px; top: 500px;
+  font-size: 36px; font-weight: 700; color: #1a1a1a;
+}
+
+/* 分割线 */
+.line1 { position: absolute; left: 80px; top: 585px; width: 920px; height: 2px; background: #cc0000; }
+.line2 { position: absolute; left: 80px; top: 592px; width: 920px; height: 2px; background: #cc0000; }
+.line3 { position: absolute; left: 80px; top: 1350px; width: 920px; height: 2px; background: #cc0000; }
+.line4 { position: absolute; left: 80px; top: 1357px; width: 920px; height: 2px; background: #cc0000; }
+
+/* 标题 */
+.headline {
+  position: absolute; left: 80px; top: 750px;
+  width: 920px;
+  font-size: 50px; font-weight: 700;
+  color: #1a1a1a; line-height: 60px;
+}
+
+/* 来源 */
+.source {
+  position: absolute; left: 80px; top: 1000px;
+  font-size: 36px; color: #666;
+}
+
+/* 底部 */
+.footer {
+  position: absolute; left: 0; top: 1470px;
+  width: 100%; text-align: center;
+  font-size: 58px; font-weight: 700; color: #000;
+}`,
         },
         corporate: {
-          _name: "企业商务",
-          _vars: {
-            accent: "#1a5276",
-            bg: "#fdfefe",
-            logoText: "企业",
-            headline: "商业资讯标题示例",
-            footerText: "关注我们，了解更多商业资讯",
-          },
-          elements: [
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 1080,
-                height: 1840,
-                background: "{{bg}}",
-                fontFamily: "Noto Sans SC, sans-serif",
-              },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 0, top: 0, width: 1080, height: 500, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 180, fontSize: 96, fontWeight: 700, color: "#fff" },
-              text: "{{logoText}}",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 300, fontSize: 28, color: "rgba(255,255,255,0.7)" },
-              text: "第001期 · 2026年07月20日",
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 80,
-                top: 560,
-                width: 920,
-                fontSize: 48,
-                fontWeight: 700,
-                color: "#2c3e50",
-                lineHeight: "58px",
-              },
-              text: "{{headline}}",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 780, fontSize: 28, color: "#7f8c8d" },
-              text: "来源：商业周刊",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 1350, width: 920, height: 1, background: "#bdc3c7" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 1450,
-                width: 1080,
-                textAlign: "center",
-                fontSize: 42,
-                fontWeight: 600,
-                color: "{{accent}}",
-              },
-              text: "{{footerText}}",
-            },
-          ],
+          html: `<div id="page">
+  <div class="banner"></div>
+  <div class="logo">企业</div>
+  <div class="meta">第001期 · 2026年07月20日</div>
+  <div class="headline">商业资讯标题示例</div>
+  <div class="source">来源：商业周刊</div>
+  <div class="divider"></div>
+  <div class="footer">关注我们，了解更多商业资讯</div>
+</div>`,
+          css: `* { margin: 0; padding: 0; box-sizing: border-box; }
+#page { width: 1080px; height: 1840px; position: relative; overflow: hidden; font-family: "Noto Sans SC", sans-serif; background: #fdfefe; }
+.banner { position: absolute; left: 0; top: 0; width: 100%; height: 500px; background: #1a5276; }
+.logo { position: absolute; left: 80px; top: 180px; font-size: 96px; font-weight: 700; color: #fff; }
+.meta { position: absolute; left: 80px; top: 300px; font-size: 28px; color: rgba(255,255,255,0.7); }
+.headline { position: absolute; left: 80px; top: 560px; width: 920px; font-size: 48px; font-weight: 700; color: #2c3e50; line-height: 58px; }
+.source { position: absolute; left: 80px; top: 780px; font-size: 28px; color: #7f8c8d; }
+.divider { position: absolute; left: 80px; top: 1350px; width: 920px; height: 1px; background: #bdc3c7; }
+.footer { position: absolute; left: 0; top: 1450px; width: 100%; text-align: center; font-size: 42px; font-weight: 600; color: #1a5276; }`,
         },
         government: {
-          _name: "政务蓝",
-          _vars: {
-            accent: "#1565c0",
-            bg: "#f0f4f8",
-            logoText: "政务公开",
-            headline: "政务信息公开公告示例",
-            footerText: "为人民服务",
-          },
-          elements: [
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: 1080,
-                height: 1840,
-                background: "{{bg}}",
-                fontFamily: "Noto Sans SC, sans-serif",
-              },
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 0, top: 0, width: 1080, height: 480, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 80,
-                top: 160,
-                width: 160,
-                height: 160,
-                background: "rgba(255,255,255,0.15)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 48,
-                color: "#fff",
-                fontWeight: 700,
-              },
-              text: "政",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 280, top: 180, fontSize: 72, fontWeight: 700, color: "#fff" },
-              text: "{{logoText}}",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 280, top: 280, fontSize: 24, color: "rgba(255,255,255,0.8)" },
-              text: "第001期 · 2026年07月20日",
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 80,
-                top: 540,
-                width: 920,
-                fontSize: 46,
-                fontWeight: 700,
-                color: "#1a1a1a",
-                lineHeight: "56px",
-              },
-              text: "{{headline}}",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 750, fontSize: 26, color: "#666" },
-              text: "来源：市政府办公室",
-            },
-            {
-              tag: "div",
-              style: { position: "absolute", left: 80, top: 1300, width: 920, height: 3, background: "{{accent}}" },
-            },
-            {
-              tag: "div",
-              style: {
-                position: "absolute",
-                left: 0,
-                top: 1420,
-                width: 1080,
-                textAlign: "center",
-                fontSize: 40,
-                fontWeight: 600,
-                color: "{{accent}}",
-              },
-              text: "{{footerText}}",
-            },
-          ],
+          html: `<div id="page">
+  <div class="banner"></div>
+  <div class="seal">政</div>
+  <div class="logo">政务公开</div>
+  <div class="meta">第001期 · 2026年07月20日</div>
+  <div class="headline">政务信息公开公告示例</div>
+  <div class="source">来源：市政府办公室</div>
+  <div class="divider"></div>
+  <div class="footer">为人民服务</div>
+</div>`,
+          css: `* { margin: 0; padding: 0; box-sizing: border-box; }
+#page { width: 1080px; height: 1840px; position: relative; overflow: hidden; font-family: "Noto Sans SC", sans-serif; background: #f0f4f8; }
+.banner { position: absolute; left: 0; top: 0; width: 100%; height: 480px; background: #1565c0; }
+.seal { position: absolute; left: 80px; top: 160px; width: 160px; height: 160px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #fff; font-weight: 700; }
+.logo { position: absolute; left: 280px; top: 180px; font-size: 72px; font-weight: 700; color: #fff; }
+.meta { position: absolute; left: 280px; top: 280px; font-size: 24px; color: rgba(255,255,255,0.8); }
+.headline { position: absolute; left: 80px; top: 540px; width: 920px; font-size: 46px; font-weight: 700; color: #1a1a1a; line-height: 56px; }
+.source { position: absolute; left: 80px; top: 750px; font-size: 26px; color: #666; }
+.divider { position: absolute; left: 80px; top: 1300px; width: 920px; height: 3px; background: #1565c0; }
+.footer { position: absolute; left: 0; top: 1420px; width: 100%; text-align: center; font-size: 40px; font-weight: 600; color: #1565c0; }`,
         },
       };
 
-      // ── 变量替换 ──
-      function applyVars(template) {
-        const vars = template._vars || {};
-        return JSON.stringify(template, null, 2).replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? `{{${k}}}`);
-      }
-
-      // ── 加载预设 ──
+      // ── Load Preset ──
       function loadPreset(name) {
-        const tpl = PRESETS[name];
-        if (!tpl) return;
-        editor.value = applyVars(tpl);
-        buildPropsPanel(tpl._vars || {});
-        doRender();
+        const p = PRESETS[name];
+        if (!p) return;
+        cmHtml.setValue(p.html);
+        cmCss.setValue(p.css);
+        refreshPreview();
       }
 
-      // ── 加载已保存 ──
-      function loadSaved() {
-        const saved = localStorage.getItem("tpl_custom");
-        if (saved) {
-          editor.value = saved;
-          detectAndBuildProps();
-          doRender();
-        } else {
-          alert("没有已保存的模板");
+      // ── Tab Switch ──
+      function switchTab(tab) {
+        document.getElementById("editorHtml").style.display = tab === "html" ? "" : "none";
+        document.getElementById("editorCss").style.display = tab === "css" ? "" : "none";
+        document.getElementById("tabHtml").classList.toggle("active", tab === "html");
+        document.getElementById("tabCss").classList.toggle("active", tab === "css");
+        if (tab === "html") cmHtml.refresh();
+        if (tab === "css") cmCss.refresh();
+      }
+
+      // ── Preview Refresh ──
+      function scheduleUpdate() {
+        clearTimeout(updateTimer);
+        updateTimer = setTimeout(refreshPreview, 300);
+      }
+
+      function refreshPreview() {
+        const html = cmHtml.getValue();
+        const css = cmCss.getValue();
+        const iframe = document.getElementById("previewIframe");
+        const doc = iframe.contentDocument;
+        doc.open();
+        doc.write(
+          `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${html}</body></html>`,
+        );
+        doc.close();
+
+        // 设置 iframe 尺寸为模板尺寸
+        const page = doc.getElementById("page") || doc.querySelector("[id]") || doc.body.firstElementChild;
+        if (page) {
+          const w = parseInt(page.style.width) || page.offsetWidth || 1080;
+          const h = parseInt(page.style.height) || page.offsetHeight || 1840;
+          const scale = Math.min(
+            1,
+            (window.innerHeight - 100) / h,
+            (document.getElementById("panelPreview").offsetWidth - 40) / w,
+          );
+          iframe.style.width = w + "px";
+          iframe.style.height = h + "px";
+          iframe.style.transform = `scale(${scale})`;
+          iframe.style.transformOrigin = "top center";
+          document.getElementById("previewFrame").style.width = w * scale + "px";
+          document.getElementById("previewFrame").style.height = h * scale + "px";
         }
+
+        // 注入拖拽和点击事件
+        injectInteraction(iframe);
+        clearSelection();
       }
 
+      // ── Interaction: click to select, drag to move ──
+      function injectInteraction(iframe) {
+        const doc = iframe.contentDocument;
+        const scale = parseFloat(iframe.style.transform?.match(/scale\(([\d.]+)\)/)?.[1] || 1);
+
+        doc.addEventListener("mousedown", (e) => {
+          const el = e.target;
+          if (el === doc.body || el.id === "page") return;
+
+          e.preventDefault();
+          selectElement(el, iframe);
+
+          // 开始拖拽
+          const style = el.style;
+          if (style.position === "absolute") {
+            dragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            dragOrigLeft = parseInt(style.left) || 0;
+            dragOrigTop = parseInt(style.top) || 0;
+
+            const onMove = (e2) => {
+              if (!dragging) return;
+              const dx = (e2.clientX - dragStartX) / scale;
+              const dy = (e2.clientY - dragStartY) / scale;
+              const newLeft = Math.round(dragOrigLeft + dx);
+              const newTop = Math.round(dragOrigTop + dy);
+              el.style.left = newLeft + "px";
+              el.style.top = newTop + "px";
+              updateSelectBox(el, iframe);
+              updatePropsPanel(el);
+            };
+
+            const onUp = () => {
+              dragging = false;
+              doc.removeEventListener("mousemove", onMove);
+              doc.removeEventListener("mouseup", onUp);
+              // 同步回代码
+              syncStyleToCode(el);
+            };
+
+            doc.addEventListener("mousemove", onMove);
+            doc.addEventListener("mouseup", onUp);
+          }
+        });
+      }
+
+      // ── Select Element ──
+      function selectElement(el, iframe) {
+        selectedEl = el;
+        updateSelectBox(el, iframe);
+        updatePropsPanel(el);
+      }
+
+      function clearSelection() {
+        selectedEl = null;
+        document.getElementById("selectBox").style.display = "none";
+        document.getElementById("selectLabel").style.display = "none";
+        document.getElementById("propsBody").innerHTML = '<div class="prop-empty">点击预览中的元素查看属性</div>';
+      }
+
+      function updateSelectBox(el, iframe) {
+        const iframeRect = iframe.getBoundingClientRect();
+        const scale = parseFloat(iframe.style.transform?.match(/scale\(([\d.]+)\)/)?.[1] || 1);
+        const rect = el.getBoundingClientRect();
+
+        const box = document.getElementById("selectBox");
+        const label = document.getElementById("selectLabel");
+
+        box.style.display = "block";
+        box.style.left = rect.left - iframeRect.left + iframe.offsetLeft + "px";
+        box.style.top = rect.top - iframeRect.top + iframe.offsetTop + "px";
+        box.style.width = rect.width + "px";
+        box.style.height = rect.height + "px";
+
+        label.style.display = "block";
+        label.style.left = box.style.left;
+        label.style.top = parseFloat(box.style.top) - 20 + "px";
+        const tag = el.tagName.toLowerCase();
+        const id = el.id ? `#${el.id}` : "";
+        const cls = el.className ? `.${el.className.split(" ")[0]}` : "";
+        label.textContent = `${tag}${id}${cls}`;
+      }
+
+      // ── Properties Panel ──
+      function updatePropsPanel(el) {
+        const s = el.style;
+        const tag = el.tagName.toLowerCase();
+        const id = el.id || "";
+        const cls = el.className || "";
+
+        let html = `<div class="prop-section"><div class="prop-section-title">元素 &lt;${tag}&gt;${id ? " #" + id : ""}${cls ? " ." + cls.split(" ")[0] : ""}</div><div class="prop-body">`;
+
+        // Position
+        if (s.position === "absolute") {
+          html += `<div class="prop-row">
+      <div class="prop-field"><label>left</label><input type="number" value="${parseInt(s.left) || 0}" onchange="setStyle('left',this.value+'px')"/></div>
+      <div class="prop-field"><label>top</label><input type="number" value="${parseInt(s.top) || 0}" onchange="setStyle('top',this.value+'px')"/></div>
+    </div>`;
+        }
+
+        // Size
+        if (s.width)
+          html += `<div class="prop-field"><label>width</label><input value="${s.width}" onchange="setStyle('width',this.value)"/></div>`;
+        if (s.height)
+          html += `<div class="prop-field"><label>height</label><input value="${s.height}" onchange="setStyle('height',this.value)"/></div>`;
+
+        // Colors
+        const bg = s.background || s.backgroundColor;
+        if (bg && !bg.includes("gradient"))
+          html += `<div class="prop-field"><label>background</label><input type="color" value="${toHex(bg)}" onchange="setStyle('background',this.value)"/></div>`;
+        if (s.color)
+          html += `<div class="prop-field"><label>color</label><input type="color" value="${toHex(s.color)}" onchange="setStyle('color',this.value)"/></div>`;
+
+        // Typography
+        if (s.fontSize)
+          html += `<div class="prop-field"><label>font-size</label><input value="${s.fontSize}" onchange="setStyle('fontSize',this.value)"/></div>`;
+        if (s.fontWeight)
+          html += `<div class="prop-field"><label>font-weight</label><input value="${s.fontWeight}" onchange="setStyle('fontWeight',this.value)"/></div>`;
+
+        // Text content (for leaf elements)
+        if (el.children.length === 0 && el.textContent.trim()) {
+          html += `<div class="prop-field"><label>text</label><input value="${escAttr(el.textContent)}" onchange="selectedEl.textContent=this.value;syncTextToCode(selectedEl)"/></div>`;
+        }
+
+        // Border radius
+        if (s.borderRadius)
+          html += `<div class="prop-field"><label>border-radius</label><input value="${s.borderRadius}" onchange="setStyle('borderRadius',this.value)"/></div>`;
+
+        html += "</div></div>";
+
+        // All styles (advanced)
+        html += `<div class="prop-section"><div class="prop-section-title">全部样式</div><div class="prop-body">`;
+        for (const [k, v] of Object.entries(s)) {
+          if (v && typeof v === "string" && !k.startsWith("webkit") && k !== "length" && k !== "parentRule") {
+            html += `<div class="prop-field"><label>${k}</label><input value="${v}" onchange="setStyle('${k}',this.value)" style="font-size:11px"/></div>`;
+          }
+        }
+        html += "</div></div>";
+
+        document.getElementById("propsBody").innerHTML = html;
+      }
+
+      function setStyle(prop, value) {
+        if (!selectedEl) return;
+        selectedEl.style[prop] = value;
+        updateSelectBox(selectedEl, document.getElementById("previewIframe"));
+        syncStyleToCode(selectedEl);
+      }
+
+      // ── Sync: preview → code ──
+      function syncStyleToCode(el) {
+        // 找到元素在 HTML 中的位置并更新 style 属性
+        const html = cmHtml.getValue();
+        const elHtml = el.outerHTML;
+        // 简单策略：用 id 或 class+tag 定位
+        const id = el.id;
+        const cls = el.className;
+        let searchStr;
+        if (id) {
+          searchStr = `id="${id}"`;
+        } else if (cls) {
+          searchStr = `class="${cls.split(" ")[0]}"`;
+        } else {
+          return; // 无法定位，跳过同步
+        }
+
+        const idx = html.indexOf(searchStr);
+        if (idx === -1) return;
+
+        // 找到这个元素的 style="..." 部分
+        const beforeSearch = html.slice(0, idx);
+        const tagStart = beforeSearch.lastIndexOf("<");
+        const afterSearch = html.slice(idx);
+        const tagEnd = afterSearch.indexOf(">");
+
+        if (tagStart === -1 || tagEnd === -1) return;
+
+        const fullTag = html.slice(tagStart, idx + tagEnd + 1);
+        const newStyle = el.getAttribute("style");
+        let newTag;
+
+        if (fullTag.includes('style="')) {
+          newTag = fullTag.replace(/style="[^"]*"/, `style="${newStyle}"`);
+        } else {
+          newTag = fullTag.replace(/(id|class)="/, `style="${newStyle}" $1="`);
+        }
+
+        const newHtml = html.slice(0, tagStart) + newTag + html.slice(tagStart + fullTag.length);
+        cmHtml.setValue(newHtml);
+      }
+
+      function syncTextToCode(el) {
+        const html = cmHtml.getValue();
+        const text = el.textContent;
+        const oldHtml = el.outerHTML;
+        const newHtml = html.replace(oldHtml, el.outerHTML);
+        if (newHtml !== html) cmHtml.setValue(newHtml);
+      }
+
+      // ── Helpers ──
+      function toHex(color) {
+        if (!color) return "#000000";
+        if (color.startsWith("#"))
+          return color.length === 4 ? "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3] : color;
+        const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (m) return "#" + [m[1], m[2], m[3]].map((x) => parseInt(x).toString(16).padStart(2, "0")).join("");
+        return "#000000";
+      }
+      function escAttr(s) {
+        return String(s).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+      }
+
+      // ── Save / Load / Export ──
       function saveTemplate() {
-        localStorage.setItem("tpl_custom", editor.value);
+        const data = { html: cmHtml.getValue(), css: cmCss.getValue() };
+        localStorage.setItem("tpl_workshop", JSON.stringify(data));
         document.getElementById("status").textContent = "✅ 已保存";
         document.getElementById("status").className = "status ok";
         setTimeout(() => {
@@ -606,121 +874,82 @@
         }, 2000);
       }
 
-      // ── 属性面板 ──
-      function buildPropsPanel(vars) {
-        const body = document.getElementById("propsBody");
-        let html = "";
-        for (const [k, v] of Object.entries(vars)) {
-          const isColor = /^#[0-9a-fA-F]{3,8}$/.test(v);
-          html += `<div class="prop-field"><label>${k}</label><input type="${isColor ? "color" : "text"}" value="${escAttr(v)}" data-var="${k}" onchange="onPropChange('${k}',this.value)"/></div>`;
-        }
-        body.innerHTML = html;
+      function downloadTemplate() {
+        const html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<style>\n${cmCss.getValue()}\n</style>\n</head>\n<body>\n${cmHtml.getValue()}\n</body>\n</html>`;
+        const blob = new Blob([html], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "template.html";
+        a.click();
       }
 
-      function detectAndBuildProps() {
-        try {
-          const tpl = JSON.parse(editor.value);
-          const vars = tpl._vars || {};
-          buildPropsPanel(vars);
-        } catch {}
-      }
+      async function exportPng() {
+        const modal = document.getElementById("exportModal");
+        const status = document.getElementById("exportStatus");
+        const img = document.getElementById("exportImg");
+        const btn = document.getElementById("exportDownloadBtn");
 
-      function onPropChange(key, value) {
-        try {
-          const tpl = JSON.parse(editor.value);
-          if (!tpl._vars) tpl._vars = {};
-          tpl._vars[key] = value;
-          // 替换模板中的 {{key}}
-          const json = JSON.stringify(tpl, null, 2);
-          editor.value = json.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
-          scheduleRender();
-        } catch {}
-      }
-
-      function escAttr(s) {
-        return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-      }
-
-      // ── 渲染 ──
-      function scheduleRender() {
-        clearTimeout(debounce);
-        debounce = setTimeout(doRender, 400);
-      }
-
-      async function doRender() {
-        const status = document.getElementById("status");
-        const img = document.getElementById("previewImg");
-        const ph = document.getElementById("placeholder");
-        const errEl = document.getElementById("errorEl");
-        const info = document.getElementById("infoEl");
-
-        let parsed;
-        try {
-          parsed = JSON.parse(editor.value);
-        } catch (e) {
-          errEl.textContent = "JSON 解析错误: " + e.message;
-          errEl.style.display = "block";
-          return;
-        }
-
-        status.textContent = "渲染中...";
-        errEl.style.display = "none";
+        modal.classList.add("show");
+        status.textContent = "正在渲染...";
+        img.style.display = "none";
+        btn.style.display = "none";
 
         try {
-          const start = Date.now();
-          const resp = await fetch("/api/render-template", {
+          // 从 iframe 获取浏览器已解析的 HTML（CSS 已应用）
+          const iframe = document.getElementById("previewIframe");
+          const doc = iframe.contentDocument;
+          // 序列化 DOM 为 HTML（浏览器已计算所有样式）
+          const renderedHtml = doc.body.innerHTML;
+
+          const resp = await fetch("/api/render-html", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ elements: parsed.elements || [] }),
+            body: JSON.stringify({ html: renderedHtml }),
           });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({ error: resp.statusText }));
-            throw new Error(err.error || "渲染失败");
-          }
+          if (!resp.ok) throw new Error((await resp.json()).error || "渲染失败");
           const blob = await resp.blob();
-          const url = URL.createObjectURL(blob);
-          if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
-          img.src = url;
+          img.src = URL.createObjectURL(blob);
           img.style.display = "block";
-          ph.style.display = "none";
-          const ms = Date.now() - start;
-          info.textContent = `${ms}ms · ${(blob.size / 1024).toFixed(0)}KB`;
-          status.textContent = "就绪";
-          status.className = "status ok";
+          status.textContent = "渲染完成";
+          btn.style.display = "";
         } catch (e) {
-          errEl.textContent = e.message;
-          errEl.style.display = "block";
-          status.textContent = "错误";
-          status.className = "status";
+          status.textContent = "❌ " + e.message;
         }
       }
 
-      // ── 编辑器变化 → 自动重建属性面板 ──
-      editor.addEventListener("input", () => {
-        detectAndBuildProps();
-        scheduleRender();
-      });
+      function closeExportModal() {
+        document.getElementById("exportModal").classList.remove("show");
+      }
+      function downloadExport() {
+        const a = document.createElement("a");
+        a.href = document.getElementById("exportImg").src;
+        a.download = "template.png";
+        a.click();
+      }
 
-      // ── 快捷键 ──
+      // ── Keyboard ──
       document.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-          e.preventDefault();
-          doRender();
-        }
         if ((e.ctrlKey || e.metaKey) && e.key === "s") {
           e.preventDefault();
           saveTemplate();
         }
+        if (e.key === "Escape") clearSelection();
+        if (e.key === "Delete" && selectedEl && !e.target.closest(".CodeMirror")) {
+          const html = cmHtml.getValue();
+          cmHtml.setValue(html.replace(selectedEl.outerHTML, ""));
+          clearSelection();
+          refreshPreview();
+        }
       });
 
-      // ── 拖拽调整面板宽度 ──
+      // ── Resizer ──
       function initResizer(id, panelId, dir) {
-        const r = document.getElementById(id);
-        const p = document.getElementById(panelId);
-        let startX, startW;
+        const r = document.getElementById(id),
+          p = document.getElementById(panelId);
+        let sx, sw;
         r.addEventListener("pointerdown", (e) => {
-          startX = e.clientX;
-          startW = p.offsetWidth;
+          sx = e.clientX;
+          sw = p.offsetWidth;
           r.classList.add("active");
           document.body.style.cursor = "col-resize";
           document.body.style.userSelect = "none";
@@ -728,7 +957,7 @@
         });
         window.addEventListener("pointermove", (e) => {
           if (!r.classList.contains("active")) return;
-          p.style.width = (dir === "left" ? startW + e.clientX - startX : startW - (e.clientX - startX)) + "px";
+          p.style.width = (dir === "left" ? sw + e.clientX - sx : sw - (e.clientX - sx)) + "px";
         });
         window.addEventListener("pointerup", () => {
           r.classList.remove("active");
@@ -737,21 +966,22 @@
         });
       }
 
-      // ── Tab 键在 textarea 中插入缩进 ──
-      editor.addEventListener("keydown", (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-          const s = editor.selectionStart,
-            end = editor.selectionEnd;
-          editor.value = editor.value.substring(0, s) + "  " + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = s + 2;
-        }
-      });
-
-      // ── 初始化 ──
+      // ── Init ──
       initResizer("resizer1", "panelCode", "left");
       initResizer("resizer2", "panelProps", "right");
-      loadPreset("default");
+
+      // Load saved or default
+      const saved = localStorage.getItem("tpl_workshop");
+      if (saved) {
+        try {
+          const d = JSON.parse(saved);
+          cmHtml.setValue(d.html);
+          cmCss.setValue(d.css);
+        } catch {}
+      } else {
+        loadPreset("default");
+      }
+      refreshPreview();
     </script>
   </body>
 </html>

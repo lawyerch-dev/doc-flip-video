@@ -3,6 +3,118 @@ import { state, setStatus, goStep, toast } from "./app.mjs";
 import { populateForm } from "./step2-edit.mjs";
 import { viewVideo } from "./step4-export.mjs";
 
+// ── Multi-select state ──
+let selectMode = false;
+const selected = new Set();
+
+export function toggleSelectMode() {
+  selectMode = !selectMode;
+  if (!selectMode) selected.clear();
+  const btn = document.getElementById("selectModeBtn");
+  if (btn) btn.style.color = selectMode ? "var(--accent)" : "";
+  loadHistory();
+}
+window.toggleSelectMode = toggleSelectMode;
+
+export function toggleItemCheck(issueNum) {
+  if (selected.has(issueNum)) selected.delete(issueNum);
+  else selected.add(issueNum);
+  updateMultiBar();
+  // Update item highlight
+  const el = document.querySelector(`.history-item[data-issue='${issueNum}']`);
+  if (el) el.classList.toggle("selected", selected.has(issueNum));
+}
+window.toggleItemCheck = toggleItemCheck;
+
+export function toggleSelectAll() {
+  const container = document.getElementById("historyList");
+  if (!container) return;
+  const checkboxes = container.querySelectorAll(".history-check");
+  const allChecked = checkboxes.length > 0 && [...checkboxes].every((cb) => cb.checked);
+  checkboxes.forEach((cb) => {
+    const num = Number(cb.dataset.issue);
+    cb.checked = !allChecked;
+    if (allChecked) selected.delete(num);
+    else selected.add(num);
+    const item = cb.closest(".history-item");
+    if (item) item.classList.toggle("selected", !allChecked);
+  });
+  updateMultiBar();
+}
+window.toggleSelectAll = toggleSelectAll;
+
+function updateMultiBar() {
+  const count = document.getElementById("multiCount");
+  const delBtn = document.getElementById("multiDelBtn");
+  if (count) count.textContent = selected.size > 0 ? `已选 ${selected.size} 项` : "";
+  if (delBtn) delBtn.disabled = selected.size === 0;
+}
+
+export async function batchDeleteSelected() {
+  if (selected.size === 0) return;
+  const count = selected.size;
+  if (!confirm(`确定删除选中的 ${count} 个项目？`)) return;
+  const nums = [...selected];
+  try {
+    await Promise.all(nums.map((n) => fetch(`/api/configs/${n}`, { method: "DELETE" })));
+    toast(`已删除 ${count} 个项目`, "success");
+    selected.clear();
+    selectMode = false;
+    const btn = document.getElementById("selectModeBtn");
+    if (btn) btn.style.color = "";
+    loadHistory();
+  } catch (e) {
+    toast("批量删除失败: " + e.message, "error");
+  }
+}
+window.batchDeleteSelected = batchDeleteSelected;
+
+// ── Sidebar Resize ──
+export function initSidebarResize() {
+  const sidebar = document.getElementById("sidebar");
+  const handle = document.getElementById("sidebarResize");
+  if (!sidebar || !handle) return;
+
+  // Restore saved width
+  const savedW = localStorage.getItem("sidebar-width");
+  if (savedW) sidebar.style.width = savedW + "px";
+
+  let dragging = false;
+  let startX = 0;
+  let startW = 0;
+
+  const onPointerDown = (e) => {
+    if (sidebar.classList.contains("collapsed")) return;
+    dragging = true;
+    startX = e.clientX;
+    startW = sidebar.offsetWidth;
+    handle.classList.add("active");
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const newW = Math.max(180, Math.min(500, startW + dx));
+    sidebar.style.width = newW + "px";
+  };
+
+  const onPointerUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove("active");
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+    localStorage.setItem("sidebar-width", sidebar.offsetWidth);
+  };
+
+  handle.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+}
+
 // ── History (localStorage) ──
 const HISTORY_KEY = "doc-flip-projects";
 
@@ -177,11 +289,22 @@ export async function loadHistory() {
       container.innerHTML = '<div class="history-empty">暂无历史记录</div>';
       return;
     }
-    container.innerHTML = list
+    // Multi-select toolbar
+    let html = "";
+    if (selectMode) {
+      html += `
+        <div class="multi-bar">
+          <label><input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll()" /> 全选</label>
+          <span class="multi-count" id="multiCount"></span>
+          <button class="btn small secondary" id="multiDelBtn" onclick="batchDeleteSelected()" disabled style="color:var(--error)">批量删除</button>
+        </div>`;
+    }
+    html += list
       .map(
         (e) => `
-      <div class="history-item">
+      <div class="history-item${selected.has(e.issueNum) ? " selected" : ""}" data-issue="${e.issueNum}">
         <div class="history-item-top">
+          ${selectMode ? `<input type="checkbox" class="history-check" data-issue="${e.issueNum}" ${selected.has(e.issueNum) ? "checked" : ""} onchange="toggleItemCheck(${e.issueNum})" />` : ""}
           <span class="history-badge">${String(e.issueNum).padStart(3, "0")}</span>
           ${e.videoReady ? '<span class="history-badge history-badge-ready"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>' : ""}
           <span class="history-headline" title="${e.headline}">${e.headline}</span>
@@ -198,6 +321,8 @@ export async function loadHistory() {
     `,
       )
       .join("");
+    container.innerHTML = html;
+    updateMultiBar();
   } catch {}
 }
 

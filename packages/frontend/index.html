@@ -11,11 +11,17 @@
     <div class="layout">
       <!-- Sidebar: History -->
       <aside class="sidebar" id="sidebar">
+        <div class="sidebar-resize" id="sidebarResize"></div>
         <div class="sidebar-header">
           <span class="sidebar-title"><i data-lucide="history" class="icon"></i> 历史项目</span>
-          <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起侧栏">
-            <i data-lucide="panel-left-close" class="icon"></i>
-          </button>
+          <div style="display: flex; gap: 2px; align-items: center">
+            <button class="sidebar-toggle" id="selectModeBtn" onclick="toggleSelectMode()" title="多选删除">
+              <i data-lucide="check-square" class="icon"></i>
+            </button>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起侧栏">
+              <i data-lucide="panel-left-close" class="icon"></i>
+            </button>
+          </div>
         </div>
         <div class="sidebar-body" id="historyList"></div>
       </aside>
@@ -755,6 +761,11 @@
         saveSettingsUI,
         toggleKeyVis,
         markSettingsDirty,
+        toggleSelectMode,
+        toggleItemCheck,
+        toggleSelectAll,
+        batchDeleteSelected,
+        initSidebarResize,
       } from "/js/history.mjs";
 
       // Sidebar toggle
@@ -801,6 +812,10 @@
         markSettingsDirty,
         toggleTheme,
         toggleSidebar,
+        toggleSelectMode,
+        toggleItemCheck,
+        toggleSelectAll,
+        batchDeleteSelected,
         goStep,
         toast,
         showModal,
@@ -858,6 +873,7 @@
       loadSettingsUI();
       loadHistory();
       loadDefaultArticleList();
+      initSidebarResize();
       if (window.lucide) lucide.createIcons();
     </script>
   </body>

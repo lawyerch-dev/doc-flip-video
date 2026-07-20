@@ -10,6 +10,7 @@ import {
   ARTICLES_DIR as CONFIGS_DIR,
   TEMP_DIR,
   OUTPUT_DIR,
+  PROJECTS_DIR,
   TEMPLATES_DIR,
   TEMPLATE_PATH,
   SETTINGS_PATH,
@@ -74,6 +75,7 @@ const PORT = process.env.PORT || _settings.port || 33011;
 fs.mkdirSync(CONFIGS_DIR, { recursive: true });
 fs.mkdirSync(TEMP_DIR, { recursive: true });
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 
 const defaultTemplate = JSON.parse(fs.readFileSync(TEMPLATE_PATH, "utf-8"));
 
@@ -94,17 +96,45 @@ const MIME = {
 function json(res, data, status = 200) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(data));
+  return true;
 }
 
 export function errorResponse(res, message, status = 500, details = null) {
-  json(res, { error: message, details, timestamp: new Date().toISOString() }, status);
+  return json(res, { error: message, details, timestamp: new Date().toISOString() }, status);
 }
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (c) => (body += c));
-    req.on("end", () => resolve(body));
+    const chunks = [];
+    let length = 0;
+    req.on("data", (chunk) => {
+      length += chunk.length;
+      if (length > 100 * 1024 * 1024) {
+        req.destroy();
+        reject(new Error("请求体不能超过 100MB"));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function readBuffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let length = 0;
+    req.on("data", (chunk) => {
+      length += chunk.length;
+      if (length > 100 * 1024 * 1024) {
+        req.destroy();
+        reject(new Error("请求体不能超过 100MB"));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
 }
@@ -128,8 +158,8 @@ function today() {
 }
 
 // ── Exports ──
-export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, TEMPLATES_DIR, TEMPLATE_PATH };
+export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, PROJECTS_DIR, TEMPLATES_DIR, TEMPLATE_PATH };
 export { __dirname as DIRNAME };
-export { MIME, json, readBody, parseJson, nextIssueNumber, today, defaultTemplate };
+export { MIME, json, readBody, readBuffer, parseJson, nextIssueNumber, today, defaultTemplate };
 export { http, fs, path, fileURLToPath, execFileSync, execFile, execSync, spawn, randomUUID };
 export { PORT, saveSettings };

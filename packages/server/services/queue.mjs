@@ -7,7 +7,7 @@ import path from "path";
 import { spawn } from "child_process";
 
 import { ROOT, OUTPUT_DIR, CONFIGS_DIR, TEMP_DIR, DIRNAME } from "../shared.mjs";
-import { ENGINE_ENTRY, WORKFLOW_RUNNER } from "../../../config/paths.mjs";
+import { ENGINE_ENTRY } from "../../../config/paths.mjs";
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }
@@ -48,47 +48,6 @@ export function enqueue(config) {
     status: "queued",
     config,
     issueNum,
-    progress: [],
-    videoUrl: null,
-    error: null,
-    startedAt: null,
-    finishedAt: null,
-    child: null,
-  };
-
-  jobs.set(jobId, job);
-
-  // Start processing the queue if idle
-  if (!processing) {
-    setImmediate(() => _processNext());
-  }
-
-  return jobId;
-}
-
-/**
- * Accept a workflow JSON and return a jobId immediately.
- */
-export function enqueueWorkflow(workflow, configPath = null) {
-  if (!workflow || !workflow.name) {
-    throw new Error("Invalid workflow: missing name");
-  }
-
-  const jobId = nextJobId();
-  const issueNum = workflow.variables?.issueNumber || 0;
-
-  // Save workflow to temp file
-  const workflowPath = path.join(TEMP_DIR, `workflow-${jobId}.json`);
-  fs.mkdirSync(path.dirname(workflowPath), { recursive: true });
-  fs.writeFileSync(workflowPath, JSON.stringify(workflow, null, 2));
-
-  const job = {
-    status: "queued",
-    workflow,
-    workflowPath,
-    configPath,
-    issueNum,
-    mode: "workflow",
     progress: [],
     videoUrl: null,
     error: null,
@@ -204,17 +163,8 @@ function _processNext() {
   job.startedAt = Date.now();
   job.progress.push("[build started]");
 
-  let child;
-  if (job.workflowPath) {
-    const args = [WORKFLOW_RUNNER, job.workflowPath];
-    if (job.configPath) {
-      args.push("--config", job.configPath);
-    }
-    child = spawn("node", args, { cwd: ROOT, timeout: 120000 });
-  } else {
-    const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
-    child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
-  }
+  const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
+  const child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
 
   job.child = child;
 
@@ -249,12 +199,8 @@ function _processNext() {
   child.on("close", (code) => {
     // 确定输出文件名
     let videoFilename;
-    if (job.workflow?.output?.filename) {
-      videoFilename = job.workflow.output.filename;
-    } else {
-      const padded = String(issueNum).padStart(3, "0");
-      videoFilename = `法务视频-${padded}期.mp4`;
-    }
+    const padded = String(issueNum).padStart(3, "0");
+    videoFilename = `法务视频-${padded}期.mp4`;
 
     const videoPath = path.join(OUTPUT_DIR, videoFilename);
     const ready = fs.existsSync(videoPath);

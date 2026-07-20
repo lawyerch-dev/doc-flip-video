@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="用素材和 AI 编排短视频" />
+    <title>剪辑台 · AI 视频编排</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body class="jy-app">
+    <!-- ── Left Sidebar ── -->
+    <aside class="jy-sidebar">
+      <div class="jy-sidebar-logo">
+        <a class="jy-logo-icon" href="/" title="返回工作台">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polygon points="23 7 16 12 23 17 23 7" />
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+          </svg>
+        </a>
+      </div>
+      <nav class="jy-sidebar-nav">
+        <button class="jy-nav-btn active" title="剪辑台">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          <span>剪辑台</span>
+        </button>
+        <a class="jy-nav-btn" href="/" title="草稿箱">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>草稿箱</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="jy-main">
+      <!-- Top Bar -->
+      <header class="jy-topbar">
+        <div class="jy-topbar-left">
+          <h1 class="jy-topbar-title">AI 视频编排</h1>
+          <span class="jy-ai-badge" id="aiStatus"></span>
+        </div>
+        <div class="jy-topbar-right">
+          <span class="jy-topbar-hint"><span class="jy-status-dot done"></span> 就绪</span>
+        </div>
+      </header>
+
+      <!-- ── Intro / Launch ── -->
+      <section class="jy-content" id="projectStart">
+        <div class="jy-launch">
+          <div class="jy-launch-hero">
+            <p class="jy-launch-eyebrow">素材驱动的视频工作流</p>
+            <h1 class="jy-launch-title">先把素材放上桌，<br /><em>再让 AI 组织镜头。</em></h1>
+          </div>
+          <div class="jy-launch-form">
+            <div class="jy-field">
+              <label class="jy-label">项目名称</label>
+              <input id="projectName" class="jy-input" placeholder="例如：夏季新品预告" value="我的视频" />
+            </div>
+            <div class="jy-field">
+              <label class="jy-label">画幅</label>
+              <div class="jy-ratio-group">
+                <label class="jy-ratio active">
+                  <input type="radio" name="canvas" value="vertical" checked />
+                  <b>9:16</b><span>竖屏短视频</span>
+                </label>
+                <label class="jy-ratio">
+                  <input type="radio" name="canvas" value="horizontal" />
+                  <b>16:9</b><span>横屏叙事</span>
+                </label>
+              </div>
+            </div>
+            <button class="jy-btn primary jy-launch-btn" id="createProject">
+              开始创作
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+            <p class="jy-launch-note">支持图片、视频片段与背景音乐 · 预览不会覆盖原始素材</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Workspace ── -->
+      <section class="jy-editor" id="workspace" hidden>
+        <!-- Project Header -->
+        <div class="jy-editor-topbar">
+          <div class="jy-project-info">
+            <p class="jy-launch-eyebrow">当前项目</p>
+            <h2 id="projectTitle" class="jy-project-name"></h2>
+          </div>
+          <div class="jy-project-stats">
+            <span class="jy-stat" id="assetCount">0 份素材</span>
+            <span class="jy-stat" id="sceneCount">0 个片段</span>
+          </div>
+        </div>
+
+        <!-- Assets + Director -->
+        <div class="jy-workspace-grid">
+          <!-- Assets Panel -->
+          <aside class="jy-ws-panel">
+            <div class="jy-ws-panel-header">
+              <span class="jy-ws-panel-num">01</span>
+              <div>
+                <span class="jy-ws-panel-title">素材库</span>
+                <span class="jy-ws-panel-desc">原始文件独立保存</span>
+              </div>
+            </div>
+            <label class="jy-upload-well" for="upload">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <strong>添加素材</strong>
+              <span>图片、音频或视频片段</span>
+            </label>
+            <input type="file" id="upload" multiple accept="image/*,audio/*,video/*" hidden />
+            <div class="jy-asset-list" id="assets"></div>
+          </aside>
+
+          <!-- Director Panel -->
+          <section class="jy-ws-panel jy-director-panel">
+            <div class="jy-ws-panel-header">
+              <span class="jy-ws-panel-num">02</span>
+              <div>
+                <span class="jy-ws-panel-title">导演台</span>
+                <span class="jy-ws-panel-desc">选择一个起点，或直接描述你的想法</span>
+              </div>
+            </div>
+
+            <!-- Template Card -->
+            <div class="jy-template-card">
+              <span class="jy-template-tag">推荐成片模板</span>
+              <h3 class="jy-template-title">图文故事</h3>
+              <p class="jy-template-desc">标题开场、视觉叙事、收尾卡片。适合快速把素材做成一条完整短片。</p>
+              <button class="jy-btn ghost" id="applyTemplate">使用这个结构 →</button>
+            </div>
+
+            <!-- Catalog -->
+            <div class="jy-catalog" id="catalog"></div>
+
+            <!-- AI Prompt -->
+            <div class="jy-prompt-box">
+              <label class="jy-label" for="instruction">给 AI 的创作方向</label>
+              <textarea
+                id="instruction"
+                class="jy-input jy-textarea"
+                placeholder="例如：以冷静、克制的节奏，做一条 20 秒新品介绍；开头突出产品，结尾留一句行动号召。"
+              ></textarea>
+              <button class="jy-btn primary" id="plan">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                  />
+                </svg>
+                生成编排草案
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Timeline -->
+        <section class="jy-timeline-section">
+          <div class="jy-timeline-header">
+            <div>
+              <span class="jy-launch-eyebrow">03 / 编辑成片</span>
+              <h2 class="jy-section-title">时间线</h2>
+            </div>
+            <button class="jy-btn ghost" id="saveTimeline">保存改动</button>
+          </div>
+          <div class="jy-timeline-ruler">
+            <span>00:00</span>
+            <div class="jy-ruler-line"></div>
+            <span>素材按从左到右播放</span>
+          </div>
+          <div id="timeline" class="jy-timeline-track"></div>
+        </section>
+
+        <!-- Output -->
+        <section class="jy-output-section">
+          <div class="jy-output-info">
+            <span class="jy-launch-eyebrow">04 / 观看与导出</span>
+            <h2 class="jy-section-title">先看低清预览，再输出正式成片。</h2>
+            <p class="jy-output-status" id="renderStatus" aria-live="polite">你的改动只会写入当前项目。</p>
+            <div class="jy-output-actions">
+              <button class="jy-btn ghost" id="preview">生成预览</button>
+              <button class="jy-btn primary" id="build">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                导出 MP4
+              </button>
+            </div>
+          </div>
+          <div class="jy-player-frame">
+            <video id="player" controls playsinline></video>
+            <div class="jy-player-empty" id="playerEmpty">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              <span>成片预览</span>
+              <small>在左侧完成编排后生成</small>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/js/projects.mjs"></script>
+  </body>
+</html>

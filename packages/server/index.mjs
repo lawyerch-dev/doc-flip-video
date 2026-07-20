@@ -16,32 +16,7 @@ import { register as scrapeRoutes } from "./routes/scrape.mjs";
 import { register as aiRoutes } from "./routes/ai.mjs";
 import { register as buildRoutes } from "./routes/build.mjs";
 import { register as projectRoutes } from "./routes/project.mjs";
-import { register as workflowRoutes } from "./routes/workflow.mjs";
-
-const STUDIO_PORT = 5173;
-
-// ── Proxy to Studio dev server ──
-function proxyToStudio(req, res) {
-  const url = req.url;
-  const proxyReq = http.request(
-    {
-      hostname: "localhost",
-      port: STUDIO_PORT,
-      path: url,
-      method: req.method,
-      headers: req.headers,
-    },
-    (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
-      proxyRes.pipe(res);
-    },
-  );
-  proxyReq.on("error", () => {
-    res.writeHead(502, { "Content-Type": "text/plain" });
-    res.end("Studio 未启动，请运行: pnpm studio:flow");
-  });
-  req.pipe(proxyReq);
-}
+import { register as projectRoutesV2 } from "./routes/projects.mjs";
 
 // ── Static file server ──
 function serveStatic(req, res) {
@@ -90,7 +65,7 @@ function serveStatic(req, res) {
 // ── Main handler ──
 const requestHandler = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -103,15 +78,11 @@ const requestHandler = async (req, res) => {
   const params = new URL(req.url, `http://localhost:${PORT}`).searchParams;
 
   try {
-    if (urlPath.startsWith("/workflow")) {
-      proxyToStudio(req, res);
-      return;
-    }
+    if (await projectRoutesV2(method, urlPath, req, res, params)) return;
     if (await scrapeRoutes(method, urlPath, req, res, params)) return;
     if (await aiRoutes(method, urlPath, req, res, params)) return;
     if (await buildRoutes(method, urlPath, req, res, params)) return;
     if (await projectRoutes(method, urlPath, req, res, params)) return;
-    if (await workflowRoutes(method, urlPath, req, res, params)) return;
     serveStatic(req, res);
   } catch (e) {
     console.error(`Error [${method} ${urlPath}]:`, e);

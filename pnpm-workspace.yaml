@@ -5,3 +5,5 @@ packages:
 allowBuilds:
   canvas: true
   puppeteer: true
+overrides:
+  vue: 3.3.13

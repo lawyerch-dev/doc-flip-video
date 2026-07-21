@@ -1,0 +1,52 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1080,
+      "height": 1840,
+      "fill": "#ffffff",
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "text": "{{headline}}",
+      "left": 80,
+      "top": 750,
+      "width": 920,
+      "fontSize": 50,
+      "fontWeight": "bold",
+      "fill": "#1a1a1a",
+      "fontFamily": "Noto Sans SC",
+      "editable": true
+    },
+    {
+      "type": "textbox",
+      "text": "{{logoText}}",
+      "left": 120,
+      "top": 350,
+      "width": 380,
+      "height": 200,
+      "fontSize": 108,
+      "fontWeight": "bold",
+      "fill": "#ffffff",
+      "fontFamily": "Ma Shan Zheng",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "text": "{{footerText}}",
+      "left": 0,
+      "top": 1470,
+      "width": 1080,
+      "fontSize": 58,
+      "fontWeight": "bold",
+      "fill": "#000000",
+      "textAlign": "center",
+      "fontFamily": "Noto Sans SC"
+    }
+  ],
+  "background": "#ffffff"
+}

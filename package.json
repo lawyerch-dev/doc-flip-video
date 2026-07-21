@@ -7,7 +7,7 @@
     "demo": "npx serve . -p 8080 --no-clipboard",
     "server": "node packages/server/index.mjs",
     "studio": "node packages/server/index.mjs",
-    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; (cd packages/vue-fabric-editor && pnpm dev &) ; (sleep 2 && open http://localhost:33011) & nodemon --watch packages/server --watch packages/frontend -e mjs,html,js,css --delay 1 packages/server/index.mjs",
+    "dev": "lsof -ti:33011 | xargs kill -9 2>/dev/null; lsof -ti:33012 | xargs kill -9 2>/dev/null; (cd packages/vue-fabric-editor && pnpm dev &) ; (sleep 2 && open http://localhost:33011) & nodemon --watch packages/server --watch packages/frontend -e mjs,html,js,css --delay 1 packages/server/index.mjs",
     "mcp": "node packages/mcp/mcp-server.mjs",
     "lint": "eslint packages/ --ignore-pattern='**/node_modules/**' --ignore-pattern='**/vendor/**' --ignore-pattern='**/workflow-studio/**' --ignore-pattern='**/build/**' --ignore-pattern='**/dist/**' --ignore-pattern='packages/yft-design/**' --ignore-pattern='packages/vue-fabric-editor/**'",
     "format": "prettier --write 'packages/**/*.{mjs,js,json,css,html}'",
@@ -34,11 +34,5 @@
     "lint-staged": "^17.0.8",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "canvas",
-      "puppeteer"
-    ]
   }
 }

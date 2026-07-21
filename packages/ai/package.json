@@ -1,0 +1,10 @@
+{
+  "name": "@doc-flip/ai",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./chat": "./chat.mjs",
+    "./generate": "./generate.mjs"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@doc-flip/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./paths": "./paths.mjs",
+    "./settings": "./settings.mjs"
+  }
+}

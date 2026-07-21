@@ -7,7 +7,7 @@ import { createCanvas } from "canvas";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ROOT, TEMP_DIR, OUTPUT_DIR } from "../../config/paths.mjs";
+import { ROOT, TEMP_DIR, OUTPUT_DIR } from "@doc-flip/shared";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

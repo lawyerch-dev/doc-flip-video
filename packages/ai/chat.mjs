@@ -1,4 +1,4 @@
-import { getSettings } from "../shared.mjs";
+import { getSettings } from "@doc-flip/shared";
 import OpenAI from "openai";
 
 let _client = null;

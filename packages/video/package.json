@@ -1,0 +1,10 @@
+{
+  "name": "@doc-flip/video",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./render": "./render-video.mjs",
+    "./effects": "./effects.mjs"
+  }
+}

@@ -25,14 +25,14 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
 
-// ── Paths (相对于 engine 包自身，不依赖 config/paths.mjs) ──
+// ── Paths (指向新包位置) ──
 const ASSETS_DIR = path.join(ROOT, "assets");
-const TEMPLATES_DIR = path.join(__dirname, "templates");
+const TEMPLATES_DIR = path.join(ROOT, "packages", "render", "templates");
 const TEMP_DIR = path.join(ROOT, "data", "temp");
 const OUTPUT_DIR = path.join(ROOT, "data", "output");
 const ARTICLES_DIR = path.join(ROOT, "data", "articles");
-const RENDER_IMAGES = path.join(__dirname, "render-images.mjs");
-const RENDER_VIDEO = path.join(__dirname, "render-video.mjs");
+const RENDER_IMAGES = path.join(ROOT, "packages", "render", "render-images.mjs");
+const RENDER_VIDEO = path.join(ROOT, "packages", "video", "render-video.mjs");
 
 // ── 自动编号：扫描已有文章取最大期号 +1 ──
 function nextIssueNumber() {

@@ -1,0 +1,10 @@
+{
+  "name": "@doc-flip/render",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./images": "./render-images.mjs",
+    "./satori": "./render-satori.mjs"
+  }
+}

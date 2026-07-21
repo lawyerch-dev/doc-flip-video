@@ -9,6 +9,11 @@
     "dev": "node index.mjs"
   },
   "dependencies": {
+    "@doc-flip/shared": "workspace:*",
+    "@doc-flip/ai": "workspace:*",
+    "@doc-flip/scrape": "workspace:*",
+    "@doc-flip/render": "workspace:*",
+    "@doc-flip/video": "workspace:*",
     "@doc-flip/engine": "workspace:*"
   }
 }

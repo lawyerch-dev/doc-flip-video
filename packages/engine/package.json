@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "exports": {
-    ".": "./effects.mjs",
+    ".": "./generate.mjs",
     "./generate": "./generate.mjs",
-    "./effects": "./effects.mjs",
     "./timeline": "./projects/timeline.mjs",
     "./catalog": "./projects/catalog.mjs",
     "./render": "./projects/render.mjs",

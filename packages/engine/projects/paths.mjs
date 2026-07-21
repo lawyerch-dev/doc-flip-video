@@ -1,5 +1,5 @@
 import path from "path";
-import { PROJECTS_DIR } from "../../../config/paths.mjs";
+import { PROJECTS_DIR } from "@doc-flip/shared";
 
 export function projectDir(id) {
   if (!/^[a-z0-9-]{8,64}$/.test(id)) throw new Error("项目 ID 无效");

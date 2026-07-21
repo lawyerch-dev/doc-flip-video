@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import EFFECTS from "../effects.mjs";
-import { ROOT } from "../../../config/paths.mjs";
+import EFFECTS from "@doc-flip/video/effects";
+import { ROOT } from "@doc-flip/shared";
 
 export const CANVASES = {
   vertical: { id: "vertical", width: 1080, height: 1920, fps: 30, name: "竖屏 9:16" },

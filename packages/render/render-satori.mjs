@@ -10,7 +10,7 @@ import satori from "satori";
 import sharp from "sharp";
 import fs from "fs";
 import path from "path";
-import { ROOT_ASSETS, ROOT, TEMP_DIR, TEMPLATE_PATH, ARTICLES_DIR } from "../../config/paths.mjs";
+import { ROOT_ASSETS, ROOT, TEMP_DIR, TEMPLATE_PATH, ARTICLES_DIR } from "@doc-flip/shared";
 
 // ── 字体加载 ──
 const FONTS_DIR = path.join(ROOT_ASSETS, "fonts");

@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import http from "http";
 import fs from "fs";
 import path from "path";
-import { ROOT, TEMP_DIR, OUTPUT_DIR, ENGINE_DIR, TEMPLATE_PATH } from "../../config/paths.mjs";
+import { ROOT, TEMP_DIR, OUTPUT_DIR, ENGINE_DIR, TEMPLATE_PATH } from "@doc-flip/shared";
 const FPS = 60;
 
 // Load template + config

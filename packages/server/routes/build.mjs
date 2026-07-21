@@ -17,7 +17,7 @@ import {
   defaultTemplate,
   DIRNAME,
 } from "../shared.mjs";
-import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY, RENDER_SATORI_SCRIPT } from "../../../config/paths.mjs";
+import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY, RENDER_SATORI_SCRIPT } from "@doc-flip/shared";
 
 import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 

@@ -32,12 +32,15 @@ function main() {
 
   console.log(`📄 Config: ${configPath}`);
   console.log("─── Generating images ───");
-  execFileSync("node", [path.join(__dirname, "render-images.mjs"), configPath], {
+  execFileSync("node", [path.join(ROOT, "packages", "render", "render-images.mjs"), configPath], {
     stdio: "inherit",
   });
   console.log("─── Rendering video ───");
-  const captureScript = process.env.CAPTURE === "puppeteer" ? "render-video-puppeteer.mjs" : "render-video.mjs";
-  execFileSync("node", [path.join(__dirname, captureScript), configPath], {
+  const captureScript =
+    process.env.CAPTURE === "puppeteer"
+      ? path.join(ROOT, "packages", "video", "render-video-puppeteer.mjs")
+      : path.join(ROOT, "packages", "video", "render-video.mjs");
+  execFileSync("node", [captureScript, configPath], {
     stdio: "inherit",
   });
 }

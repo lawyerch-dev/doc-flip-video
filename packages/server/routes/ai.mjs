@@ -2,7 +2,7 @@ import { getSettings, json, errorResponse, parseJson } from "../shared.mjs";
 import {
   generateConfig,
   refineConfig,
-  resolveHighlight,
+  fuzzyFindHighlight,
   parseAIResponse,
   parseAIResponseWithSchema,
 } from "@doc-flip/ai/generate";
@@ -41,12 +41,10 @@ export async function register(method, urlPath, req, res, params) {
     const refined = await refineConfig(config, message, history || []);
     // Auto-fix highlights that don't match paragraph text
     if (refined?.content?.paragraphs) {
-      refined.content.paragraphs = await Promise.all(
-        refined.content.paragraphs.map(async (p) => ({
-          ...p,
-          highlight: await resolveHighlight(p.text, p.highlight),
-        })),
-      );
+      refined.content.paragraphs = refined.content.paragraphs.map((p) => ({
+        ...p,
+        highlight: fuzzyFindHighlight(p.text, p.highlight),
+      }));
     }
     json(res, refined);
     return true;
@@ -60,28 +58,17 @@ export async function register(method, urlPath, req, res, params) {
       return true;
     }
     try {
-      const systemPrompt = `你是一个法律短视频内容编辑专家。从给定的正文中，选出**观众会记住并转述的核心结论**作为高亮。
-
-## 规则
-- highlight 必须是正文中的**原文连续片段**，一个字都不能改
-- 选后半段的判决结果、关键建议或实用信息，不要选开头的场景描述
-- 结论中自然包含的术语（如"判赔""即时生效"）可以保留
-- 不要选纯术语堆砌（"违约、侵权、依法"）或泛词（"可以起诉"）
-- 选较长的结论片段而非短关键词，让观众看到完整的有用信息
-- 如果全文没有值得高亮的结论，返回空字符串
-
-只返回 JSON：{"highlight": "..."}`;
       const result = await aiChat([
-        { role: "system", content: systemPrompt },
+        {
+          role: "system",
+          content:
+            '从正文中选出观众最会记住的核心结论，返回 JSON：{"highlight": "选段落中最有冲击力的结论或建议"}。不需要逐字匹配原文，系统会自动修正。',
+        },
         { role: "user", content: text },
       ]);
       const parsed = parseAIResponseWithSchema(result, { highlight: [] });
-      const hl = parsed.highlight || "";
-      if (hl && text.includes(hl)) {
-        json(res, { highlight: hl });
-      } else {
-        json(res, { highlight: "" });
-      }
+      const hl = fuzzyFindHighlight(text, parsed.highlight || "");
+      json(res, { highlight: hl });
     } catch (e) {
       json(res, { highlight: "" });
     }

@@ -1,37 +1,45 @@
 import { getSettings, nextIssueNumber, today } from "@doc-flip/shared";
 import { aiChat } from "./chat.mjs";
 
-// ── Resolve highlight: if AI's answer doesn't match, auto-fix via dedicated call ──
-async function resolveHighlight(text, originalHighlight) {
+// ── Fuzzy highlight matching ──
+// Find the best matching substring in `text` for the given `highlight`.
+// Uses longest common substring approach — works even when the AI's
+// highlight has a few characters of difference from the actual text.
+function fuzzyFindHighlight(text, highlight) {
+  if (!highlight || !text) return "";
   // Exact match → use as-is
-  if (originalHighlight && text.includes(originalHighlight)) return originalHighlight;
-  // Not enough text to highlight
-  if (!text || text.trim().length < 10) return "";
-  // Call dedicated highlight generator to find a valid match
-  try {
-    const highlightSchema = { highlight: [] };
-    const prompt = `你是一个法律短视频内容编辑专家。从给定的正文中，选出**观众会记住并转述的核心结论**作为高亮。
+  if (text.includes(highlight)) return highlight;
 
-## 规则
-- highlight 必须是正文中的**原文连续片段**，一个字都不能改
-- 选后半段的判决结果、关键建议或实用信息，不要选开头的场景描述
-- 结论中自然包含的术语（如"判赔""即时生效"）可以保留
-- 不要选纯术语堆砌（"违约、侵权、依法"）或泛词（"可以起诉"）
-- 选较长的结论片段而非短关键词，让观众看到完整的有用信息
-- 如果全文没有值得高亮的结论，返回空字符串
+  // Find longest common substring between highlight and text
+  const m = highlight.length,
+    n = text.length;
+  if (m === 0 || n === 0) return "";
 
-只返回 JSON：{"highlight": "..."}`;
-    const result = await aiChat([
-      { role: "system", content: prompt },
-      { role: "user", content: text },
-    ]);
-    const parsed = parseAIResponseWithSchema(result, highlightSchema);
-    const hl = parsed.highlight || "";
-    if (hl && text.includes(hl)) return hl;
-  } catch (e) {
-    console.warn("[resolveHighlight] AI call failed:", e.message);
+  // Optimize: only need previous row
+  let prev = new Uint16Array(n + 1);
+  let maxLen = 0,
+    endIdx = 0;
+
+  for (let i = 1; i <= m; i++) {
+    const curr = new Uint16Array(n + 1);
+    for (let j = 1; j <= n; j++) {
+      if (highlight[i - 1] === text[j - 1]) {
+        curr[j] = prev[j - 1] + 1;
+        if (curr[j] > maxLen) {
+          maxLen = curr[j];
+          endIdx = j;
+        }
+      }
+    }
+    prev = curr;
   }
-  return "";
+
+  // Require at least 40% of the highlight to match
+  if (maxLen < Math.max(4, m * 0.4)) return "";
+
+  // Extract the matched substring from text
+  const start = endIdx - maxLen;
+  return text.slice(start, endIdx);
 }
 
 const ITEM_SCHEMA = { explanation: ["text", "content"], highlight: [] };
@@ -140,7 +148,7 @@ async function generateConfig(articleText, sourceInfo) {
   "headline": "封面标题，≤20字，有悬念或冲突",
   "subtitle": "副标题，≤20字，补充说明",
   "paragraphs": [
-    { "explanation": "50-80字通俗讲解", "highlight": "核心结论原文" },
+    { "explanation": "50-80字通俗讲解", "highlight": "选段落中你认为观众最会记住的一句话或一个短语" },
     ...
   ]
 }
@@ -148,27 +156,10 @@ async function generateConfig(articleText, sourceInfo) {
 ## 写作原则
 - 观众是普通人，不是律师。用日常语言
 - 第1段有具体场景和数字，第2段有看完就能用的建议
-- 法律角色用日常称呼："室友""老板"，不用"原告""被告"
+- 法律角色用日常称呼：“室友”“老板”，不用“原告”“被告”
 
-## highlight 规则（违反则整条高亮消失）
-highlight 是段落中**观众会记住并转述的核心结论**——通常是后半段的判决结果、关键建议或实用信息。
-
-- 必须是 explanation 的**原文连续片段**，逐字符完全匹配，一字不能改
-- 选段落中最有冲击力、最实用的结论性内容，而不是开头的场景描述
-- 可以包含结论中的法律术语（如"判赔""即时生效"），这些是结论的一部分
-- 不要选纯法律术语堆砌（如"违约、侵权、依法"），也不要选泛词（如"可以起诉"）
-
-✅ 好的高亮（选后半段结论）：
-  - 文本→"孙某上午9点买了商业险...保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万。"
-    高亮→"保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万" ✅
-  - 文本→"首次买保险的人注意了...交强险即时生效，商业险也要看合同细节。"
-    高亮→"交强险即时生效，商业险也要看合同细节" ✅
-
-❌ 差的高亮（选太短/选场景）：
-  - 高亮→"保险公司拒赔" ❌（太短，丢失了关键信息）
-  - 高亮→"孙某上午9点买了商业险" ❌（选了场景，不是结论）
-
-如果段落中没有值得高亮的原文，highlight 返回空字符串`;
+## highlight 说明
+highlight 是你希望视觉强调的内容，选段落中最有冲击力的结论或建议。不需要逐字匹配——系统会自动找到最接近的原文片段。`;
 
   const _settings = getSettings();
   const _finalPrompt = _settings.contentPrompt || systemPrompt;
@@ -265,17 +256,15 @@ highlight 是段落中**观众会记住并转述的核心结论**——通常是
     content: {
       title: headline,
       subtitle,
-      paragraphs: await Promise.all(
-        items.slice(0, 2).map(async (item) => {
-          // 用完整 explanation 做高亮匹配，截断只用于最终输出
+      paragraphs: items.slice(0, 2).map((item) => {
+          // 用完整 explanation 做模糊匹配，截断只用于最终输出
           const fullText = item.text;
-          const highlight = await resolveHighlight(fullText, item.highlight);
+          const highlight = fuzzyFindHighlight(fullText, item.highlight);
           const text = fullText.slice(0, 80);
           // 确保 highlight 在截断后的 text 范围内
           const validHighlight = highlight && text.includes(highlight) ? highlight : "";
           return { text, highlight: validHighlight };
         }),
-      ),
       source,
     },
   };
@@ -288,51 +277,19 @@ async function refineConfig(config, userMessage, chatHistory = []) {
 当前配置：
 ${JSON.stringify(config, null, 2)}
 
-## 写作原则（修改时必须遵守）
-- 观众是普通人，不是律师。用日常语言，不用法律术语
-- 第1段要有具体场景和数字，第2段要有看完就能用的建议
-- 法律角色词用日常称呼："室友""老板""一个姑娘"，不要"原告""被告""申请人"
+## 写作原则
+- 观众是普通人，不是律师。用日常语言
+- 第1段有具体场景和数字，第2段有看完就能用的建议
+- 法律角色用日常称呼：“室友”“老板”，不用“原告”“被告”
 
-## 高亮规则
-highlight 是段落中**观众会记住并转述的核心结论**——通常是后半段的判决结果、关键建议或实用信息，而不是开头的场景描述。
-必须是 paragraph text 中的**原文连续片段**，逐字匹配，一字不能改。
+## highlight 说明
+highlight 是你希望视觉强调的内容，选段落中最有冲击力的结论或建议。不需要逐字匹配——系统会自动找到最接近的原文片段。
 
-✅ 好的高亮（选后半段结论）：
-- text="孙某上午9点买了商业险...保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万。"
-  highlight="保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万"
-- text="首次买保险的人注意了...交强险即时生效，商业险也要看合同细节。"
-  highlight="交强险即时生效，商业险也要看合同细节"
+## 字数限制
+- headline/title/subtitle: ≤20字
+- 每段正文: 50-80字
 
-❌ 差的高亮（太短/选场景）：
-- highlight="保险公司拒赔"（太短，丢失关键信息）
-- highlight="孙某上午9点买了商业险"（选了场景，不是结论）
-
-## 字数限制（严格遵守）
-- cover.headline: ≤20字符
-- cover.source: ≤25字符
-- content.title: ≤20字符
-- content.subtitle: ≤20字符
-- 每段正文: 50-80字符
-- content.source: ≤60字符
-
-## 最重要的规则：高亮必须是正文原文（违反则高亮消失）
-highlight 字段必须是 paragraph text 中的**原文连续片段**，逐字匹配，不能增删改。
-选后半段的结论性内容，不要选太短的片段。
-
-✅ 正例：
-- text="保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万。"
-  highlight="保险公司拒赔，但法院认为保险公司没提醒生效时间，条款无效，判赔2.2万"
-- text="交强险即时生效，商业险也要看合同细节。"
-  highlight="交强险即时生效，商业险也要看合同细节"
-
-❌ 反例（必消失）：
-- text="点\\"本人签收\\""        highlight="点击\\"本人签收\\""（增了"击"）
-- text="用户没选保价"            highlight="用户没有选择保价"（改写了）
-- text="判决拆除"                highlight="陈某的空调被判拆除"（加了主语）
-
-如果段落中没有值得高亮的原文片段，highlight 返回空字符串。
-
-修改后严格输出完整的 JSON 对象（和输入格式一样），不要输出其他内容。`;
+修改后输出完整的 JSON 对象（和输入格式一样），不要输出其他内容。`;
 
   const messages = [{ role: "system", content: systemPrompt }, ...chatHistory, { role: "user", content: userMessage }];
 
@@ -340,4 +297,4 @@ highlight 字段必须是 paragraph text 中的**原文连续片段**，逐字�
   return parseAIResponse(result);
 }
 
-export { resolveHighlight, parseAIResponse, normalizeAIResponse, parseAIResponseWithSchema, generateConfig, refineConfig, ITEM_SCHEMA, PUBLISH_SCHEMA };
+export { fuzzyFindHighlight, parseAIResponse, normalizeAIResponse, parseAIResponseWithSchema, generateConfig, refineConfig, ITEM_SCHEMA, PUBLISH_SCHEMA };

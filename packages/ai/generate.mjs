@@ -267,9 +267,13 @@ highlight 是段落中**观众会记住并转述的核心结论**——通常是
       subtitle,
       paragraphs: await Promise.all(
         items.slice(0, 2).map(async (item) => {
-          const text = item.text.slice(0, 80);
-          const highlight = await resolveHighlight(text, item.highlight);
-          return { text, highlight };
+          // 用完整 explanation 做高亮匹配，截断只用于最终输出
+          const fullText = item.text;
+          const highlight = await resolveHighlight(fullText, item.highlight);
+          const text = fullText.slice(0, 80);
+          // 确保 highlight 在截断后的 text 范围内
+          const validHighlight = highlight && text.includes(highlight) ? highlight : "";
+          return { text, highlight: validHighlight };
         }),
       ),
       source,

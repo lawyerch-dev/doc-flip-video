@@ -32,8 +32,8 @@ function loadSettings() {
     enableScoring: false,
     sourceName: "中国法院网",
     headlinePrompt: "生成 3 个爆款标题（≤20字），有悬念、冲突或好奇心",
-    contentPrompt:
-      '你是一个法律短视频内容编辑专家。请从法律文章中提炼出让普通人想停下来看的短视频内容。\n\n核心原则：用日常称呼代替法律角色，每段 50-80 字。\n\n## 高亮铁律（违反则高亮消失）\nhighlight 必须是 explanation 的**原文连续片段**，逐字匹配，不能增删改。\n如果段落原文说"点"本人签收""，高亮写"点击"本人签收""就是错的——多了一个字，渲染引擎匹配不到。\n正例：原文"用户没选保价，就得按协议赔" → 高亮"用户没选保价"。\n无合适原文时 highlight 返回空字符串。\n禁用法律术语高亮。',
+    // contentPrompt 不设默认值，由 generateConfig 里的 systemPrompt 作为真正默认。
+    // 用户可在设置页面自定义覆盖，保存后存入 settings.json。
     publishPrompt:
       "你是一个短视频发布助手。生成发布用的标题和介绍。标题20字以内，介绍100字以内。末尾空一行后加5个以上话题标签，包含通用标签（#法律 #普法）和视频核心关键词标签。",
     scoringPrompt:

@@ -6,7 +6,7 @@ async function resolveHighlight(text, originalHighlight) {
   // Exact match → use as-is
   if (originalHighlight && text.includes(originalHighlight)) return originalHighlight;
   // Not enough text to highlight
-  if (!text || text.trim().length < 10) return undefined;
+  if (!text || text.trim().length < 10) return "";
   // Call dedicated highlight generator to find a valid match
   try {
     const highlightSchema = { highlight: [] };
@@ -30,7 +30,7 @@ async function resolveHighlight(text, originalHighlight) {
   } catch (e) {
     console.warn("[resolveHighlight] AI call failed:", e.message);
   }
-  return undefined;
+  return "";
 }
 
 const ITEM_SCHEMA = { explanation: ["text", "content"], highlight: [] };
@@ -132,26 +132,34 @@ async function generateConfig(articleText, sourceInfo) {
   const issueNum = nextIssueNumber();
   const settings = getSettings();
 
-  // DeepSeek JSON mode: response_format forces valid JSON, but the model uses its own schema.
-  // Instead of fighting it, we extract whatever array of items we get.
-  const systemPrompt = `你是一个法律短视频内容编辑专家。分析文章后输出 JSON，包含关键内容和 highlight。
+  const systemPrompt = `你是一个法律短视频内容编辑专家。分析法律文章，生成短视频所需的标题、副标题和讲解内容。
 
-文章内容：下文用户消息中给出的法律文章。
+输出 JSON 对象：
+{
+  "headline": "封面标题，≤20字，有悬念或冲突",
+  "subtitle": "副标题，≤20字，补充说明",
+  "paragraphs": [
+    { "explanation": "50-80字通俗讲解", "highlight": "高亮关键词" },
+    ...
+  ]
+}
 
-输出必须包含一个数组，每个元素包含 explanation（50-80字通俗讲解）和 highlight。
+## 写作原则
+- 观众是普通人，不是律师。用日常语言
+- 第1段有具体场景和数字，第2段有看完就能用的建议
+- 法律角色用日常称呼："室友""老板"，不用"原告""被告"
 
 ## highlight 铁律（违反则整条高亮消失）
-- highlight 必须是 explanation 文本中的**原文连续片段**，逐字符完全匹配
+- highlight 必须是 explanation 的**原文连续片段**，逐字符完全匹配
 - 不允许：增字、删字、改字、补充解释、换说法、加主语
 - 反例：
-  - 文本→"点"本人签收""  高亮→"点击"本人签收"" ❌（增了"击"）
+  - 文本→"点\"本人签收\""  高亮→"点击\"本人签收\"" ❌（增了"击"）
   - 文本→"用户没选保价"  高亮→"用户没有选择保价" ❌（改写了）
   - 文本→"判决拆除"       高亮→"陈某的空调被判拆除" ❌（加了主语）
 - 正例：
   - 文本→"用户没选保价，就得按协议赔"  高亮→"用户没选保价" ✅
   - 文本→"判决拆除。"                   高亮→"判决拆除" ✅
-
-如果段落中没有值得高亮的原文，highlight 返回空字符串。`;
+- 如果段落中没有值得高亮的原文，highlight 返回空字符串`;
 
   const _settings = getSettings();
   const _finalPrompt = _settings.contentPrompt || systemPrompt;
@@ -160,36 +168,29 @@ async function generateConfig(articleText, sourceInfo) {
   try {
     raw = await aiChat([
       { role: "system", content: _finalPrompt },
-      {
-        role: "user",
-        content: `从以下文章中提炼3段短视频讲解，每段50-80字。
-
-## 高亮规则（必须遵守）
-每条 explanation 配一个 highlight。highlight 必须是 explanation 文字的**原文连续片段**——逐字相同，不能多一个字也不能少一个字。
-如果你的 highlight 不在 explanation 字符串中，整条高亮会彻底消失，观众看不到。
-如果 explanation 里没有值得高亮的原话，highlight 返回空字符串。
-
-来源信息：${sourceInfo}
-
-文章全文：
-${articleText}`,
-      },
+      { role: "user", content: `来源信息：${sourceInfo}\n\n文章全文：\n${articleText}` },
     ]);
   } catch (e) {
     console.warn("[generateConfig] AI call failed:", e.message);
     throw new Error("AI 生成内容无效，请点「重新生成」重试", { cause: e });
   }
 
-  // Parse JSON from AI response
+  // Parse JSON from AI response — supports both old array format and new object format
   let items = [];
+  let aiHeadline = "";
+  let aiSubtitle = "";
   try {
     const parsed = parseAIResponse(raw);
-    // Find the array — could be at root, or under videoScripts/content/paragraphs/etc
     let arr = null;
     if (Array.isArray(parsed)) {
+      // Old format: bare array
       arr = parsed;
     } else if (typeof parsed === "object" && parsed !== null) {
-      const arrayKeys = ["videoScripts", "paragraphs", "content", "items", "data"];
+      // New format: { headline, subtitle, paragraphs }
+      aiHeadline = parsed.headline || "";
+      aiSubtitle = parsed.subtitle || "";
+      // Find paragraphs array
+      const arrayKeys = ["paragraphs", "videoScripts", "content", "items", "data"];
       for (const key of arrayKeys) {
         if (Array.isArray(parsed[key]) && parsed[key].length > 0) {
           arr = parsed[key];
@@ -231,9 +232,9 @@ ${articleText}`,
     }
   }
 
-  // Build config from extracted items
+  // Build headline: prefer AI-generated, fallback to first sentence of first paragraph
   const headline = (() => {
-    // Try to extract a headline from first paragraph
+    if (aiHeadline && aiHeadline.length <= 20) return aiHeadline;
     const first = items[0]?.text || "";
     const short = first
       .replace(/[。，！？]/g, "\n")
@@ -241,6 +242,9 @@ ${articleText}`,
       .trim();
     return short.length <= 20 ? short : short.slice(0, 17) + "…";
   })();
+
+  // Build subtitle: prefer AI-generated, fallback to empty
+  const subtitle = aiSubtitle.length <= 20 ? aiSubtitle : aiSubtitle.slice(0, 17) + "…";
 
   const raw_p = settings.sourceName || "中国法院网";
   const source = raw_p.startsWith("来源：") ? raw_p : `来源：${raw_p}`;
@@ -251,7 +255,7 @@ ${articleText}`,
     cover: { headline, source },
     content: {
       title: headline,
-      subtitle: "",
+      subtitle,
       paragraphs: await Promise.all(
         items.slice(0, 2).map(async (item) => {
           const text = item.text.slice(0, 80);

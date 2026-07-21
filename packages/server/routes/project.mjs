@@ -12,7 +12,7 @@ import {
   updateSettings,
   saveSettings,
 } from "../shared.mjs";
-import { aiChat } from "../services/ai.mjs";
+import { aiChat } from "@doc-flip/ai/chat";
 
 /**
  * Register project/config route handlers.

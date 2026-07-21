@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { errorResponse, json, readBody, readBuffer } from "../shared.mjs";
-import { aiChat } from "../services/ai.mjs";
+import { aiChat } from "@doc-flip/ai/chat";
 import {
   addAsset,
   createProject,

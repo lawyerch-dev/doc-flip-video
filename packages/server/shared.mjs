@@ -55,6 +55,6 @@ const MIME = {
 // ── Exports ──
 export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, PROJECTS_DIR, TEMPLATES_DIR, TEMPLATE_PATH };
 export { __dirname as DIRNAME };
-export { MIME, json, readBody, readBuffer, parseJson, nextIssueNumber, today, defaultTemplate };
+export { MIME, json, errorResponse, readBody, readBuffer, parseJson, nextIssueNumber, today, defaultTemplate };
 export { http, fs, path, fileURLToPath, execFileSync, execFile, execSync, spawn, randomUUID };
 export { PORT, getSettings, updateSettings, saveSettings };

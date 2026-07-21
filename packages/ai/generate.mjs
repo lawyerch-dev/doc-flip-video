@@ -3,43 +3,66 @@ import { aiChat } from "./chat.mjs";
 
 // ── Fuzzy highlight matching ──
 // Find the best matching substring in `text` for the given `highlight`.
-// Uses longest common substring approach — works even when the AI's
-// highlight has a few characters of difference from the actual text.
+// Uses sliding window with character-level similarity — tolerates small
+// differences (extra/missing characters) that LLMs often produce.
 function fuzzyFindHighlight(text, highlight) {
   if (!highlight || !text) return "";
   // Exact match → use as-is
   if (text.includes(highlight)) return highlight;
 
-  // Find longest common substring between highlight and text
   const m = highlight.length,
     n = text.length;
   if (m === 0 || n === 0) return "";
 
-  // Optimize: only need previous row
-  let prev = new Uint16Array(n + 1);
-  let maxLen = 0,
-    endIdx = 0;
+  // Try windows of text with similar length to the highlight
+  // Allow ±20% length difference to handle extra/missing chars
+  const minWin = Math.max(4, Math.floor(m * 0.8));
+  const maxWin = Math.min(n, Math.ceil(m * 1.2));
 
-  for (let i = 1; i <= m; i++) {
-    const curr = new Uint16Array(n + 1);
-    for (let j = 1; j <= n; j++) {
-      if (highlight[i - 1] === text[j - 1]) {
-        curr[j] = prev[j - 1] + 1;
-        if (curr[j] > maxLen) {
-          maxLen = curr[j];
-          endIdx = j;
+  let bestScore = 0;
+  let bestStart = 0;
+  let bestLen = 0;
+
+  for (let winLen = minWin; winLen <= maxWin; winLen++) {
+    for (let i = 0; i <= n - winLen; i++) {
+      const slice = text.slice(i, i + winLen);
+      // Count matching characters at same positions
+      let matches = 0;
+      const cmpLen = Math.min(winLen, m);
+      for (let j = 0; j < cmpLen; j++) {
+        if (slice[j] === highlight[j]) matches++;
+      }
+      // Also check for shifted matches (handles insertions/deletions)
+      let shiftedMatches = 0;
+      for (let offset = 1; offset <= 2; offset++) {
+        let sm = 0;
+        for (let j = offset; j < cmpLen; j++) {
+          if (slice[j] === highlight[j - offset]) sm++;
         }
+        shiftedMatches = Math.max(shiftedMatches, sm);
+      }
+      matches = Math.max(matches, shiftedMatches);
+
+      const score = matches / Math.max(winLen, m);
+      if (score > bestScore) {
+        bestScore = score;
+        bestStart = i;
+        bestLen = winLen;
       }
     }
-    prev = curr;
   }
 
-  // Require at least 40% of the highlight to match
-  if (maxLen < Math.max(4, m * 0.4)) return "";
-
-  // Extract the matched substring from text
-  const start = endIdx - maxLen;
-  return text.slice(start, endIdx);
+  // Require at least 60% similarity
+  if (bestScore < 0.6) return "";
+  let result = text.slice(bestStart, bestStart + bestLen);
+  // Trim leading/trailing punctuation
+  result = result.replace(/^[，。！？、；：·\s]+/, "");
+  result = result.replace(/[，。！？、；：·\s]+$/, "");
+  // If result starts with extra chars not in highlight, try trimming them
+  while (result.length > 4 && !highlight.startsWith(result[0]) && !highlight.includes(result.slice(0, 2))) {
+    result = result.slice(1);
+  }
+  return result || "";
 }
 
 const ITEM_SCHEMA = { explanation: ["text", "content"], highlight: [] };

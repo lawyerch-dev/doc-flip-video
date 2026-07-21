@@ -6,5 +6,8 @@
     ".": "./index.mjs",
     "./images": "./render-images.mjs",
     "./satori": "./render-satori.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
   }
 }

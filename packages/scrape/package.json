@@ -4,5 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./scrape.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
   }
 }

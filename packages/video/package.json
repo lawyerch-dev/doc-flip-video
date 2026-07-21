@@ -6,5 +6,8 @@
     ".": "./index.mjs",
     "./render": "./render-video.mjs",
     "./effects": "./effects.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
   }
 }

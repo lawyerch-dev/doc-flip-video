@@ -9,5 +9,9 @@
     "./catalog": "./projects/catalog.mjs",
     "./render": "./projects/render.mjs",
     "./paths": "./projects/paths.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*",
+    "@doc-flip/video": "workspace:*"
   }
 }

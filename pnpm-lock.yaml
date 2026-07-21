@@ -55,19 +55,67 @@ importers:
         specifier: ^3.9.5
         version: 3.9.5
 
-  packages/engine: {}
+  packages/ai:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/engine:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@doc-flip/video':
+        specifier: workspace:*
+        version: link:../video
 
   packages/frontend: {}
 
   packages/mcp: {}
 
+  packages/render:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/scrape:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+
   packages/server:
     dependencies:
+      '@doc-flip/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@doc-flip/engine':
         specifier: workspace:*
         version: link:../engine
+      '@doc-flip/render':
+        specifier: workspace:*
+        version: link:../render
+      '@doc-flip/scrape':
+        specifier: workspace:*
+        version: link:../scrape
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@doc-flip/video':
+        specifier: workspace:*
+        version: link:../video
+
+  packages/shared: {}
 
   packages/template-render: {}
+
+  packages/video:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
 
 packages:
 

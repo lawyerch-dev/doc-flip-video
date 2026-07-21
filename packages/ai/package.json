@@ -6,5 +6,8 @@
     ".": "./index.mjs",
     "./chat": "./chat.mjs",
     "./generate": "./generate.mjs"
+  },
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
   }
 }

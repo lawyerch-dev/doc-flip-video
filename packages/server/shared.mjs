@@ -15,6 +15,7 @@ import {
   PROJECTS_DIR,
   TEMPLATES_DIR,
   TEMPLATE_PATH,
+  VIDEO_TEMPLATES_DIR,
   SETTINGS_PATH,
   getSettings,
   updateSettings,
@@ -53,7 +54,17 @@ const MIME = {
 };
 
 // ── Exports ──
-export { ROOT, WEB_DIR, CONFIGS_DIR, TEMP_DIR, OUTPUT_DIR, PROJECTS_DIR, TEMPLATES_DIR, TEMPLATE_PATH };
+export {
+  ROOT,
+  WEB_DIR,
+  CONFIGS_DIR,
+  TEMP_DIR,
+  OUTPUT_DIR,
+  PROJECTS_DIR,
+  TEMPLATES_DIR,
+  TEMPLATE_PATH,
+  VIDEO_TEMPLATES_DIR,
+};
 export { __dirname as DIRNAME };
 export { MIME, json, errorResponse, readBody, readBuffer, parseJson, nextIssueNumber, today, defaultTemplate };
 export { http, fs, path, fileURLToPath, execFileSync, execFile, execSync, spawn, randomUUID };

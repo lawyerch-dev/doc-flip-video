@@ -5,15 +5,28 @@
     "day": 21,
     "issueNumber": 9,
     "description": "法理明如镜，务知天下事！",
-    "template": "default"
+    "template": "default",
+    "videoTemplate": "flip-book",
+    "sceneTransitions": [
+      {
+        "effect": "swap"
+      },
+      {
+        "effect": "page-curl"
+      },
+      {
+        "effect": "wipeleft"
+      }
+    ],
+    "overlays": ["glow"]
   },
   "timing": {
     "settle": 1.2,
-    "cover": 2,
-    "curl": 2.5,
+    "cover": 1,
+    "curl": 2,
     "sweep": 2,
-    "hold": 1,
-    "final": 2
+    "hold": 0.5,
+    "final": 1.5
   },
   "cover": {
     "headline": "过户后才得知承重墙被拆，买方能“退房”吗？",

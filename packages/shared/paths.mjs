@@ -25,6 +25,9 @@ export const PROJECTS_DIR = path.join(DATA_DIR, "projects");
 export const TEMPLATES_DIR = path.join(ROOT, "packages", "render", "templates");
 export const TEMPLATE_PATH = path.join(TEMPLATES_DIR, "default.json");
 
+// ── 视频模板 ──
+export const VIDEO_TEMPLATES_DIR = path.join(ROOT, "packages", "video");
+
 // ── 渲染脚本 ──
 export const RENDER_IMAGES_SCRIPT = path.join(ROOT, "packages", "render", "render-images.mjs");
 export const RENDER_SATORI_SCRIPT = path.join(ROOT, "packages", "render", "render-satori.mjs");

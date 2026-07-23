@@ -98,6 +98,7 @@ export function populateForm() {
   document.getElementById("f_day").value = meta?.day || d.getDate();
   document.getElementById("f_description").value = meta?.description || "";
   document.getElementById("f_template").value = meta?.template || "default";
+  document.getElementById("f_video_template").value = meta?.videoTemplate || "flip-book";
   document.getElementById("f_headline").value = cover.headline || "";
   document.getElementById("f_coverSource").value = cover.source || "";
   document.getElementById("f_title").value = cover.headline || "";
@@ -154,6 +155,7 @@ export function readForm() {
   c.meta.day = parseInt(document.getElementById("f_day").value) || d.getDate();
   c.meta.description = document.getElementById("f_description").value || c.meta.description;
   c.meta.template = document.getElementById("f_template").value || "default";
+  c.meta.videoTemplate = document.getElementById("f_video_template").value || "flip-book";
   c.cover.headline = document.getElementById("f_headline").value;
   c.cover.source = document.getElementById("f_coverSource").value;
   c.content.title = document.getElementById("f_title").value;

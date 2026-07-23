@@ -5,7 +5,8 @@
     "day": 21,
     "issueNumber": 8,
     "description": "法理明如镜，务知天下事！",
-    "template": "default"
+    "template": "default",
+    "videoTemplate": "slideshow"
   },
   "timing": {
     "settle": 1.2,

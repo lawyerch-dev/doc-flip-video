@@ -4,6 +4,7 @@ import {
   CONFIGS_DIR,
   OUTPUT_DIR,
   TEMPLATES_DIR,
+  VIDEO_TEMPLATES_DIR,
   json,
   errorResponse,
   parseJson,
@@ -74,6 +75,27 @@ export async function register(method, urlPath, req, res, params) {
       } catch {
         return { id: name, name: LABELS[name] || name, logo: "", default: isDefault };
       }
+    });
+    json(res, templates);
+    return true;
+  }
+
+  // ── GET /api/video-templates — list available video templates ──
+  if (method === "GET" && urlPath === "/api/video-templates") {
+    const files = fs
+      .readdirSync(VIDEO_TEMPLATES_DIR)
+      .filter((f) => f.startsWith("render-video-") && f.endsWith(".mjs") && !f.endsWith("-puppeteer.mjs"))
+      .sort();
+    const LABELS = {
+      "render-video-flip-book.mjs": "📖 翻页效果",
+      "render-video-slideshow.mjs": "🖼️ 幻灯片",
+    };
+    const templates = files.map((f) => {
+      const id = f.replace(/^render-video-/, "").replace(/\.mjs$/, "");
+      return {
+        id,
+        name: LABELS[f] || id,
+      };
     });
     json(res, templates);
     return true;

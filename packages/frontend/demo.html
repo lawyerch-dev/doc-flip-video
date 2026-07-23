@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>视频效果配置 Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f5f7;
+        color: #1d1d1f;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app {
+        display: flex;
+        height: 100vh;
+      }
+      .app > div {
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .left {
+        flex: 0 0 420px;
+        border-right: 1px solid #e8e8ed;
+        background: #fff;
+      }
+      .right {
+        flex: 1;
+        background: #f5f5f7;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 18px;
+        margin-bottom: 2px;
+      }
+      .sub {
+        color: #6e6e73;
+        font-size: 12px;
+        margin-bottom: 16px;
+      }
+
+      .bar {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .fl {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .fl label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #6e6e73;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .fl select,
+      .fl input {
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #d2d2d7;
+        font-size: 12px;
+        background: #fff;
+      }
+      .fl select {
+        min-width: 120px;
+      }
+      .fl button {
+        padding: 5px 14px;
+        border-radius: 6px;
+        border: none;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        background: #0071e3;
+        color: #fff;
+      }
+      .fl button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .fl button.s {
+        background: #fff;
+        color: #0071e3;
+        border: 1px solid #0071e3;
+      }
+
+      .timeline {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 12px;
+      }
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: #d2d2d7;
+        border-radius: 1px;
+      }
+
+      .scene {
+        background: #f9f9fb;
+        border: 1px solid #e8e8ed;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        position: relative;
+      }
+      .scene::before {
+        content: "";
+        position: absolute;
+        left: -18px;
+        top: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0071e3;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #0071e3;
+      }
+      .scene:last-child::before {
+        background: #86868b;
+        box-shadow: 0 0 0 2px #86868b;
+      }
+      .scene .h {
+        font-size: 11px;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 4px;
+      }
+      .scene .h .sub {
+        font-weight: 400;
+        color: #6e6e73;
+        font-size: 10px;
+      }
+      .scene .row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .scene select {
+        min-width: 110px;
+        padding: 3px 6px;
+        border-radius: 5px;
+        border: 1px solid #d2d2d7;
+        font-size: 11px;
+        background: #fff;
+        flex: 1;
+      }
+      .scene .dur {
+        width: 50px;
+        padding: 3px 5px;
+        border-radius: 5px;
+        border: 1px solid #d2d2d7;
+        font-size: 11px;
+        text-align: center;
+      }
+      .scene .lbl {
+        font-size: 9px;
+        color: #6e6e73;
+        white-space: nowrap;
+      }
+      .scene optgroup {
+        font-weight: 600;
+        font-size: 10px;
+        color: #6e6e73;
+      }
+
+      .extras {
+        background: #f9f9fb;
+        border: 1px solid #e8e8ed;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .extras > span {
+        font-size: 9px;
+        font-weight: 600;
+        color: #6e6e73;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .extras label {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+      .extras .dur {
+        width: 50px;
+        padding: 3px 5px;
+        border-radius: 5px;
+        border: 1px solid #d2d2d7;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .total {
+        font-size: 11px;
+        color: #6e6e73;
+        padding: 6px 12px;
+        background: #f0f0f2;
+        border-radius: 6px;
+        text-align: center;
+      }
+      .hint {
+        font-size: 10px;
+        color: #b33;
+        margin-top: 8px;
+        text-align: center;
+        display: none;
+      }
+
+      /* 右侧 */
+      #status {
+        font-size: 12px;
+        color: #6e6e73;
+        min-height: 20px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      }
+      #status.err {
+        color: #d32f2f;
+      }
+      #status.ok {
+        color: #1d9e3e;
+      }
+
+      .pbox {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 0;
+      }
+      .pbox:not(.on) {
+        display: none;
+      }
+
+      .player-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        border-radius: 10px;
+        min-height: 0;
+        overflow: hidden;
+      }
+      video {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+      }
+      .inf {
+        font-size: 11px;
+        color: #6e6e73;
+        text-align: center;
+        flex-shrink: 0;
+        padding: 2px 0;
+      }
+
+      .lg {
+        background: #1d1d1f;
+        color: #b8b8b8;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-family: monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        height: 140px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        flex-shrink: 0;
+      }
+      .lg:empty {
+        display: none;
+      }
+
+      #summary {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- 左侧：配置 -->
+      <div class="left">
+        <h1>🎬 效果配置</h1>
+        <p class="sub">每段场景独立设置</p>
+
+        <div class="bar">
+          <div class="fl">
+            <label>文章</label>
+            <select id="sArticle"></select>
+          </div>
+          <div class="fl">
+            <label>模板</label>
+            <select id="sTmpl">
+              <option value="flip-book">📖 翻页</option>
+              <option value="slideshow">🖼️ 幻灯片</option>
+            </select>
+          </div>
+          <div class="fl">
+            <label>&nbsp;</label>
+            <button id="btnBuild" onclick="build()">▶ 生成</button>
+          </div>
+        </div>
+
+        <div class="timeline" id="timeline"></div>
+
+        <div class="extras" id="extrasPanel"></div>
+
+        <div class="total" id="totalInfo">总时长：—</div>
+        <div class="hint" id="glHint">⚠️ 部分 GLSL 效果可能不被当前 FFmpeg 支持，失败时可查看日志</div>
+      </div>
+
+      <!-- 右侧：状态 + 预览 + 日志 -->
+      <div class="right">
+        <div id="status">选择文章，配置效果，点击生成</div>
+
+        <div class="pbox" id="pbox">
+          <div class="player-area">
+            <video id="player" controls playsinline></video>
+          </div>
+          <div class="inf" id="fileInfo"></div>
+          <pre class="lg" id="lg"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const EFFECTS = [
+        { id: "dissolve", name: "溶解", cat: "基础", gl: false },
+        { id: "wipeleft", name: "向左擦除", cat: "基础", gl: false },
+        { id: "pushright", name: "向右推挤", cat: "基础", gl: false },
+        { id: "zoomin", name: "放大", cat: "基础", gl: false },
+        { id: "page-curl", name: "翻页", cat: "翻页", gl: true },
+        { id: "simple-curl", name: "简单翻页", cat: "翻页", gl: true },
+        { id: "book-curl", name: "书本翻页", cat: "翻页", gl: true },
+        { id: "diamond", name: "菱形展开", cat: "几何", gl: true },
+        { id: "double-diamond", name: "双菱形", cat: "几何", gl: true },
+        { id: "star", name: "星形", cat: "几何", gl: true },
+        { id: "bowtie", name: "蝴蝶结", cat: "几何", gl: true },
+        { id: "pinwheel", name: "风车", cat: "几何", gl: true },
+        { id: "bounce", name: "弹跳", cat: "动感", gl: true },
+        { id: "flower", name: "花朵绽放", cat: "动感", gl: true },
+        { id: "bars", name: "条纹", cat: "动感", gl: true },
+        { id: "curtain", name: "幕布", cat: "动感", gl: true },
+        { id: "swap", name: "交换", cat: "动感", gl: true },
+        { id: "fan-in", name: "扇形展开", cat: "优雅", gl: true },
+        { id: "fan-out", name: "扇形退出", cat: "优雅", gl: true },
+        { id: "cross-out", name: "十字退出", cat: "优雅", gl: true },
+        { id: "corner-vanish", name: "角落消失", cat: "优雅", gl: true },
+        { id: "exponential-swish", name: "指数甩动", cat: "优雅", gl: true },
+        { id: "cube", name: "立方体", cat: "3D", gl: true },
+      ];
+
+      function grouped() {
+        const g = {};
+        EFFECTS.forEach((e) => {
+          (g[e.cat] ??= []).push(e);
+        });
+        return g;
+      }
+
+      const SCENE_DEFS = {
+        "flip-book": [
+          { label: "黑场 → 封面", effect: "swap", xfade: 1.2, dwell: 1.0, last: false },
+          { label: "封面 → 正文", effect: "page-curl", xfade: 2.0, dwell: 0.5, last: false },
+          { label: "正文 → 高亮", effect: "wipeleft", xfade: 2.0, dwell: 1.0, last: true },
+        ],
+        slideshow: [
+          { label: "黑场 → 封面", effect: "dissolve", xfade: 0.5, dwell: 2.5, last: false },
+          { label: "封面 → 正文", effect: "dissolve", xfade: 1.0, dwell: 2.0, last: false },
+          { label: "正文 → 高亮", effect: "dissolve", xfade: 1.0, dwell: 2.0, last: true },
+        ],
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const sArticle = $("sArticle"),
+        sTmpl = $("sTmpl"),
+        btnBuild = $("btnBuild");
+      const timeline = $("timeline"),
+        extrasPanel = $("extrasPanel");
+      const totInfo = $("totalInfo"),
+        status = $("status");
+      const player = $("player"),
+        pbox = $("pbox"),
+        fileInfo = $("fileInfo"),
+        lg = $("lg");
+
+      function log(m) {
+        lg.textContent += `[${new Date().toLocaleTimeString()}] ${m}\n`;
+        lg.scrollTop = lg.scrollHeight;
+      }
+
+      function renderTimeline() {
+        const tmpl = sTmpl.value;
+        const defs = SCENE_DEFS[tmpl];
+        const cats = grouped();
+        const useGlsl = tmpl === "flip-book";
+
+        timeline.innerHTML = defs
+          .map((sc, i) => {
+            const id = `sc_${i}`;
+            const opts = Object.entries(cats)
+              .map(
+                ([cat, effs]) =>
+                  `<optgroup label="${cat}">` +
+                  effs
+                    .map(
+                      (e) =>
+                        `<option value="${e.id}"${e.id === sc.effect ? " selected" : ""}>${e.name}${e.gl ? " ⚡" : ""}</option>`,
+                    )
+                    .join("") +
+                  `</optgroup>`,
+              )
+              .filter(Boolean)
+              .join("");
+
+            return `<div class="scene">
+      <div class="h">${i + 1}. ${sc.label} <span class="sub">${sc.last ? "（淡出结束）" : "（转场→停留）"}</span></div>
+      <div class="row">
+        <select id="${id}_eff">${opts}</select>
+        <span class="lbl">转场</span>
+        <input class="dur" id="${id}_xf" type="number" step="0.1" min="0.3" max="5" value="${sc.xfade}" oninput="calcTotal()">s
+        ${sc.last ? "" : `<span class="lbl">停留</span><input class="dur" id="${id}_dwl" type="number" step="0.1" min="0" max="10" value="${sc.dwell}" oninput="calcTotal()">s`}
+      </div>
+    </div>`;
+          })
+          .join("");
+
+        extrasPanel.innerHTML =
+          `<span>附加</span>` +
+          (useGlsl ? `<label><input type="checkbox" id="chGlow" checked> 光晕</label>` : "") +
+          `<label><input type="checkbox" id="chMusic" checked> 音乐</label>` +
+          `<span style="margin-left:auto">淡出</span>` +
+          `<input class="dur" id="fadeDur" type="number" step="0.1" min="0.5" max="5" value="1.5" oninput="calcTotal()">s`;
+        $("glHint").style.display = "block";
+        calcTotal();
+      }
+
+      function calcTotal() {
+        const defs = SCENE_DEFS[sTmpl.value];
+        let t = 0;
+        defs.forEach((sc, i) => {
+          t += parseFloat($(`sc_${i}_xf`)?.value) || sc.xfade;
+          if (!sc.last) t += parseFloat($(`sc_${i}_dwl`)?.value) || sc.dwell;
+        });
+        t += parseFloat($("fadeDur")?.value) || 1.5;
+        totInfo.textContent = `总时长：约 ${t.toFixed(1)} 秒`;
+      }
+
+      sTmpl.onchange = renderTimeline;
+
+      async function loadArticles() {
+        try {
+          const r = await fetch("/api/configs");
+          if (!r.ok) throw Error();
+          const data = await r.json();
+          (data.configs || data || []).forEach((a) => {
+            const o = document.createElement("option");
+            o.value = a.issueNum;
+            o.textContent = `第${String(a.issueNum).padStart(3, "0")}期 ${a.headline || ""}`;
+            sArticle.appendChild(o);
+          });
+        } catch (e) {
+          status.textContent = "⚠️ 服务未启动";
+        }
+      }
+
+      function collectConfig() {
+        const tmpl = sTmpl.value;
+        const defs = SCENE_DEFS[tmpl];
+        const timing = { final: parseFloat($("fadeDur")?.value) || 1.5 };
+
+        const sceneTransitions = defs.map((sc, i) => {
+          const effect = $(`sc_${i}_eff`)?.value || sc.effect;
+          const xfade = parseFloat($(`sc_${i}_xf`)?.value) || sc.xfade;
+          if (i === 0) timing.settle = xfade;
+          else if (i === 1) timing.curl = xfade;
+          else timing.sweep = xfade;
+          return { effect };
+        });
+        if (!defs[0].last) timing.cover = parseFloat($("sc_0_dwl")?.value) || defs[0].dwell;
+        if (!defs[1].last) timing.hold = parseFloat($("sc_1_dwl")?.value) || defs[1].dwell;
+
+        const overlays = tmpl === "flip-book" && $("chGlow")?.checked ? ["glow"] : [];
+        return { timing, sceneTransitions, overlays, hasMusic: $("chMusic")?.checked ?? true };
+      }
+
+      async function build() {
+        const issueNum = sArticle.value;
+        const tmpl = sTmpl.value;
+        if (!issueNum) return;
+        btnBuild.disabled = true;
+        status.className = "";
+        pbox.classList.remove("on");
+        lg.textContent = "";
+        status.textContent = "⏳ 读取配置...";
+        log(`模板: ${tmpl}`);
+
+        try {
+          const r = await fetch(`/data/articles/article-${String(issueNum).padStart(3, "0")}.json`);
+          if (!r.ok) throw new Error("找不到配置文件");
+          const cfg = await r.json();
+          const uc = collectConfig();
+          cfg.timing = { ...cfg.timing, ...uc.timing };
+          cfg.meta = cfg.meta || {};
+          cfg.meta.videoTemplate = tmpl;
+          cfg.meta.sceneTransitions = uc.sceneTransitions;
+          cfg.meta.overlays = uc.overlays;
+
+          status.textContent = "⏳ 提交构建...";
+          log(`转场: ${uc.sceneTransitions.map((s) => s.effect).join(" → ")}`);
+          log(`参数: timing=${JSON.stringify(uc.timing)}`);
+
+          const br = await fetch("/api/build", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cfg),
+          });
+          if (!br.ok) throw new Error("构建请求失败");
+          const { jobId } = await br.json();
+          log(`jobId: ${jobId}`);
+
+          const padded = String(issueNum).padStart(3, "0");
+          const vpath = `/data/output/法务视频-${padded}期.mp4`;
+
+          status.textContent = "⏳ 生成中...";
+          const poll = setInterval(async () => {
+            const sr = await fetch(`/api/status?issue=${issueNum}`);
+            const s = await sr.json();
+            const qj = s.queueJob;
+            if (qj?.progress) {
+              qj.progress.forEach((p) => {
+                if (["🎬", "✨", "✅", "❌", "[stderr]", "⚠️", "💡"].some((x) => p.startsWith(x))) log(p);
+              });
+              const last = qj.progress.filter((p) => !p.startsWith("[build")).slice(-1)[0];
+              if (last && !["✅", "❌"].some((x) => last.startsWith(x))) status.textContent = "⏳ " + last;
+            }
+            if (qj?.status === "done") {
+              clearInterval(poll);
+              btnBuild.disabled = false;
+              player.src = vpath + "?t=" + Date.now();
+              pbox.classList.add("on");
+              status.textContent = "✅ 完成";
+              status.className = "ok";
+              log("✅ 生成完成");
+              const hr = await fetch(player.src, { method: "HEAD" }).catch(() => {});
+              const sz = hr?.headers?.get("Content-Length");
+              fileInfo.textContent = `模板: ${tmpl}${sz ? " | " + (sz / 1024 / 1024).toFixed(1) + "MB" : ""}`;
+            }
+            if (qj?.status === "failed") {
+              clearInterval(poll);
+              btnBuild.disabled = false;
+              const errLines = (qj.progress || []).filter((p) => p.startsWith("[stderr]"));
+              const detail = errLines.map((l) => l.replace("[stderr] ", "")).join(" | ");
+              status.textContent = "❌ " + (qj.error || "") + (detail ? ": " + detail.slice(0, 200) : "");
+              status.className = "err";
+              log("❌ 失败: " + (qj.error || "") + (detail ? " | " + detail : ""));
+            }
+          }, 1500);
+        } catch (e) {
+          status.textContent = "❌ " + e.message;
+          status.className = "err";
+          log("错误: " + e.message);
+          btnBuild.disabled = false;
+        }
+      }
+
+      renderTimeline();
+      loadArticles();
+    </script>
+  </body>
+</html>

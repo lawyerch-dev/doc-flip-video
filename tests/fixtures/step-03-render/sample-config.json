@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "year": 2026,
+    "month": 7,
+    "day": 23,
+    "issueNumber": 99,
+    "description": "测试用文章配置",
+    "template": "default",
+    "videoTemplate": "flip-book",
+    "sceneTransitions": [{ "effect": "swap" }, { "effect": "page-curl" }, { "effect": "wipeleft" }],
+    "overlays": ["glow"]
+  },
+  "timing": {
+    "settle": 1.2,
+    "cover": 1,
+    "curl": 2,
+    "sweep": 2,
+    "hold": 0.5,
+    "final": 1.5
+  },
+  "cover": {
+    "headline": "过户后才得知承重墙被拆，买方能退房吗？",
+    "source": "来源：中国法院网"
+  },
+  "content": {
+    "title": "过户后才得知承重墙被拆，买方能退房吗？",
+    "subtitle": "法院判解除合同退赔损失",
+    "paragraphs": [
+      {
+        "text": "2023年3月，姚女士花206万在上海买了一套房，顺利过户入住后，却突然收到执法部门的《责令改正通知书》，要求恢复房屋承重结构。原来原房主曹先生擅自拆除了两处承重墙。"
+      },
+      {
+        "text": "买方注意：看房时要求卖家书面承诺房屋结构无拆改，并保留沟通记录。若过户后发现承重墙被拆，可依据合同法主张卖方隐瞒重要信息，要求解除合同并索赔。",
+        "highlight": "可依据合同法主张卖方隐瞒重要信息，要求解除合同并索赔"
+      }
+    ],
+    "source": "来源：中国法院网"
+  }
+}

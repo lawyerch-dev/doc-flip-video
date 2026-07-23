@@ -13,7 +13,12 @@
     "format:check": "prettier --check 'packages/**/*.{mjs,js,json,css,html}'",
     "check": "npm run lint && npm run format:check",
     "prepare": "husky",
-    "fonts": "bash scripts/download-fonts.sh"
+    "fonts": "bash scripts/download-fonts.sh",
+    "test:step-01": "node tests/run-step-01.mjs",
+    "test:step-02": "node tests/run-step-02.mjs",
+    "test:step-03": "node tests/run-step-03.mjs",
+    "test:step-04": "node tests/run-step-04.mjs",
+    "test": "node tests/run-all.mjs"
   },
   "dependencies": {
     "canvas": "^3.2.3",

@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "year": 2026,
+    "month": 7,
+    "day": 23,
+    "issueNumber": 99,
+    "description": "测试用视频配置",
+    "template": "default",
+    "videoTemplate": "flip-book",
+    "sceneTransitions": [{ "effect": "swap" }, { "effect": "dissolve" }],
+    "overlays": ["glow"]
+  },
+  "timing": {
+    "settle": 0.5,
+    "cover": 1,
+    "curl": 1.5,
+    "sweep": 1.5,
+    "hold": 0.3,
+    "final": 1
+  },
+  "cover": {
+    "headline": "过户后才得知承重墙被拆，买方能退房吗？",
+    "source": "来源：中国法院网"
+  },
+  "content": {
+    "title": "过户后才得知承重墙被拆，买方能退房吗？",
+    "subtitle": "法院判解除合同退赔损失",
+    "paragraphs": [
+      {
+        "text": "2023年3月，姚女士花206万在上海买了一套房。",
+        "image": "__ISSUE_99__/cover.png"
+      },
+      {
+        "text": "买方注意：看房时要求卖家书面承诺房屋结构无拆改。",
+        "highlight": "要求卖家书面承诺房屋结构无拆改",
+        "image": "__ISSUE_99__/content-hl.png"
+      }
+    ],
+    "source": "来源：中国法院网"
+  }
+}

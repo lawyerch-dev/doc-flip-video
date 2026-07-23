@@ -9,7 +9,8 @@ packages/backend/orchestrator/build/ffmpeg-*
 packages/backend/orchestrator/build/FFmpeg-n8.1.2/
 
 # 开发日志（不公开）
-dev_docs/
+tests/output/
+tests/temp/
 
 # 学习资料（大型外部仓库，不纳入版本控制）
 vendor/flowgram.ai/

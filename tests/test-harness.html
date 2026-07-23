@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Doc Flip — 步骤测试台</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1c25;
+        --border: #2a2d3a;
+        --text: #e4e6f0;
+        --text-dim: #8b8fa3;
+        --accent: #4f8cf7;
+        --accent-hover: #6ba0ff;
+        --success: #34d399;
+        --warn: #fbbf24;
+        --error: #f87171;
+        --log-bg: #0d0f14;
+        --mono: "SF Mono", "Fira Code", monospace;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 12px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      header h1 {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-left: 20px;
+      }
+      .tab {
+        padding: 6px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text-dim);
+        border: 1px solid transparent;
+        transition: all 0.15s;
+      }
+      .tab:hover {
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .tab.active {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: rgba(79, 140, 247, 0.08);
+      }
+      .main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+      .left {
+        width: 45%;
+        min-width: 380px;
+        padding: 16px;
+        overflow-y: auto;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .preview {
+        flex: 1;
+        padding: 16px;
+        overflow: auto;
+        min-height: 200px;
+      }
+      .logs {
+        height: 240px;
+        min-height: 120px;
+        background: var(--log-bg);
+        border-top: 1px solid var(--border);
+        padding: 10px 14px;
+        font-family: var(--mono);
+        font-size: 12px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .log-line {
+        display: flex;
+        gap: 8px;
+        line-height: 1.5;
+      }
+      .log-time {
+        color: var(--text-dim);
+        flex-shrink: 0;
+      }
+      .log-info {
+        color: var(--accent);
+      }
+      .log-ok {
+        color: var(--success);
+      }
+      .log-err {
+        color: var(--error);
+      }
+      .log-warn {
+        color: var(--warn);
+      }
+      .log-data {
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      button {
+        padding: 8px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-secondary {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-secondary:hover {
+        border-color: var(--accent);
+      }
+      label {
+        font-size: 12px;
+        color: var(--text-dim);
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      textarea,
+      input[type="text"],
+      input[type="url"],
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 13px;
+        font-family: var(--mono);
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      textarea:focus,
+      input:focus {
+        border-color: var(--accent);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      pre {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 12px;
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+      }
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 6px;
+      }
+      video {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 6px;
+      }
+      .step-panel {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+      }
+      .step-panel.active {
+        display: flex;
+      }
+      .result-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+      .result-box .label {
+        color: var(--text-dim);
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .empty-hint {
+        color: var(--text-dim);
+        font-style: italic;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🧪 步骤测试台</h1>
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-step="1">步骤1 抓取</div>
+        <div class="tab" data-step="2">步骤2 AI</div>
+        <div class="tab" data-step="3">步骤3 渲染</div>
+        <div class="tab" data-step="4">步骤4 视频</div>
+      </div>
+    </header>
+
+    <div class="main">
+      <!-- ===== 左侧：配置区 ===== -->
+      <div class="left" id="configArea"></div>
+
+      <!-- ===== 右侧：预览 + 日志 ===== -->
+      <div class="right">
+        <div class="preview" id="previewArea">
+          <div class="empty-hint">选择步骤后点击运行，结果将显示在这里</div>
+        </div>
+        <div class="logs" id="logArea">
+          <div class="log-line"><span class="log-time">[系统]</span><span>欢迎使用步骤测试台</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── 配置面板定义 ──
+      const STEPS = {
+        1: {
+          name: "步骤1 抓取数据",
+          configHTML: `
+      <div class="field">
+        <label>文章 URL</label>
+        <input type="url" id="s1-url" value="https://www.chinacourt.cn/article/detail/2026/07/id/9407488.shtml">
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="runStep(1)">▶ 抓取</button>
+        <button class="btn-secondary" onclick="loadFixture(1)">📂 加载样本</button>
+      </div>
+      <details>
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-dim)">预设 URL</summary>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;font-size:12px">
+          <a href="#" onclick="setUrl(event,'https://www.chinacourt.cn/article/detail/2026/07/id/9407488.shtml')">中国法院网 — 承重墙案</a>
+          <a href="#" onclick="setUrl(event,'https://www.chinacourt.cn/article/index/id/MzAwNDAwNTBIApMEAAA.shtml')">中国法院网 — 文章列表</a>
+        </div>
+      </details>
+    `,
+          run: async () => {
+            const url = document.getElementById("s1-url").value;
+            if (!url) {
+              log("err", "请输入 URL");
+              return;
+            }
+            log("info", `抓取中: ${url}`);
+            const r = await fetch("/api/scrape", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url }),
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+            return data;
+          },
+          renderPreview: (data) => `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="result-box">
+          <div class="label">标题</div>
+          <div>${data.title || "(无)"}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">来源</div>
+          <div>${data.source || "(无)"}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">正文 (${(data.text || "").length} 字)</div>
+          <div style="white-space:pre-wrap;line-height:1.6">${data.text || "(无)"}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">原始数据</div>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      </div>
+    `,
+          loadFixture: () => {
+            fetch("/tests/fixtures/step-01-scrape/sample-response.json")
+              .then((r) => r.json())
+              .then((data) => showPreview(1, data))
+              .catch((e) => log("err", "加载样本失败: " + e.message));
+          },
+        },
+        2: {
+          name: "步骤2 AI 加工",
+          configHTML: `
+      <div class="field">
+        <label>文章原文</label>
+        <textarea id="s2-text" rows="8">房屋承重墙被擅自拆除，原房主在卖房时却刻意隐瞒。近日，上海市宝山区人民法院审结一起房屋买卖合同纠纷案，判决解除购房合同，原房主退还购房款并赔偿买家相应损失。\n\n法院审理后认为，执法部门上门现场检查时，曹先生尚未交付房屋，却未将该情况如实告知姚女士，明显违反了诚实信用原则。据此，法院判决解除双方购房合同，曹先生退还购房款并赔偿姚女士相应损失。\n\n买方注意：看房时要求卖家书面承诺房屋结构无拆改，并保留沟通记录。若过户后发现承重墙被拆，可依据合同法主张卖方隐瞒重要信息，要求解除合同并索赔。</textarea>
+      </div>
+      <div class="field">
+        <label>来源</label>
+        <input type="text" id="s2-source" value="来源：中国法院网">
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="runStep(2)">🤖 AI 生成配置</button>
+        <button class="btn-secondary" onclick="loadFixture(2)">📂 加载样本</button>
+      </div>
+    `,
+          run: async () => {
+            const text = document.getElementById("s2-text").value;
+            const source = document.getElementById("s2-source").value;
+            if (!text) {
+              log("err", "请输入文章原文");
+              return;
+            }
+            log("info", `AI 生成配置中 (${text.length} 字)...`);
+            const r = await fetch("/api/generate-config", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text, source }),
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+            return data;
+          },
+          renderPreview: (data) => `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="result-box">
+          <div class="label">标题</div>
+          <div>${data.content?.title || "(无)"}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">子标题</div>
+          <div>${data.content?.subtitle || "(无)"}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">段落 (${(data.content?.paragraphs || []).length} 段)</div>
+          ${(data.content?.paragraphs || [])
+            .map(
+              (p, i) =>
+                `<div style="padding:4px 0;border-bottom:1px solid var(--border)">
+              ${i + 1}. ${(p.text || "").slice(0, 100)}${p.highlight ? ' <span style="color:var(--warn)">[有高亮]</span>' : ""}
+            </div>`,
+            )
+            .join("")}
+        </div>
+        <div class="result-box">
+          <div class="label">完整配置</div>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      </div>
+    `,
+          loadFixture: () => {
+            fetch("/tests/fixtures/step-02-ai/sample-article.txt")
+              .then((r) => r.text())
+              .then((text) => {
+                document.getElementById("s2-text").value = text;
+                log("ok", "已加载样本文本");
+              });
+          },
+        },
+        3: {
+          name: "步骤3 生成图片",
+          configHTML: `
+      <div class="field">
+        <label>配置 JSON</label>
+        <textarea id="s3-config" rows="10"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="runStep(3)">🎨 渲染图片</button>
+        <button class="btn-secondary" onclick="loadFixture(3)">📂 加载样本</button>
+        <button class="btn-secondary" onclick="document.getElementById('s3-config').value=localStorage.getItem('step2_result')||''">📋 粘贴步骤2结果</button>
+      </div>
+    `,
+          run: async () => {
+            const configText = document.getElementById("s3-config").value;
+            if (!configText) {
+              log("err", "请输入配置 JSON");
+              return;
+            }
+            let config;
+            try {
+              config = JSON.parse(configText);
+            } catch (e) {
+              log("err", "JSON 格式错误: " + e.message);
+              return;
+            }
+            log("info", `渲染图片中 (issue #${config.meta?.issueNumber || "?"})...`);
+            const r = await fetch("/api/preview", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ config }),
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+            return data;
+          },
+          renderPreview: (data) => {
+            const images = data.images || data;
+            const base = data.baseUrl || "";
+            return `
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${images.cover ? `<div class="result-box"><div class="label">封面图</div><img src="${base}${images.cover}?t=${Date.now()}"></div>` : ""}
+          ${images.plain ? `<div class="result-box"><div class="label">正文图</div><img src="${base}${images.plain}?t=${Date.now()}"></div>` : ""}
+          ${images.highlight ? `<div class="result-box"><div class="label">高亮图</div><img src="${base}${images.highlight}?t=${Date.now()}"></div>` : ""}
+          <div class="result-box"><div class="label">响应数据</div><pre>${JSON.stringify(data, null, 2)}</pre></div>
+        </div>
+      `;
+          },
+          loadFixture: () => {
+            fetch("/tests/fixtures/step-03-render/sample-config.json")
+              .then((r) => r.json())
+              .then((cfg) => {
+                document.getElementById("s3-config").value = JSON.stringify(cfg, null, 2);
+                log("ok", "已加载样本配置");
+              });
+          },
+        },
+        4: {
+          name: "步骤4 生成视频",
+          configHTML: `
+      <div class="field">
+        <label>配置 JSON</label>
+        <textarea id="s4-config" rows="10"></textarea>
+      </div>
+      <div class="field">
+        <label>期号 (issue number)</label>
+        <input type="number" id="s4-issue" value="99" min="1">
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="runStep(4)">🎬 生成视频</button>
+        <button class="btn-secondary" onclick="loadFixture(4)">📂 加载样本</button>
+      </div>
+      <details>
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-dim)">说明</summary>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:4px">需要先运行步骤3生成本期图片，或确保 data/temp/issue-NNN/ 下有 cover.png、content-plain.png、content-hl.png。支持长轮询等待完成。</p>
+      </details>
+    `,
+          run: async () => {
+            const configText = document.getElementById("s4-config").value;
+            const issue = document.getElementById("s4-issue").value;
+            if (!configText) {
+              log("err", "请输入配置 JSON");
+              return;
+            }
+            let config;
+            try {
+              config = JSON.parse(configText);
+            } catch (e) {
+              log("err", "JSON 格式错误: " + e.message);
+              return;
+            }
+            config._issueNumber = parseInt(issue);
+            log("info", `提交构建 #${issue}...`);
+            const r = await fetch("/api/build", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ config, issueNumber: parseInt(issue) }),
+            });
+            const job = await r.json();
+            if (!r.ok) throw new Error(job.error || `HTTP ${r.status}`);
+            log("info", `任务已提交，ID: ${job.jobId}，轮询中...`);
+
+            // 轮询
+            for (let i = 0; i < 60; i++) {
+              await new Promise((r) => setTimeout(r, 2000));
+              const sr = await fetch(`/api/status?issue=${issue}`);
+              const status = await sr.json();
+              log("info", `状态: ${status.status} (${i + 1}/60)`);
+              if (status.status === "completed" || status.status === "done") {
+                return {
+                  issue,
+                  videoUrl: status.videoUrl || `/data/output/法务视频-${String(issue).padStart(3, "0")}期.mp4`,
+                };
+              }
+              if (status.status === "failed" || status.status === "error") {
+                throw new Error(status.error || "构建失败");
+              }
+            }
+            throw new Error("超时");
+          },
+          renderPreview: (data) => `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="result-box">
+          <div class="label">视频</div>
+          <video controls autoplay muted>
+            <source src="${data.videoUrl}?t=${Date.now()}" type="video/mp4">
+          </video>
+        </div>
+        <div class="result-box"><div class="label">结果</div><pre>${JSON.stringify(data, null, 2)}</pre></div>
+      </div>
+    `,
+          loadFixture: () => {
+            fetch("/tests/fixtures/step-04-video/sample-config.json")
+              .then((r) => r.json())
+              .then((cfg) => {
+                document.getElementById("s4-config").value = JSON.stringify(cfg, null, 2);
+                log("ok", "已加载样本配置");
+              });
+          },
+        },
+      };
+
+      // ── 当前步骤 ──
+      let currentStep = 1;
+
+      // ── 切换标签 ──
+      document.getElementById("tabs").addEventListener("click", (e) => {
+        const tab = e.target.closest(".tab");
+        if (!tab) return;
+        switchStep(parseInt(tab.dataset.step));
+      });
+
+      function switchStep(n) {
+        currentStep = n;
+        document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", parseInt(t.dataset.step) === n));
+        document.getElementById("configArea").innerHTML =
+          `<h3 style="font-size:14px;margin-bottom:4px">${STEPS[n].name}</h3>${STEPS[n].configHTML}`;
+        document.getElementById("previewArea").innerHTML = '<div class="empty-hint">点击运行后，结果将显示在这里</div>';
+      }
+
+      // ── 运行步骤 ──
+      async function runStep(n) {
+        const step = STEPS[n];
+        document.getElementById("previewArea").innerHTML = '<div style="color:var(--accent)">⏳ 运行中...</div>';
+        try {
+          const data = await step.run();
+          log("ok", `${step.name} 完成`);
+          showPreview(n, data);
+          if (n === 2 && data) {
+            localStorage.setItem("step2_result", JSON.stringify(data, null, 2));
+          }
+        } catch (e) {
+          log("err", `${step.name} 失败: ${e.message}`);
+          document.getElementById("previewArea").innerHTML = `<div style="color:var(--error)">❌ ${e.message}</div>`;
+        }
+      }
+
+      function showPreview(n, data) {
+        document.getElementById("previewArea").innerHTML = STEPS[n].renderPreview(data);
+      }
+
+      function loadFixture(n) {
+        STEPS[n].loadFixture();
+      }
+
+      function setUrl(e, url) {
+        e.preventDefault();
+        document.getElementById("s1-url").value = url;
+      }
+
+      // ── 日志 ──
+      function log(level, msg) {
+        const area = document.getElementById("logArea");
+        const time = new Date().toLocaleTimeString();
+        const cls =
+          level === "ok" ? "log-ok" : level === "err" ? "log-err" : level === "warn" ? "log-warn" : "log-info";
+        area.innerHTML += `<div class="log-line"><span class="log-time">[${time}]</span><span class="${cls}">${msg}</span></div>`;
+        area.scrollTop = area.scrollHeight;
+      }
+
+      // ── 初始化 ──
+      switchStep(1);
+    </script>
+  </body>
+</html>

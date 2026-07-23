@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import EFFECTS from "@doc-flip/video/effects";
+import EFFECTS from "@doc-flip/step-04-video/effects";
 import { ROOT } from "@doc-flip/shared";
 
 export const CANVASES = {

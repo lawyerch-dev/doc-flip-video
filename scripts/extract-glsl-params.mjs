@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Extract uniform parameters from all .glsl files in vendor/xfade-easing/glsl/
- * and generate packages/engine/glsl-catalog.json
+ *   并生成 packages/orchestrator/glsl-catalog.json
  *
  * Usage: node scripts/extract-glsl-params.mjs
  */

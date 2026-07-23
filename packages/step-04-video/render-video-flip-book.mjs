@@ -23,7 +23,7 @@ function findFFmpeg() {
   if (fs.existsSync(genericBin)) return genericBin;
   console.error(`\n❌ 缺少自定义 FFmpeg: ${platformBin}`);
   console.error(`   运行: bash scripts/build-ffmpeg-xfade.sh`);
-  console.error(`   或从 GitHub Releases 下载对应平台二进制到 packages/engine/build/\n`);
+  console.error(`   或从 GitHub Releases 下载对应平台二进制到 packages/orchestrator/build/\n`);
   process.exit(1);
 }
 

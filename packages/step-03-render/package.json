@@ -1,0 +1,7 @@
+{
+  "name": "@doc-flip/step-03-render",
+  "type": "module",
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
+  }
+}

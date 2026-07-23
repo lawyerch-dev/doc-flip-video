@@ -1,0 +1,7 @@
+{
+  "name": "@doc-flip/step-01-scrape",
+  "type": "module",
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
+  }
+}

@@ -17,7 +17,7 @@ import {
   defaultTemplate,
   DIRNAME,
 } from "../shared.mjs";
-import { RENDER_IMAGES_SCRIPT, ENGINE_ENTRY, RENDER_SATORI_SCRIPT } from "@doc-flip/shared";
+import { RENDER_IMAGES_SCRIPT, ORCHESTRATOR_ENTRY, RENDER_SATORI_SCRIPT } from "@doc-flip/shared";
 
 import { enqueue, cancelJob, listJobs } from "../services/queue.mjs";
 
@@ -41,7 +41,7 @@ function generateImagesSatori(configPath) {
 // ── Video generation (returns job ID, runs async) ──
 function generateVideoAsync(configPath, issueNum) {
   return new Promise((resolve, reject) => {
-    execFile("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 }, (err, stdout, stderr) => {
+    execFile("node", [ORCHESTRATOR_ENTRY, configPath], { cwd: ROOT, timeout: 120000 }, (err, stdout, stderr) => {
       if (err) reject(new Error(stderr || err.message));
       else resolve({ issueNum, stdout });
     });
@@ -63,7 +63,7 @@ function generateVideo(content) {
   const outputPath = path.join(jobDir, "output.mp4");
 
   try {
-    execFileSync("node", [ENGINE_ENTRY, articlePath], { cwd: ROOT, stdio: "pipe", timeout: 120000 });
+    execFileSync("node", [ORCHESTRATOR_ENTRY, articlePath], { cwd: ROOT, stdio: "pipe", timeout: 120000 });
 
     const generatedPath = path.join(OUTPUT_DIR, "output.mp4");
     if (fs.existsSync(generatedPath)) {

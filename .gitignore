@@ -5,7 +5,8 @@ data/projects/
 config/settings.json
 
 gl-transitions/
-packages/engine/build/ffmpeg-*
+packages/backend/orchestrator/build/ffmpeg-*
+packages/backend/orchestrator/build/FFmpeg-n8.1.2/
 
 # 开发日志（不公开）
 dev_docs/

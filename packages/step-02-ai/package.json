@@ -1,0 +1,7 @@
+{
+  "name": "@doc-flip/step-02-ai",
+  "type": "module",
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
+  }
+}

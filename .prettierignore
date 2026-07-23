@@ -1,5 +1,5 @@
 packages/workflow-studio/
 packages/yft-design/
 vendor/
-packages/engine/build/
+packages/backend/orchestrator/build/
 node_modules/

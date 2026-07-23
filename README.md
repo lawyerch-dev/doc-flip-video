@@ -13,7 +13,7 @@ npm run server
 ### 简化 API（代码调用）
 
 ```js
-import { generateVideo } from "./packages/engine/generate.mjs";
+import { generateVideo } from "./packages/orchestrator/generate.mjs";
 
 const result = await generateVideo({
   title: "快递丢件谁赔",
@@ -48,10 +48,10 @@ packages/
 简化 API: generateVideo(input)
        │
        ▼
-packages/engine/generate.mjs   标准化输入 → 写入临时 config.json
+packages/orchestrator/generate.mjs   标准化输入 → 写入临时 config.json
        │
        ▼
-packages/engine/index.mjs
+packages/orchestrator/index.mjs
        │
    ┌───┴───┐
    ▼       ▼
@@ -85,7 +85,7 @@ data/output/法务视频-NNN期.mp4
 
 ```bash
 bash scripts/build-ffmpeg-xfade.sh
-# 输出: packages/engine/build/ffmpeg-custom
+# 输出: packages/orchestrator/build/ffmpeg-custom
 ```
 
 有自定义 FFmpeg 时使用 `gl_InvertedPageCurl` + `gl_swap` 转场；没有时降级到系统 FFmpeg 的 dissolve + fadeblack。详见 [移植指南](docs/PORTING.md)。
@@ -102,6 +102,6 @@ bash scripts/build-ffmpeg-xfade.sh
 
 ## 各包文档
 
-- [engine](packages/engine/README.md)
+- [orchestrator](packages/orchestrator/README.md)
 - [frontend](packages/frontend/README.md)
-- [server](packages/server/README.md)
+- [backend](packages/backend/README.md)

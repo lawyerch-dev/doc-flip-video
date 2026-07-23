@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import http from "http";
 import fs from "fs";
 import path from "path";
-import { ROOT, TEMP_DIR, OUTPUT_DIR, ENGINE_DIR, TEMPLATE_PATH } from "@doc-flip/shared";
+import { ROOT, TEMP_DIR, OUTPUT_DIR, ORCHESTRATOR_DIR, TEMPLATE_PATH } from "@doc-flip/shared";
 const FPS = 60;
 
 // Load template + config
@@ -12,7 +12,7 @@ const tmpl = JSON.parse(fs.readFileSync(templatePath, "utf-8"));
 const W = tmpl.style.width,
   H = tmpl.style.height;
 
-const configPath = process.argv[2] || path.join(ENGINE_DIR, "..", "article.json");
+const configPath = process.argv[2] || path.join(ORCHESTRATOR_DIR, "..", "article.json");
 const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 const tm = cfg.timing || {};
 
@@ -70,7 +70,7 @@ function startServer(dir, port) {
         res.end();
         return;
       }
-      const fp = path.join(dir, urlPath === "/" ? "packages/engine/video-renderer.html" : urlPath);
+      const fp = path.join(dir, urlPath === "/" ? "packages/orchestrator/video-renderer.html" : urlPath);
       if (!fs.existsSync(fp)) {
         console.log(`  404: ${req.url}`);
         res.writeHead(404);

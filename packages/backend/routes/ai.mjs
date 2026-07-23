@@ -5,8 +5,8 @@ import {
   fuzzyFindHighlight,
   parseAIResponse,
   parseAIResponseWithSchema,
-} from "@doc-flip/ai/generate";
-import { aiChat } from "@doc-flip/ai/chat";
+} from "@doc-flip/step-02-ai/generate";
+import { aiChat } from "@doc-flip/step-02-ai/chat";
 
 const PUBLISH_SCHEMA = { title: [], desc: ["description"] };
 

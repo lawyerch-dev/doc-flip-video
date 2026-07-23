@@ -1,0 +1,12 @@
+{
+  "name": "@doc-flip/backend",
+  "main": "index.mjs",
+  "type": "module",
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*",
+    "@doc-flip/step-02-ai": "workspace:*",
+    "@doc-flip/step-01-scrape": "workspace:*",
+    "@doc-flip/step-03-render": "workspace:*",
+    "@doc-flip/step-04-video": "workspace:*"
+  }
+}

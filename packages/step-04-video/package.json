@@ -1,0 +1,7 @@
+{
+  "name": "@doc-flip/step-04-video",
+  "type": "module",
+  "dependencies": {
+    "@doc-flip/shared": "workspace:*"
+  }
+}

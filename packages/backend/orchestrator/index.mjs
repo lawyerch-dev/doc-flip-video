@@ -2,7 +2,7 @@
 /**
  * index.mjs — 视频构建入口
  *
- * node packages/engine/index.mjs data/articles/article-001.json
+ * node packages/orchestrator/index.mjs data/articles/article-001.json
  * → render-images.mjs + render-video.mjs
  */
 
@@ -32,14 +32,14 @@ function main() {
 
   console.log(`📄 Config: ${configPath}`);
   console.log("─── Generating images ───");
-  execFileSync("node", [path.join(ROOT, "packages", "render", "render-images.mjs"), configPath], {
+  execFileSync("node", [path.join(ROOT, "packages", "step-03-render", "render-images.mjs"), configPath], {
     stdio: "inherit",
   });
   console.log("─── Rendering video ───");
   const captureScript =
     process.env.CAPTURE === "puppeteer"
-      ? path.join(ROOT, "packages", "video", "render-video-puppeteer.mjs")
-      : path.join(ROOT, "packages", "video", "render-video.mjs");
+      ? path.join(ROOT, "packages", "step-04-video", "render-video-puppeteer.mjs")
+      : path.join(ROOT, "packages", "step-04-video", "render-video.mjs");
   execFileSync("node", [captureScript, configPath], {
     stdio: "inherit",
   });

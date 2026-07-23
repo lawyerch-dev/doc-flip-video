@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { errorResponse, json, readBody, readBuffer } from "../shared.mjs";
-import { aiChat } from "@doc-flip/ai/chat";
+import { aiChat } from "@doc-flip/step-02-ai/chat";
 import {
   addAsset,
   createProject,
@@ -11,9 +11,9 @@ import {
   publicProject,
   updateTimeline,
 } from "../services/projects.mjs";
-import { applyTemplate, validateTimeline } from "@doc-flip/engine/timeline";
-import { catalog } from "@doc-flip/engine/catalog";
-import { renderProject } from "@doc-flip/engine/render";
+import { applyTemplate, validateTimeline } from "../orchestrator/projects/timeline.mjs";
+import { catalog } from "../orchestrator/projects/catalog.mjs";
+import { renderProject } from "../orchestrator/projects/render.mjs";
 
 async function readJson(req) {
   const body = await readBody(req);

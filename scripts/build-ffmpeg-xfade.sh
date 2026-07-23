@@ -4,7 +4,7 @@
 #
 # Usage: bash scripts/build-ffmpeg-xfade.sh
 # Requires: Xcode CLI tools, Homebrew (for dependencies)
-# Output: ./packages/engine/build/ffmpeg-{os}-{arch} (does NOT replace system ffmpeg)
+# Output: ./packages/orchestrator/build/ffmpeg-{os}-{arch} (does NOT replace system ffmpeg)
 #
 # 自动检测平台，输出到平台专属路径：
 #   macOS ARM64 → ffmpeg-darwin-arm64
@@ -16,7 +16,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 FFMPEG_VERSION="8.1.2"
-BUILD_DIR="packages/engine/build"
+BUILD_DIR="packages/backend/orchestrator/build"
 FFMPEG_DIR="$BUILD_DIR/ffmpeg-$FFMPEG_VERSION"
 CUSTOM_BIN="$BUILD_DIR/ffmpeg-$PLATFORM_NAME"
 XFADE_REPO="https://raw.githubusercontent.com/scriptituk/xfade-easing/main"

@@ -7,7 +7,7 @@ import path from "path";
 import { spawn } from "child_process";
 
 import { ROOT, OUTPUT_DIR, CONFIGS_DIR, TEMP_DIR, DIRNAME } from "../shared.mjs";
-import { ENGINE_ENTRY } from "@doc-flip/shared";
+import { ORCHESTRATOR_ENTRY } from "@doc-flip/shared";
 
 // ── Job store ──
 const jobs = new Map(); // jobId -> { status, config, issueNum, progress, videoUrl, error, startedAt, finishedAt, child }
@@ -164,7 +164,7 @@ function _processNext() {
   job.progress.push("[build started]");
 
   const configPath = path.join(CONFIGS_DIR, `article-${String(issueNum).padStart(3, "0")}.json`);
-  const child = spawn("node", [ENGINE_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
+  const child = spawn("node", [ORCHESTRATOR_ENTRY, configPath], { cwd: ROOT, timeout: 120000 });
 
   job.child = child;
 

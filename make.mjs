@@ -51,7 +51,7 @@ for (let i = 0; i < args.length; i++) {
 }
 
 if (!opt.images) { console.error('请指定 --images'); process.exit(1); }
-if (!existsSync(CUSTOM_FFMPEG)) { console.error('缺少 packages/engine/build/ffmpeg-custom'); process.exit(1); }
+if (!existsSync(CUSTOM_FFMPEG)) { console.error('缺少 packages/orchestrator/build/ffmpeg-custom'); process.exit(1); }
 
 const images = opt.images.split(',').map(s => s.trim());
 for (const img of images) { if (!existsSync(img)) { console.error('图片不存在:', img); process.exit(1); } }

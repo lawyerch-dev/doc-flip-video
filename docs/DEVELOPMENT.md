@@ -75,8 +75,7 @@ npm run format:check  # 检查格式（CI 用）
 
 | 文件类型                          | 检查                          |
 | --------------------------------- | ----------------------------- |
-| `packages/engine/**/*.{mjs,js}`   | ESLint 修复 + Prettier 格式化 |
-| `packages/server/**/*.{mjs,js}`   | ESLint 修复 + Prettier 格式化 |
+| `packages/backend/**/*.{mjs,js}`  | ESLint 修复 + Prettier 格式化 |
 | `packages/frontend/**/*.{mjs,js}` | ESLint 修复 + Prettier 格式化 |
 | `*.json, *.css, *.html, *.md`     | Prettier 格式化               |
 

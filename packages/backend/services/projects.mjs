@@ -2,9 +2,9 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { PROJECTS_DIR } from "../shared.mjs";
-import { CANVASES, catalog } from "@doc-flip/engine/catalog";
-import { emptyTimeline, validateTimeline } from "@doc-flip/engine/timeline";
-import { assetPath, projectDir } from "@doc-flip/engine/paths";
+import { CANVASES, catalog } from "../orchestrator/projects/catalog.mjs";
+import { emptyTimeline, validateTimeline } from "../orchestrator/projects/timeline.mjs";
+import { assetPath, projectDir } from "../orchestrator/projects/paths.mjs";
 
 const ASSET_TYPES = {
   "image/png": "image",

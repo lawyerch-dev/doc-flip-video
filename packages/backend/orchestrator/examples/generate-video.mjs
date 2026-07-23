@@ -2,7 +2,7 @@
 /**
  * 示例：通过简化 API 生成视频
  *
- * 用法: node packages/engine/examples/generate-video.mjs
+ * 用法: node packages/orchestrator/examples/generate-video.mjs
  */
 import { generateVideo } from "../generate.mjs";
 

@@ -24,11 +24,11 @@
       }
       .app > div {
         overflow-y: auto;
-        padding: 20px;
+        padding: 16px 20px;
       }
 
       .left {
-        flex: 0 0 420px;
+        flex: 0 0 440px;
         border-right: 1px solid #e8e8ed;
         background: #fff;
       }
@@ -38,25 +38,26 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-        padding: 20px;
+        padding: 16px 20px;
       }
 
       h1 {
-        font-size: 18px;
-        margin-bottom: 2px;
+        font-size: 17px;
+        margin-bottom: 1px;
       }
       .sub {
         color: #6e6e73;
-        font-size: 12px;
-        margin-bottom: 16px;
+        font-size: 11px;
+        margin-bottom: 12px;
       }
 
+      /* ── 顶部工具条 ── */
       .bar {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         align-items: flex-end;
         flex-wrap: wrap;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
       }
       .fl {
         display: flex;
@@ -64,7 +65,7 @@
         gap: 2px;
       }
       .fl label {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 600;
         color: #6e6e73;
         text-transform: uppercase;
@@ -72,18 +73,18 @@
       }
       .fl select,
       .fl input {
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 4px 7px;
+        border-radius: 5px;
         border: 1px solid #d2d2d7;
         font-size: 12px;
         background: #fff;
       }
       .fl select {
-        min-width: 120px;
+        min-width: 110px;
       }
       .fl button {
         padding: 5px 14px;
-        border-radius: 6px;
+        border-radius: 5px;
         border: none;
         font-size: 12px;
         cursor: pointer;
@@ -95,43 +96,127 @@
         opacity: 0.4;
         cursor: default;
       }
-      .fl button.s {
-        background: #fff;
-        color: #0071e3;
-        border: 1px solid #0071e3;
+
+      /* ── 折叠面板 ── */
+      .collapse {
+        border: 1px solid #e8e8ed;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      .collapse-h {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        background: #f9f9fb;
+        font-size: 12px;
+        font-weight: 600;
+        user-select: none;
+      }
+      .collapse-h:hover {
+        background: #f0f0f2;
+      }
+      .collapse-h .arrow {
+        font-size: 10px;
+        transition: transform 0.15s;
+        color: #6e6e73;
+      }
+      .collapse-h.open .arrow {
+        transform: rotate(90deg);
+      }
+      .collapse-b {
+        padding: 10px 12px;
+        display: none;
+      }
+      .collapse-b.open {
+        display: block;
       }
 
+      /* ── 文章编辑 ── */
+      .edit-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .edit-row label {
+        font-size: 10px;
+        color: #6e6e73;
+        white-space: nowrap;
+      }
+      .edit-row input,
+      .edit-row textarea {
+        padding: 3px 6px;
+        border-radius: 5px;
+        border: 1px solid #d2d2d7;
+        font-size: 12px;
+        background: #fff;
+      }
+      .edit-row input {
+        flex: 1;
+        min-width: 60px;
+      }
+      .edit-row textarea {
+        flex: 1;
+        min-width: 60px;
+        resize: vertical;
+        min-height: 48px;
+        font-family: inherit;
+        line-height: 1.4;
+      }
+      .edit-row .cc {
+        font-size: 10px;
+        color: #b33;
+        min-width: 28px;
+        text-align: right;
+      }
+      .para-box {
+        background: #f9f9fb;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 6px;
+      }
+      .para-box .p-h {
+        font-size: 10px;
+        font-weight: 600;
+        color: #6e6e73;
+        margin-bottom: 4px;
+      }
+
+      /* ── 时间轴 ── */
       .timeline {
         position: relative;
-        padding-left: 24px;
-        margin-bottom: 12px;
+        padding-left: 22px;
+        margin-bottom: 10px;
       }
       .timeline::before {
         content: "";
         position: absolute;
-        left: 10px;
+        left: 9px;
         top: 8px;
         bottom: 8px;
         width: 2px;
         background: #d2d2d7;
         border-radius: 1px;
       }
-
       .scene {
         background: #f9f9fb;
         border: 1px solid #e8e8ed;
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
+        border-radius: 7px;
+        padding: 8px 10px;
+        margin-bottom: 7px;
         position: relative;
       }
       .scene::before {
         content: "";
         position: absolute;
-        left: -18px;
-        top: 14px;
-        width: 8px;
-        height: 8px;
+        left: -16px;
+        top: 12px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
         background: #0071e3;
         border: 2px solid #fff;
@@ -144,8 +229,8 @@
       .scene .h {
         font-size: 11px;
         font-weight: 600;
+        margin-bottom: 3px;
         color: #1d1d1f;
-        margin-bottom: 4px;
       }
       .scene .h .sub {
         font-weight: 400;
@@ -154,23 +239,23 @@
       }
       .scene .row {
         display: flex;
-        gap: 6px;
+        gap: 5px;
         flex-wrap: wrap;
         align-items: center;
       }
       .scene select {
-        min-width: 110px;
-        padding: 3px 6px;
-        border-radius: 5px;
+        min-width: 100px;
+        padding: 3px 5px;
+        border-radius: 4px;
         border: 1px solid #d2d2d7;
         font-size: 11px;
         background: #fff;
         flex: 1;
       }
       .scene .dur {
-        width: 50px;
-        padding: 3px 5px;
-        border-radius: 5px;
+        width: 44px;
+        padding: 3px 4px;
+        border-radius: 4px;
         border: 1px solid #d2d2d7;
         font-size: 11px;
         text-align: center;
@@ -186,14 +271,15 @@
         color: #6e6e73;
       }
 
+      /* ── 附加 ── */
       .extras {
         background: #f9f9fb;
         border: 1px solid #e8e8ed;
-        border-radius: 8px;
-        padding: 10px 12px;
+        border-radius: 7px;
+        padding: 8px 10px;
         margin-bottom: 8px;
         display: flex;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
         align-items: center;
       }
@@ -211,10 +297,18 @@
         gap: 4px;
         cursor: pointer;
       }
+      .extras select {
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #d2d2d7;
+        font-size: 11px;
+        background: #fff;
+        min-width: 120px;
+      }
       .extras .dur {
-        width: 50px;
-        padding: 3px 5px;
-        border-radius: 5px;
+        width: 44px;
+        padding: 3px 4px;
+        border-radius: 4px;
         border: 1px solid #d2d2d7;
         font-size: 11px;
         text-align: center;
@@ -223,25 +317,18 @@
       .total {
         font-size: 11px;
         color: #6e6e73;
-        padding: 6px 12px;
+        padding: 5px 10px;
         background: #f0f0f2;
-        border-radius: 6px;
+        border-radius: 5px;
         text-align: center;
-      }
-      .hint {
-        font-size: 10px;
-        color: #b33;
-        margin-top: 8px;
-        text-align: center;
-        display: none;
       }
 
-      /* 右侧 */
+      /* ── 右侧 ── */
       #status {
         font-size: 12px;
         color: #6e6e73;
-        min-height: 20px;
-        margin-bottom: 8px;
+        min-height: 18px;
+        margin-bottom: 6px;
         flex-shrink: 0;
       }
       #status.err {
@@ -255,20 +342,19 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         min-height: 0;
       }
       .pbox:not(.on) {
         display: none;
       }
-
       .player-area {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         background: #000;
-        border-radius: 10px;
+        border-radius: 9px;
         min-height: 0;
         overflow: hidden;
       }
@@ -284,16 +370,15 @@
         flex-shrink: 0;
         padding: 2px 0;
       }
-
       .lg {
         background: #1d1d1f;
         color: #b8b8b8;
-        border-radius: 8px;
-        padding: 8px 12px;
+        border-radius: 7px;
+        padding: 7px 10px;
         font-family: monospace;
         font-size: 11px;
         line-height: 1.5;
-        height: 140px;
+        height: 130px;
         overflow-y: auto;
         white-space: pre-wrap;
         flex-shrink: 0;
@@ -301,23 +386,19 @@
       .lg:empty {
         display: none;
       }
-
-      #summary {
-        display: none;
-      }
     </style>
   </head>
   <body>
     <div class="app">
-      <!-- 左侧：配置 -->
+      <!-- 左侧 -->
       <div class="left">
         <h1>🎬 效果配置</h1>
-        <p class="sub">每段场景独立设置</p>
+        <p class="sub">选文章 → 调文本 → 配效果 → 生成预览</p>
 
         <div class="bar">
           <div class="fl">
-            <label>文章</label>
-            <select id="sArticle"></select>
+            <label>文章</label
+            ><select id="sArticle"></select>
           </div>
           <div class="fl">
             <label>模板</label>
@@ -326,28 +407,50 @@
               <option value="slideshow">🖼️ 幻灯片</option>
             </select>
           </div>
-          <div class="fl">
-            <label>&nbsp;</label>
-            <button id="btnBuild" onclick="build()">▶ 生成</button>
+          <div class="fl"><label>&nbsp;</label><button id="btnBuild" onclick="build()">▶ 生成</button></div>
+        </div>
+
+        <!-- 文章编辑（折叠） -->
+        <div class="collapse" id="editorCollapse">
+          <div
+            class="collapse-h open"
+            onclick="
+              this.classList.toggle('open');
+              this.nextElementSibling.classList.toggle('open');
+            "
+          >
+            <span class="arrow">▶</span> 文章编辑
+          </div>
+          <div class="collapse-b open" id="editorBody">
+            <div class="edit-row">
+              <label>标题</label><input id="eHeadline" maxlength="20" placeholder="≤20字" /><span class="cc" id="ccH"
+                >0</span
+              >
+            </div>
+            <div class="edit-row">
+              <label>来源</label><input id="eSource" maxlength="25" placeholder="来源：XXX" /><span class="cc" id="ccS"
+                >0</span
+              >
+            </div>
+            <div id="paraList"></div>
+            <div style="font-size: 10px; color: #6e6e73; margin-top: 4px">修改后点击"生成"自动应用</div>
           </div>
         </div>
 
+        <!-- 时间轴 -->
         <div class="timeline" id="timeline"></div>
 
+        <!-- 附加 -->
         <div class="extras" id="extrasPanel"></div>
 
         <div class="total" id="totalInfo">总时长：—</div>
-        <div class="hint" id="glHint">⚠️ 部分 GLSL 效果可能不被当前 FFmpeg 支持，失败时可查看日志</div>
       </div>
 
-      <!-- 右侧：状态 + 预览 + 日志 -->
+      <!-- 右侧 -->
       <div class="right">
-        <div id="status">选择文章，配置效果，点击生成</div>
-
+        <div id="status">选择文章，点击生成</div>
         <div class="pbox" id="pbox">
-          <div class="player-area">
-            <video id="player" controls playsinline></video>
-          </div>
+          <div class="player-area"><video id="player" controls playsinline></video></div>
           <div class="inf" id="fileInfo"></div>
           <pre class="lg" id="lg"></pre>
         </div>
@@ -358,6 +461,7 @@
       const EFFECTS = [
         { id: "dissolve", name: "溶解", cat: "基础", gl: false },
         { id: "wipeleft", name: "向左擦除", cat: "基础", gl: false },
+        { id: "wiperight", name: "向右擦除", cat: "基础", gl: false },
         { id: "pushright", name: "向右推挤", cat: "基础", gl: false },
         { id: "zoomin", name: "放大", cat: "基础", gl: false },
         { id: "page-curl", name: "翻页", cat: "翻页", gl: true },
@@ -380,7 +484,6 @@
         { id: "exponential-swish", name: "指数甩动", cat: "优雅", gl: true },
         { id: "cube", name: "立方体", cat: "3D", gl: true },
       ];
-
       function grouped() {
         const g = {};
         EFFECTS.forEach((e) => {
@@ -391,14 +494,14 @@
 
       const SCENE_DEFS = {
         "flip-book": [
-          { label: "黑场 → 封面", effect: "swap", xfade: 1.2, dwell: 1.0, last: false },
-          { label: "封面 → 正文", effect: "page-curl", xfade: 2.0, dwell: 0.5, last: false },
-          { label: "正文 → 高亮", effect: "wipeleft", xfade: 2.0, dwell: 1.0, last: true },
+          { label: "黑场 → 封面", effect: "swap", defXf: 1.2, defDw: 1.0, last: false },
+          { label: "封面 → 正文", effect: "page-curl", defXf: 2.0, defDw: 0.5, last: false },
+          { label: "正文 → 高亮", effect: "wiperight", defXf: 2.0, defDw: 1.0, last: true },
         ],
         slideshow: [
-          { label: "黑场 → 封面", effect: "dissolve", xfade: 0.5, dwell: 2.5, last: false },
-          { label: "封面 → 正文", effect: "dissolve", xfade: 1.0, dwell: 2.0, last: false },
-          { label: "正文 → 高亮", effect: "dissolve", xfade: 1.0, dwell: 2.0, last: true },
+          { label: "黑场 → 封面", effect: "dissolve", defXf: 0.5, defDw: 2.5, last: false },
+          { label: "封面 → 正文", effect: "dissolve", defXf: 1.0, defDw: 2.0, last: false },
+          { label: "正文 → 高亮", effect: "dissolve", defXf: 1.0, defDw: 2.0, last: true },
         ],
       };
 
@@ -407,28 +510,37 @@
         sTmpl = $("sTmpl"),
         btnBuild = $("btnBuild");
       const timeline = $("timeline"),
-        extrasPanel = $("extrasPanel");
-      const totInfo = $("totalInfo"),
-        status = $("status");
-      const player = $("player"),
+        extrasPanel = $("extrasPanel"),
+        totInfo = $("totalInfo");
+      const status = $("status"),
+        player = $("player"),
         pbox = $("pbox"),
         fileInfo = $("fileInfo"),
         lg = $("lg");
+      const eHeadline = $("eHeadline"),
+        eSource = $("eSource"),
+        paraList = $("paraList");
+      let musicList = [];
 
       function log(m) {
         lg.textContent += `[${new Date().toLocaleTimeString()}] ${m}\n`;
         lg.scrollTop = lg.scrollHeight;
       }
+      function cc(el, lim, display) {
+        const l = el.value.length;
+        if (display) display.textContent = l;
+        return l > lim ? "🔴" + l : l + "/" + lim;
+      }
 
+      // ── 时间轴 ──
       function renderTimeline() {
-        const tmpl = sTmpl.value;
-        const defs = SCENE_DEFS[tmpl];
-        const cats = grouped();
-        const useGlsl = tmpl === "flip-book";
-
+        const tmpl = sTmpl.value,
+          defs = SCENE_DEFS[tmpl],
+          cats = grouped(),
+          isGl = tmpl === "flip-book";
         timeline.innerHTML = defs
           .map((sc, i) => {
-            const id = `sc_${i}`;
+            const id = "sc_" + i;
             const opts = Object.entries(cats)
               .map(
                 ([cat, effs]) =>
@@ -439,30 +551,31 @@
                         `<option value="${e.id}"${e.id === sc.effect ? " selected" : ""}>${e.name}${e.gl ? " ⚡" : ""}</option>`,
                     )
                     .join("") +
-                  `</optgroup>`,
+                  "</optgroup>",
               )
-              .filter(Boolean)
               .join("");
-
-            return `<div class="scene">
-      <div class="h">${i + 1}. ${sc.label} <span class="sub">${sc.last ? "（淡出结束）" : "（转场→停留）"}</span></div>
-      <div class="row">
-        <select id="${id}_eff">${opts}</select>
-        <span class="lbl">转场</span>
-        <input class="dur" id="${id}_xf" type="number" step="0.1" min="0.3" max="5" value="${sc.xfade}" oninput="calcTotal()">s
-        ${sc.last ? "" : `<span class="lbl">停留</span><input class="dur" id="${id}_dwl" type="number" step="0.1" min="0" max="10" value="${sc.dwell}" oninput="calcTotal()">s`}
-      </div>
-    </div>`;
+            return `<div class="scene"><div class="h">${i + 1}. ${sc.label} <span class="sub">${sc.last ? "→ 淡出" : "→ 停留"}</span></div>
+      <div class="row"><select id="${id}_e">${opts}</select>
+      <span class="lbl">转</span><input class="dur" id="${id}_x" type="number" step="0.1" min="0.3" max="5" value="${sc.defXf}" oninput="calcTotal()">
+      ${sc.last ? "" : `<span class="lbl">停</span><input class="dur" id="${"sc_" + i + "_d"}" type="number" step="0.1" min="0" max="10" value="${sc.defDw}" oninput="calcTotal()">`}</div></div>`;
           })
           .join("");
 
-        extrasPanel.innerHTML =
-          `<span>附加</span>` +
-          (useGlsl ? `<label><input type="checkbox" id="chGlow" checked> 光晕</label>` : "") +
-          `<label><input type="checkbox" id="chMusic" checked> 音乐</label>` +
-          `<span style="margin-left:auto">淡出</span>` +
-          `<input class="dur" id="fadeDur" type="number" step="0.1" min="0.5" max="5" value="1.5" oninput="calcTotal()">s`;
-        $("glHint").style.display = "block";
+        extrasPanel.innerHTML = `<span>附加</span>${
+          isGl ? '<label><input type="checkbox" id="chGlow" checked>光晕</label>' : ""
+        }
+    <label>音乐</label><select id="chMusic"><option value="">随机</option><option value="__none">无音乐</option></select>
+    <span style="margin-left:auto">淡出</span><input class="dur" id="fadeDur" type="number" step="0.1" min="0.5" max="5" value="1.5" oninput="calcTotal()">s`;
+        // 填充音乐列表
+        const ms = $("chMusic");
+        if (ms) {
+          musicList.forEach((f) => {
+            const o = document.createElement("option");
+            o.value = f.path;
+            o.textContent = f.name;
+            ms.appendChild(o);
+          });
+        }
         calcTotal();
       }
 
@@ -470,15 +583,18 @@
         const defs = SCENE_DEFS[sTmpl.value];
         let t = 0;
         defs.forEach((sc, i) => {
-          t += parseFloat($(`sc_${i}_xf`)?.value) || sc.xfade;
-          if (!sc.last) t += parseFloat($(`sc_${i}_dwl`)?.value) || sc.dwell;
+          t += parseFloat($(`sc_${i}_x`)?.value) || sc.defXf;
+          if (!sc.last) t += parseFloat($(`sc_${i}_d`)?.value) || sc.defDw;
         });
         t += parseFloat($("fadeDur")?.value) || 1.5;
         totInfo.textContent = `总时长：约 ${t.toFixed(1)} 秒`;
       }
+      sTmpl.onchange = () => {
+        renderTimeline();
+        loadArticleText();
+      };
 
-      sTmpl.onchange = renderTimeline;
-
+      // ── 加载文章列表 ──
       async function loadArticles() {
         try {
           const r = await fetch("/api/configs");
@@ -487,38 +603,110 @@
           (data.configs || data || []).forEach((a) => {
             const o = document.createElement("option");
             o.value = a.issueNum;
-            o.textContent = `第${String(a.issueNum).padStart(3, "0")}期 ${a.headline || ""}`;
+            o.textContent = `${String(a.issueNum).padStart(3, "0")}期 ${a.headline || ""}`;
             sArticle.appendChild(o);
           });
+          sArticle.onchange = loadArticleText;
+          if (sArticle.options.length > 1) {
+            sArticle.selectedIndex = 1;
+            loadArticleText();
+          }
         } catch (e) {
           status.textContent = "⚠️ 服务未启动";
         }
       }
 
+      // ── 加载文章文本到编辑器 ──
+      async function loadArticleText() {
+        const n = sArticle.value;
+        if (!n) return;
+        try {
+          const r = await fetch(`/data/articles/article-${String(n).padStart(3, "0")}.json`);
+          if (!r.ok) throw Error();
+          const cfg = await r.json();
+          const cv = cfg.cover || {},
+            ct = cfg.content || {};
+          eHeadline.value = cv.headline || "";
+          cc(eHeadline, 20, $("ccH"));
+          eSource.value = cv.source || "";
+          cc(eSource, 25, $("ccS"));
+          paraList.innerHTML = (ct.paragraphs || [])
+            .map(
+              (p, i) => `
+      <div class="para-box">
+        <div class="p-h">段落 ${i + 1}</div>
+        <div class="edit-row"><label>正文</label><textarea id="pt_${i}" oninput="cc(this,80)">${p.text || ""}</textarea><span class="cc" id="ccp_${i}">${(p.text || "").length}</span></div>
+        <div class="edit-row"><label>高亮</label><input id="ph_${i}" value="${p.highlight || ""}" placeholder="原文子串（可选）"></div>
+      </div>`,
+            )
+            .join("");
+        } catch (e) {
+          /* 静默 */
+        }
+      }
+      ["eHeadline", "eSource"].forEach((id) => {
+        const el = $(id);
+        if (el)
+          el.oninput = function () {
+            cc(this, this === eHeadline ? 20 : 25, $("cc" + this.id[1].toUpperCase()));
+          };
+      });
+
+      // ── 加载音乐列表 ──
+      async function loadMusic() {
+        try {
+          const r = await fetch("/api/music");
+          if (!r.ok) throw Error();
+          const data = await r.json();
+          musicList = data.files || [];
+        } catch (e) {
+          /* 静默 */
+        }
+      }
+
+      // ── 收集配置 ──
       function collectConfig() {
-        const tmpl = sTmpl.value;
-        const defs = SCENE_DEFS[tmpl];
+        const tmpl = sTmpl.value,
+          defs = SCENE_DEFS[tmpl];
         const timing = { final: parseFloat($("fadeDur")?.value) || 1.5 };
 
         const sceneTransitions = defs.map((sc, i) => {
-          const effect = $(`sc_${i}_eff`)?.value || sc.effect;
-          const xfade = parseFloat($(`sc_${i}_xf`)?.value) || sc.xfade;
-          if (i === 0) timing.settle = xfade;
-          else if (i === 1) timing.curl = xfade;
-          else timing.sweep = xfade;
+          const effect = $(`sc_${i}_e`)?.value || sc.effect;
+          const xf = parseFloat($(`sc_${i}_x`)?.value) || sc.defXf;
+          if (i === 0) timing.settle = xf;
+          else if (i === 1) timing.curl = xf;
+          else timing.sweep = xf;
           return { effect };
         });
-        if (!defs[0].last) timing.cover = parseFloat($("sc_0_dwl")?.value) || defs[0].dwell;
-        if (!defs[1].last) timing.hold = parseFloat($("sc_1_dwl")?.value) || defs[1].dwell;
+        if (!defs[0].last) timing.cover = parseFloat($("sc_0_d")?.value) || defs[0].defDw;
+        if (!defs[1].last) timing.hold = parseFloat($("sc_1_d")?.value) || defs[1].defDw;
 
+        // 文本
+        const paragraphs = [];
+        for (let i = 0; ; i++) {
+          const ta = $("pt_" + i);
+          if (!ta) break;
+          const hl = $("ph_" + i)?.value || "";
+          paragraphs.push({ text: ta.value, highlight: hl && ta.value.includes(hl) ? hl : undefined });
+        }
+        const cover = { headline: eHeadline.value, source: eSource.value };
+        const content = { title: eHeadline.value, subtitle: "", paragraphs, source: eSource.value };
+
+        // 音乐
+        const ms = $("chMusic");
+        const mv = ms?.value || "";
         const overlays = tmpl === "flip-book" && $("chGlow")?.checked ? ["glow"] : [];
-        return { timing, sceneTransitions, overlays, hasMusic: $("chMusic")?.checked ?? true };
+        if (mv === "__none") timing._noMusic = true;
+        else if (mv) timing._musicFile = mv;
+
+        return { timing, sceneTransitions, overlays, cover, content };
       }
 
+      // ── 生成 ──
       async function build() {
-        const issueNum = sArticle.value;
-        const tmpl = sTmpl.value;
-        if (!issueNum) return;
+        const n = sArticle.value,
+          tmpl = sTmpl.value;
+        if (!n) return;
         btnBuild.disabled = true;
         status.className = "";
         pbox.classList.remove("on");
@@ -527,10 +715,14 @@
         log(`模板: ${tmpl}`);
 
         try {
-          const r = await fetch(`/data/articles/article-${String(issueNum).padStart(3, "0")}.json`);
+          const r = await fetch(`/data/articles/article-${String(n).padStart(3, "0")}.json`);
           if (!r.ok) throw new Error("找不到配置文件");
           const cfg = await r.json();
           const uc = collectConfig();
+
+          // 覆盖用户修改的值
+          cfg.cover = uc.cover;
+          cfg.content = uc.content;
           cfg.timing = { ...cfg.timing, ...uc.timing };
           cfg.meta = cfg.meta || {};
           cfg.meta.videoTemplate = tmpl;
@@ -539,7 +731,7 @@
 
           status.textContent = "⏳ 提交构建...";
           log(`转场: ${uc.sceneTransitions.map((s) => s.effect).join(" → ")}`);
-          log(`参数: timing=${JSON.stringify(uc.timing)}`);
+          log(`音乐: ${cfg.timing._noMusic ? "无" : cfg.timing._musicFile || "随机"}`);
 
           const br = await fetch("/api/build", {
             method: "POST",
@@ -550,14 +742,13 @@
           const { jobId } = await br.json();
           log(`jobId: ${jobId}`);
 
-          const padded = String(issueNum).padStart(3, "0");
-          const vpath = `/data/output/法务视频-${padded}期.mp4`;
-
+          const padded = String(n).padStart(3, "0"),
+            vpath = `/data/output/法务视频-${padded}期.mp4`;
           status.textContent = "⏳ 生成中...";
           const poll = setInterval(async () => {
-            const sr = await fetch(`/api/status?issue=${issueNum}`);
-            const s = await sr.json();
-            const qj = s.queueJob;
+            const sr = await fetch(`/api/status?issue=${n}`),
+              s = await sr.json(),
+              qj = s.queueJob;
             if (qj?.progress) {
               qj.progress.forEach((p) => {
                 if (["🎬", "✨", "✅", "❌", "[stderr]", "⚠️", "💡"].some((x) => p.startsWith(x))) log(p);
@@ -596,6 +787,7 @@
       }
 
       renderTimeline();
+      loadMusic().then(renderTimeline);
       loadArticles();
     </script>
   </body>

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import {
+  ROOT,
   CONFIGS_DIR,
   OUTPUT_DIR,
   TEMPLATES_DIR,
@@ -98,6 +99,24 @@ export async function register(method, urlPath, req, res, params) {
       };
     });
     json(res, templates);
+    return true;
+  }
+
+  // ── GET /api/music — list available background music files ──
+  if (method === "GET" && urlPath === "/api/music") {
+    const musicDir = path.join(ROOT, "assets", "music");
+    let files = [];
+    if (fs.existsSync(musicDir)) {
+      files = fs
+        .readdirSync(musicDir)
+        .filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i))
+        .sort()
+        .map((f) => ({
+          name: f,
+          path: path.join("assets", "music", f),
+        }));
+    }
+    json(res, { files });
     return true;
   }
 

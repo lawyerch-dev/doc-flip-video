@@ -42,10 +42,22 @@ const finalDur = tm.final || 1.5; // 尾部淡出
 const totalDur = settleDur + coverDur + xfadeDur + sceneDur + xfadeDur + sceneDur + finalDur;
 
 // ── Pick background music ──
-const musicDir = path.join(ROOT, "assets", "music");
-const musicFiles = fs.readdirSync(musicDir).filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i));
-const musicFile =
-  musicFiles.length > 0 ? path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]) : null;
+let musicFile = null;
+if (!cfg.timing?._noMusic) {
+  if (cfg.timing?._musicFile) {
+    const customPath = path.join(ROOT, cfg.timing._musicFile);
+    if (fs.existsSync(customPath)) {
+      musicFile = customPath;
+    }
+  }
+  if (!musicFile) {
+    const musicDir = path.join(ROOT, "assets", "music");
+    const musicFiles = fs.readdirSync(musicDir).filter((f) => f.match(/\.(mp3|wav|ogg|m4a)$/i));
+    if (musicFiles.length > 0) {
+      musicFile = path.join(musicDir, musicFiles[Math.floor(Math.random() * musicFiles.length)]);
+    }
+  }
+}
 if (musicFile) console.log(`🎵 ${path.basename(musicFile)}`);
 
 console.log(`🔧 幻灯片模板: dissolve 转场（无 GLSL 依赖）`);

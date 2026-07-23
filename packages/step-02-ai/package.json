@@ -1,6 +1,12 @@
 {
   "name": "@doc-flip/step-02-ai",
   "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./chat": "./chat.mjs",
+    "./generate": "./generate.mjs"
+  },
   "dependencies": {
     "@doc-flip/shared": "workspace:*"
   }

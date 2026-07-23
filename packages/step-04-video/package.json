@@ -1,6 +1,11 @@
 {
   "name": "@doc-flip/step-04-video",
   "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./effects": "./effects.mjs"
+  },
   "dependencies": {
     "@doc-flip/shared": "workspace:*"
   }

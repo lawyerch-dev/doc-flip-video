@@ -1,6 +1,10 @@
 {
   "name": "@doc-flip/step-01-scrape",
   "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  },
   "dependencies": {
     "@doc-flip/shared": "workspace:*"
   }

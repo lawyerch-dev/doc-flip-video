@@ -1,6 +1,12 @@
 {
   "name": "@doc-flip/step-03-render",
   "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./render-images": "./render-images.mjs",
+    "./render-satori": "./render-satori.mjs"
+  },
   "dependencies": {
     "@doc-flip/shared": "workspace:*"
   }

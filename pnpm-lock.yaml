@@ -55,63 +55,47 @@ importers:
         specifier: ^3.9.5
         version: 3.9.5
 
-  packages/ai:
+  packages/backend:
     dependencies:
       '@doc-flip/shared':
         specifier: workspace:*
         version: link:../shared
-
-  packages/engine:
-    dependencies:
-      '@doc-flip/shared':
+      '@doc-flip/step-01-scrape':
         specifier: workspace:*
-        version: link:../shared
-      '@doc-flip/video':
+        version: link:../step-01-scrape
+      '@doc-flip/step-02-ai':
         specifier: workspace:*
-        version: link:../video
+        version: link:../step-02-ai
+      '@doc-flip/step-03-render':
+        specifier: workspace:*
+        version: link:../step-03-render
+      '@doc-flip/step-04-video':
+        specifier: workspace:*
+        version: link:../step-04-video
 
   packages/frontend: {}
 
-  packages/mcp: {}
-
-  packages/render:
-    dependencies:
-      '@doc-flip/shared':
-        specifier: workspace:*
-        version: link:../shared
-
-  packages/scrape:
-    dependencies:
-      '@doc-flip/shared':
-        specifier: workspace:*
-        version: link:../shared
-
-  packages/server:
-    dependencies:
-      '@doc-flip/ai':
-        specifier: workspace:*
-        version: link:../ai
-      '@doc-flip/engine':
-        specifier: workspace:*
-        version: link:../engine
-      '@doc-flip/render':
-        specifier: workspace:*
-        version: link:../render
-      '@doc-flip/scrape':
-        specifier: workspace:*
-        version: link:../scrape
-      '@doc-flip/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@doc-flip/video':
-        specifier: workspace:*
-        version: link:../video
-
   packages/shared: {}
 
-  packages/template-render: {}
+  packages/step-01-scrape:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
 
-  packages/video:
+  packages/step-02-ai:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/step-03-render:
+    dependencies:
+      '@doc-flip/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/step-04-video:
     dependencies:
       '@doc-flip/shared':
         specifier: workspace:*

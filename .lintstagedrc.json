@@ -2,6 +2,5 @@
   "packages/engine/**/*.{mjs,js}": ["eslint --fix", "prettier --write"],
   "packages/server/**/*.{mjs,js}": ["eslint --fix", "prettier --write"],
   "packages/frontend/**/*.{mjs,js}": ["eslint --fix", "prettier --write"],
-  "packages/mcp/**/*.{mjs,js}": ["eslint --fix", "prettier --write"],
   "**/*.{json,css,html,md}": ["prettier --write"]
 }

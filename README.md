@@ -74,19 +74,6 @@ data/output/法务视频-NNN期.mp4
 
 **render-video.mjs** — 纯 FFmpeg 管道，5 段画面：settle→cover→curl→sweep→fade，输出 `data/output/法务视频-NNN期.mp4`
 
-## AI 编辑器集成
-
-```json
-{
-  "mcpServers": {
-    "doc-flip-video": {
-      "command": "node",
-      "args": ["packages/mcp/mcp-server.mjs"]
-    }
-  }
-}
-```
-
 ## 依赖
 
 - Node.js ≥ 18
@@ -118,4 +105,3 @@ bash scripts/build-ffmpeg-xfade.sh
 - [engine](packages/engine/README.md)
 - [frontend](packages/frontend/README.md)
 - [server](packages/server/README.md)
-- [mcp](packages/mcp/README.md)

@@ -1,6 +1,5 @@
 packages:
   - "packages/*"
-  - "!packages/vue-fabric-editor"
   - "!packages/yft-design"
 allowBuilds:
   canvas: true

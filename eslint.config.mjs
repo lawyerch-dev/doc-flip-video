@@ -27,7 +27,6 @@ export default [
       "**/coverage/**",
       "**/workflow-studio/**",
       "packages/yft-design/**",
-      "packages/vue-fabric-editor/**",
     ],
   },
 ];

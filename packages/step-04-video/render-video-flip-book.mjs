@@ -136,7 +136,7 @@ function resolveTransition(idx, defaultShader, defaultParams) {
 
 const tSettle = resolveTransition(0, 'gl_swap', 'reflection=0.4,perspective=0.2,depth=3');
 const tCurl = resolveTransition(1, 'gl_InvertedPageCurl', '');
-const tSweep = resolveTransition(2, 'wiperight', '');
+const tSweep = resolveTransition(2, 'gl_SimplePageCurl', '90,0,1');
 const hasGlow = overlays.includes('glow');
 console.log(`🔧 翻页模板: ${st.map(s=>s.effect).join(' → ') || '默认'}`);
 

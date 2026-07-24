@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // ── Find FFmpeg binaries ──
 function findFFmpeg() {
   const platform = `${process.platform}-${process.arch}`.replace("win32", "windows");
-  const buildDir = path.join(ROOT, "packages", "engine", "build");
+  const buildDir = path.join(ROOT, "packages", "backend", "orchestrator", "build");
   const platformBin = path.join(buildDir, `ffmpeg-${platform}`);
   const genericBin = path.join(buildDir, "ffmpeg-custom");
   if (fs.existsSync(platformBin)) return platformBin;
